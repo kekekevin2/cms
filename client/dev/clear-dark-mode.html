@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Dark Mode</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #059669;
+        }
+        .success {
+            color: #10b981;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌞 Clear Dark Mode</h1>
+        <p>Click the button below to reset dark mode to light mode</p>
+        <button onclick="clearDarkMode()">Clear Dark Mode</button>
+        <p class="success" id="success">✅ Dark mode cleared! Refresh your app.</p>
+    </div>
+
+    <script>
+        function clearDarkMode() {
+            // Clear theme from localStorage
+            localStorage.removeItem('theme');
+            localStorage.setItem('theme', 'light');
+            
+            // Remove dark class from html
+            document.documentElement.classList.remove('dark');
+            
+            // Show success message
+            document.getElementById('success').style.display = 'block';
+            
+            console.log('Dark mode cleared!');
+        }
+    </script>
+</body>
+</html>

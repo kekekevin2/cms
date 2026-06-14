@@ -1,0 +1,61 @@
+.faculty-notifications-container {
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+/* Custom scrollbar for faculty list */
+.max-h-96::-webkit-scrollbar {
+  width: 8px;
+}
+
+.max-h-96::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.max-h-96::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.max-h-96::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth transitions */
+label {
+  transition: all 0.2s ease;
+}
+
+/* Focus states */
+input:focus,
+textarea:focus {
+  outline: none;
+}
+
+/* Button hover effects */
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+/* Disabled state */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Animation for loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

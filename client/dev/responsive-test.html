@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+    <title>Responsive Test - BatStateU</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .device-info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .device-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .device-info strong {
+            color: #667eea;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .test-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .test-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status.pass {
+            background: #10b981;
+            color: white;
+        }
+
+        .status.warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .status.fail {
+            background: #ef4444;
+            color: white;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        .test-result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f9ff;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 767px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Responsive Design Test</h1>
+        
+        <div class="device-info">
+            <p><strong>Screen Width:</strong> <span id="screenWidth"></span>px</p>
+            <p><strong>Screen Height:</strong> <span id="screenHeight"></span>px</p>
+            <p><strong>Device Type:</strong> <span id="deviceType"></span></p>
+            <p><strong>Orientation:</strong> <span id="orientation"></span></p>
+            <p><strong>Touch Support:</strong> <span id="touchSupport"></span></p>
+            <p><strong>User Agent:</strong> <span id="userAgent"></span></p>
+        </div>
+
+        <div class="test-grid">
+            <div class="test-card">
+                <h3>✅ Viewport Width</h3>
+                <p id="viewportTest"></p>
+            </div>
+
+            <div class="test-card">
+                <h3>✅ Horizontal Scroll</h3>
+                <p id="scrollTest"></p>
+            </div>
+
+            <div class="test-card">
+                <h3>✅ Touch Targets</h3>
+                <p id="touchTest"></p>
+            </div>
+
+            <div class="test-card">
+                <h3>✅ Font Size</h3>
+                <p id="fontTest"></p>
+            </div>
+        </div>
+
+        <button onclick="runTests()">🔄 Run Tests Again</button>
+
+        <div class="test-result" id="result"></div>
+    </div>
+
+    <script>
+        function updateDeviceInfo() {
+            document.getElementById('screenWidth').textContent = window.innerWidth;
+            document.getElementById('screenHeight').textContent = window.innerHeight;
+            document.getElementById('orientation').textContent = 
+                window.innerWidth > window.innerHeight ? 'Landscape' : 'Portrait';
+            document.getElementById('touchSupport').textContent = 
+                'ontouchstart' in window ? 'Yes ✅' : 'No ❌';
+            document.getElementById('userAgent').textContent = 
+                navigator.userAgent.substring(0, 50) + '...';
+
+            // Detect device type
+            const width = window.innerWidth;
+            let deviceType = '';
+            if (width < 768) {
+                deviceType = '📱 Mobile Phone';
+            } else if (width < 1024) {
+                deviceType = '📱 Tablet';
+            } else {
+                deviceType = '💻 Desktop';
+            }
+            document.getElementById('deviceType').textContent = deviceType;
+        }
+
+        function runTests() {
+            const width = window.innerWidth;
+            const hasHorizontalScroll = document.documentElement.scrollWidth > document.documentElement.clientWidth;
+            
+            // Viewport test
+            let viewportStatus = '';
+            if (width < 768) {
+                viewportStatus = '<span class="status pass">PASS</span> Mobile viewport detected';
+            } else if (width < 1024) {
+                viewportStatus = '<span class="status pass">PASS</span> Tablet viewport detected';
+            } else {
+                viewportStatus = '<span class="status pass">PASS</span> Desktop viewport detected';
+            }
+            document.getElementById('viewportTest').innerHTML = viewportStatus;
+
+            // Scroll test
+            const scrollStatus = hasHorizontalScroll 
+                ? '<span class="status fail">FAIL</span> Horizontal scroll detected'
+                : '<span class="status pass">PASS</span> No horizontal scroll';
+            document.getElementById('scrollTest').innerHTML = scrollStatus;
+
+            // Touch test
+            const touchStatus = 'ontouchstart' in window
+                ? '<span class="status pass">PASS</span> Touch events supported'
+                : '<span class="status warning">N/A</span> Not a touch device';
+            document.getElementById('touchTest').innerHTML = touchStatus;
+
+            // Font test
+            const fontSize = parseInt(window.getComputedStyle(document.body).fontSize);
+            const fontStatus = fontSize >= 14
+                ? '<span class="status pass">PASS</span> Font size is readable'
+                : '<span class="status warning">WARNING</span> Font might be too small';
+            document.getElementById('fontTest').innerHTML = fontStatus;
+
+            // Overall result
+            const allPass = !hasHorizontalScroll;
+            const resultHTML = allPass
+                ? '<strong style="color: #10b981;">✅ All tests passed! Your website is responsive.</strong>'
+                : '<strong style="color: #ef4444;">⚠️ Some issues detected. Check the results above.</strong>';
+            document.getElementById('result').innerHTML = resultHTML;
+        }
+
+        // Run tests on load
+        updateDeviceInfo();
+        runTests();
+
+        // Update on resize
+        window.addEventListener('resize', () => {
+            updateDeviceInfo();
+            runTests();
+        });
+
+        // Update on orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                updateDeviceInfo();
+                runTests();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

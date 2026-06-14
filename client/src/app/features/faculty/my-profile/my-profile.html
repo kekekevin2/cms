@@ -1,0 +1,1612 @@
+<div class="p-3">
+  @if (loading()) {
+    <div class="flex justify-center py-16 text-gray-300">
+      <i class="pi pi-spin pi-spinner text-3xl"></i>
+    </div>
+  } @else {
+    <!-- Top Header Bar -->
+    <div class="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
+      <div class="flex items-center gap-3">
+        <!-- Passport Photo -->
+        <div class="shrink-0">
+          @if (personalProfile().passport_photo) {
+            <img
+              [src]="baseUrl + personalProfile().passport_photo"
+              alt="Passport Photo"
+              class="w-14 h-14 rounded-sm object-cover border-2 border-gray-100"
+            />
+          } @else {
+            <div
+              class="w-14 h-14 rounded-sm bg-green-600 flex items-center justify-center border-2 border-gray-100"
+            >
+              <i class="pi pi-user text-white text-lg"></i>
+            </div>
+          }
+        </div>
+        <div>
+          <h2 class="text-sm font-semibold text-gray-900">
+            {{ personalProfile().title ? personalProfile().title + ' ' : ''
+            }}{{ personalProfile().first_name || '' }}
+            {{ personalProfile().middle_name ? personalProfile().middle_name + ' ' : ''
+            }}{{ personalProfile().last_name || ''
+            }}{{ personalProfile().extension ? ', ' + personalProfile().extension : '' }}
+          </h2>
+          <p class="text-xs text-gray-400">Faculty</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        @if (!isEditingPersonal()) {
+          <button
+            (click)="startEditingPersonal()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
+          >
+            <i class="pi pi-pencil text-xs"></i> Edit Profile
+          </button>
+        } @else {
+          <button
+            (click)="cancelPersonalEdit()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button
+            (click)="savePersonalProfile()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
+          >
+            <i class="pi pi-check text-xs"></i> Save Changes
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="flex gap-5 items-start">
+      <!-- Left Nav -->
+      <div class="w-44 shrink-0 space-y-0.5 sticky top-20">
+        <button
+          (click)="scrollTo('section-personal')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-user text-xs text-gray-400 w-4 text-center"></i> Personal Profile
+        </button>
+        <button
+          (click)="scrollTo('section-academic')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-graduation-cap text-xs text-gray-400 w-4 text-center"></i> Academic
+          Profile
+        </button>
+        <button
+          (click)="scrollTo('section-employment')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-briefcase text-xs text-gray-400 w-4 text-center"></i> Employment
+        </button>
+        <button
+          (click)="scrollTo('section-membership')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-id-card text-xs text-gray-400 w-4 text-center"></i> Membership
+        </button>
+        <button
+          (click)="scrollTo('section-awards')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-star text-xs text-gray-400 w-4 text-center"></i> Awards
+        </button>
+        <button
+          (click)="scrollTo('section-seminars')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-book text-xs text-gray-400 w-4 text-center"></i> Seminars
+        </button>
+        <button
+          (click)="scrollTo('section-research')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-search text-xs text-gray-400 w-4 text-center"></i> Research
+        </button>
+        <button
+          (click)="scrollTo('section-extension')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-globe text-xs text-gray-400 w-4 text-center"></i> Extension
+        </button>
+      </div>
+
+      <!-- Right Content -->
+      <div class="flex-1 space-y-4 min-w-0">
+        <!-- ==================== PERSONAL PROFILE ==================== -->
+        <div
+          id="section-personal"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
+            <i class="pi pi-user text-xs text-gray-400"></i>
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              Personal Profile
+            </p>
+          </div>
+          <div class="p-4">
+            @if (!isEditingPersonal()) {
+              <!-- View Mode -->
+              <div class="flex gap-4 mb-4">
+                @if (personalProfile().passport_photo) {
+                  <div class="shrink-0">
+                    <img
+                      [src]="baseUrl + personalProfile().passport_photo"
+                      alt="Passport Photo"
+                      class="w-24 h-32 object-cover border border-gray-200 rounded-sm"
+                    />
+                  </div>
+                }
+                <div class="flex-1 grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Title</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().title || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Last Name</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().last_name || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">First Name</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().first_name || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Middle Name</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().middle_name || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Extension</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().extension || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Date of Birth</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().date_of_birth || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Civil Status</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().civil_status || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Sex</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().sex || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Citizenship</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().citizenship || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Primary Mobile</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().mobile_primary || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Secondary Mobile</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().mobile_secondary || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Primary Email</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().email_primary || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Secondary Email</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().email_secondary || '—' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <!-- Home Address -->
+              <div class="border-t border-gray-50 pt-3">
+                <p class="text-xs font-medium text-gray-500 mb-2">Home Address</p>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Country</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().home_country || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Region</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().home_region || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Province</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().home_province || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Barangay</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().home_barangay || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Street/Subdivision</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().home_street_subdivision || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Zip Code</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().home_zip_code || '—' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <!-- Edit Mode -->
+              <form (ngSubmit)="savePersonalProfile()">
+                <!-- Passport Photo Upload -->
+                <div class="mb-4">
+                  <div class="flex gap-4 items-start mb-3">
+                    @if (personalProfile().passport_photo && !selectedPassportPhoto) {
+                      <div>
+                        <p class="text-xs text-gray-400 mb-1">Current Photo</p>
+                        <img
+                          [src]="baseUrl + personalProfile().passport_photo"
+                          alt="Passport Photo"
+                          class="w-20 h-28 object-cover border border-gray-200 rounded-sm"
+                        />
+                      </div>
+                    }
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1"
+                        >Passport Photo (White Background)</label
+                      >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        (change)="onPassportPhotoSelected($event)"
+                        class="block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Title</label>
+                    <select
+                      [(ngModel)]="personalForm().title"
+                      name="title"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    >
+                      <option value="">Select Title</option>
+                      <option value="Mr.">Mr.</option>
+                      <option value="Ms.">Ms.</option>
+                      <option value="Mrs.">Mrs.</option>
+                      <option value="Dr.">Dr.</option>
+                      <option value="Prof.">Prof.</option>
+                      <option value="Engr.">Engr.</option>
+                      <option value="Atty.">Atty.</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="personalForm().last_name"
+                      name="last_name"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">First Name</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="personalForm().first_name"
+                      name="first_name"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Middle Name</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="personalForm().middle_name"
+                      name="middle_name"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Extension</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="personalForm().extension"
+                      name="extension"
+                      placeholder="Jr., Sr., III"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1"
+                      >Date of Birth</label
+                    >
+                    <input
+                      type="date"
+                      [(ngModel)]="personalForm().date_of_birth"
+                      name="date_of_birth"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1"
+                      >Place of Birth</label
+                    >
+                    <input
+                      type="text"
+                      [(ngModel)]="personalForm().place_of_birth"
+                      name="place_of_birth"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Civil Status</label>
+                    <select
+                      [(ngModel)]="personalForm().civil_status"
+                      name="civil_status"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    >
+                      <option value="">Select</option>
+                      <option value="Single">Single</option>
+                      <option value="Married">Married</option>
+                      <option value="Widowed">Widowed</option>
+                      <option value="Separated">Separated</option>
+                      <option value="Divorced">Divorced</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Sex</label>
+                    <select
+                      [(ngModel)]="personalForm().sex"
+                      name="sex"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    >
+                      <option value="">Select</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Citizenship</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="personalForm().citizenship"
+                      name="citizenship"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1"
+                      >Primary Mobile</label
+                    >
+                    <input
+                      type="tel"
+                      [(ngModel)]="personalForm().mobile_primary"
+                      name="mobile_primary"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1"
+                      >Secondary Mobile</label
+                    >
+                    <input
+                      type="tel"
+                      [(ngModel)]="personalForm().mobile_secondary"
+                      name="mobile_secondary"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1"
+                      >Primary Email</label
+                    >
+                    <input
+                      type="email"
+                      [(ngModel)]="personalForm().email_primary"
+                      name="email_primary"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1"
+                      >Secondary Email</label
+                    >
+                    <input
+                      type="email"
+                      [(ngModel)]="personalForm().email_secondary"
+                      name="email_secondary"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                </div>
+
+                <!-- Home Address -->
+                <div class="border-t border-gray-50 pt-3 mb-3">
+                  <p class="text-xs font-medium text-gray-500 mb-2">Home Address</p>
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1">Country</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="personalForm().home_country"
+                        name="home_country"
+                        class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1">Region</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="personalForm().home_region"
+                        name="home_region"
+                        class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1">Province</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="personalForm().home_province"
+                        name="home_province"
+                        class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1">Barangay</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="personalForm().home_barangay"
+                        name="home_barangay"
+                        class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1"
+                        >Street/Subdivision</label
+                      >
+                      <input
+                        type="text"
+                        [(ngModel)]="personalForm().home_street_subdivision"
+                        name="home_street_subdivision"
+                        class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1">Zip Code</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="personalForm().home_zip_code"
+                        name="home_zip_code"
+                        class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </form>
+            }
+          </div>
+        </div>
+
+        <!-- ==================== ACADEMIC PROFILE ==================== -->
+        <div
+          id="section-academic"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-graduation-cap text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                Academic Profile
+              </p>
+            </div>
+            <button
+              (click)="openAcademicModal()"
+              class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+            >
+              <i class="pi pi-plus text-xs"></i> Add
+            </button>
+          </div>
+          <div class="p-4">
+            @if (academicProfiles().length === 0) {
+              <p class="text-xs text-gray-400">No academic profiles added yet.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (profile of academicProfiles(); track profile.id) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50 transition">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-gray-800">{{ profile.school_name }}</p>
+                        <p class="text-xs text-gray-500">
+                          {{ profile.level }} · {{ profile.degree_course }}
+                        </p>
+                        <p class="text-xs text-gray-400">
+                          {{ profile.year_from }} – {{ profile.year_to }}
+                        </p>
+                        @if (profile.honors_received) {
+                          <p class="text-xs text-green-600 mt-0.5">
+                            Honors: {{ profile.honors_received }}
+                          </p>
+                        }
+                      </div>
+                      <div class="flex gap-1 shrink-0">
+                        <button
+                          (click)="openAcademicModal(profile)"
+                          class="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-sm transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          (click)="deleteAcademicProfile(profile.id!)"
+                          class="px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded-sm transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- ==================== EMPLOYMENT ==================== -->
+        <div
+          id="section-employment"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-briefcase text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Employment</p>
+            </div>
+            <button
+              (click)="openEmploymentModal()"
+              class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+            >
+              <i class="pi pi-plus text-xs"></i> Add
+            </button>
+          </div>
+          <div class="p-4">
+            @if (employmentProfiles().length === 0) {
+              <p class="text-xs text-gray-400">No employment records added yet.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (profile of employmentProfiles(); track profile.id) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50 transition">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-gray-800">
+                          {{ profile.position_title }}
+                        </p>
+                        <p class="text-xs text-gray-500">{{ profile.company_name }}</p>
+                        <p class="text-xs text-gray-400">
+                          {{ profile.employment_status }} · {{ profile.date_from }} –
+                          {{ profile.date_to || 'Present' }}
+                        </p>
+                        @if (profile.is_current) {
+                          <span
+                            class="inline-block px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded-sm mt-0.5"
+                            >Current</span
+                          >
+                        }
+                      </div>
+                      <div class="flex gap-1 shrink-0">
+                        <button
+                          (click)="openEmploymentModal(profile)"
+                          class="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-sm transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          (click)="deleteEmploymentProfile(profile.id!)"
+                          class="px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded-sm transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- ==================== PROFESSIONAL MEMBERSHIP ==================== -->
+        <div
+          id="section-membership"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-id-card text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                Professional Membership
+              </p>
+            </div>
+            <button
+              (click)="openMembershipModal()"
+              class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+            >
+              <i class="pi pi-plus text-xs"></i> Add
+            </button>
+          </div>
+          <div class="p-4">
+            @if (memberships().length === 0) {
+              <p class="text-xs text-gray-400">No memberships added yet.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (membership of memberships(); track membership.id) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50 transition">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-gray-800">
+                          {{ membership.organization_name }}
+                        </p>
+                        <p class="text-xs text-gray-500">{{ membership.position }}</p>
+                        <p class="text-xs text-gray-400">
+                          {{ membership.membership_type }}
+                          @if (membership.date_joined) {
+                            · Joined: {{ membership.date_joined }}
+                          }
+                        </p>
+                      </div>
+                      <div class="flex gap-1 shrink-0">
+                        <button
+                          (click)="openMembershipModal(membership)"
+                          class="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-sm transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          (click)="deleteMembership(membership.id!)"
+                          class="px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded-sm transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- ==================== AWARDS ==================== -->
+        <div id="section-awards" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-star text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                Awards Received
+              </p>
+            </div>
+            <button
+              (click)="openAwardModal()"
+              class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+            >
+              <i class="pi pi-plus text-xs"></i> Add
+            </button>
+          </div>
+          <div class="p-4">
+            @if (awards().length === 0) {
+              <p class="text-xs text-gray-400">No awards added yet.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (award of awards(); track award.id) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50 transition">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-gray-800">{{ award.award_title }}</p>
+                        <p class="text-xs text-gray-500">{{ award.awarding_body }}</p>
+                        <p class="text-xs text-gray-400">
+                          {{ award.date_received }} · {{ award.level }}
+                        </p>
+                      </div>
+                      <div class="flex gap-1 shrink-0">
+                        <button
+                          (click)="openAwardModal(award)"
+                          class="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-sm transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          (click)="deleteAward(award.id!)"
+                          class="px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded-sm transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- ==================== SEMINARS/TRAININGS ==================== -->
+        <div
+          id="section-seminars"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-book text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                Seminars / Trainings
+              </p>
+            </div>
+            <button
+              (click)="openSeminarModal()"
+              class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+            >
+              <i class="pi pi-plus text-xs"></i> Add
+            </button>
+          </div>
+          <div class="p-4">
+            @if (seminars().length === 0) {
+              <p class="text-xs text-gray-400">No seminars/trainings added yet.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (seminar of seminars(); track seminar.id) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50 transition">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-gray-800">{{ seminar.title }}</p>
+                        <p class="text-xs text-gray-500">
+                          {{ seminar.category }} · {{ seminar.sponsoring_agency }}
+                        </p>
+                        <p class="text-xs text-gray-400">{{ seminar.date }}</p>
+                      </div>
+                      <div class="flex gap-1 shrink-0">
+                        <button
+                          (click)="openSeminarModal(seminar)"
+                          class="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-sm transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          (click)="deleteSeminar(seminar.id!)"
+                          class="px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded-sm transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- ==================== RESEARCH ACTIVITIES ==================== -->
+        <div
+          id="section-research"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-search text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                Research Activities
+              </p>
+            </div>
+            <button
+              (click)="openResearchModal()"
+              class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+            >
+              <i class="pi pi-plus text-xs"></i> Add
+            </button>
+          </div>
+          <div class="p-4">
+            @if (researchActivities().length === 0) {
+              <p class="text-xs text-gray-400">No research activities added yet.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (activity of researchActivities(); track activity.id) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50 transition">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-gray-800">
+                          {{ activity.research_title }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                          {{ activity.category }} · {{ activity.sponsoring_agency }}
+                        </p>
+                        <p class="text-xs text-gray-400">{{ activity.date }}</p>
+                      </div>
+                      <div class="flex gap-1 shrink-0">
+                        <button
+                          (click)="openResearchModal(activity)"
+                          class="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-sm transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          (click)="deleteResearch(activity.id!)"
+                          class="px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded-sm transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- ==================== EXTENSION ACTIVITIES ==================== -->
+        <div
+          id="section-extension"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-globe text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                Extension Activities
+              </p>
+            </div>
+            <button
+              (click)="openExtensionModal()"
+              class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+            >
+              <i class="pi pi-plus text-xs"></i> Add
+            </button>
+          </div>
+          <div class="p-4">
+            @if (extensionActivities().length === 0) {
+              <p class="text-xs text-gray-400">No extension activities added yet.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (activity of extensionActivities(); track activity.id) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50 transition">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-gray-800">
+                          {{ activity.extension_title }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                          {{ activity.beneficiary }} · {{ activity.location }}
+                        </p>
+                        <p class="text-xs text-gray-400">{{ activity.date_of_implementation }}</p>
+                      </div>
+                      <div class="flex gap-1 shrink-0">
+                        <button
+                          (click)="openExtensionModal(activity)"
+                          class="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-sm transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          (click)="deleteExtension(activity.id!)"
+                          class="px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded-sm transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Academic Profile Modal -->
+@if (showAcademicModal()) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-xs font-semibold text-gray-800">
+          {{ isEditingAcademic() ? 'Edit Academic Profile' : 'Add Academic Profile' }}
+        </h3>
+        <button (click)="showAcademicModal.set(false)" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <form (ngSubmit)="saveAcademicProfile()" class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Level</label>
+          <select
+            [(ngModel)]="academicForm().level"
+            name="level"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          >
+            <option value="">Select Level</option>
+            <option value="Elementary">Elementary</option>
+            <option value="Secondary">Secondary</option>
+            <option value="Vocational/Trade Course">Vocational/Trade Course</option>
+            <option value="College">College</option>
+            <option value="Graduate Studies">Graduate Studies</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">School Name</label>
+          <input
+            type="text"
+            [(ngModel)]="academicForm().school_name"
+            name="school_name"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Degree / Course</label>
+          <input
+            type="text"
+            [(ngModel)]="academicForm().degree_course"
+            name="degree_course"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Year From</label>
+            <input
+              type="number"
+              [(ngModel)]="academicForm().year_from"
+              name="year_from"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Year To</label>
+            <input
+              type="number"
+              [(ngModel)]="academicForm().year_to"
+              name="year_to"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Year Graduated</label>
+            <input
+              type="number"
+              [(ngModel)]="academicForm().year_graduated"
+              name="year_graduated"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Honors Received</label>
+          <input
+            type="text"
+            [(ngModel)]="academicForm().honors_received"
+            name="honors_received"
+            placeholder="e.g. Cum Laude, Magna Cum Laude"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            (click)="showAcademicModal.set(false)"
+            class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
+          >
+            {{ isEditingAcademic() ? 'Save Changes' : 'Add Profile' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Employment Modal -->
+@if (showEmploymentModal()) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-xs font-semibold text-gray-800">
+          {{ isEditingEmployment() ? 'Edit Employment' : 'Add Employment' }}
+        </h3>
+        <button (click)="showEmploymentModal.set(false)" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <form (ngSubmit)="saveEmploymentProfile()" class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Position Title</label>
+          <input
+            type="text"
+            [(ngModel)]="employmentForm().position_title"
+            name="position_title"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Company / Agency Name</label>
+          <input
+            type="text"
+            [(ngModel)]="employmentForm().company_name"
+            name="company_name"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Employment Status</label>
+          <select
+            [(ngModel)]="employmentForm().employment_status"
+            name="employment_status"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          >
+            <option value="">Select</option>
+            <option value="Permanent">Permanent</option>
+            <option value="Temporary">Temporary</option>
+            <option value="Casual">Casual</option>
+            <option value="Contractual">Contractual</option>
+            <option value="Part-Time">Part-Time</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Date From</label>
+            <input
+              type="date"
+              [(ngModel)]="employmentForm().date_from"
+              name="date_from"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Date To</label>
+            <input
+              type="date"
+              [(ngModel)]="employmentForm().date_to"
+              name="date_to"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Salary Grade</label>
+            <input
+              type="text"
+              [(ngModel)]="employmentForm().salary_grade"
+              name="salary_grade"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Monthly Salary</label>
+            <input
+              type="number"
+              [(ngModel)]="employmentForm().monthly_salary"
+              name="monthly_salary"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <label class="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+            <input
+              type="checkbox"
+              [(ngModel)]="employmentForm().is_current"
+              name="is_current"
+              class="rounded-sm"
+            />
+            Current Position
+          </label>
+          <label class="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+            <input
+              type="checkbox"
+              [(ngModel)]="employmentForm().is_government_service"
+              name="is_government_service"
+              class="rounded-sm"
+            />
+            Government Service
+          </label>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            (click)="showEmploymentModal.set(false)"
+            class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
+          >
+            {{ isEditingEmployment() ? 'Save Changes' : 'Add Employment' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Membership Modal -->
+@if (showMembershipModal()) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-xs font-semibold text-gray-800">
+          {{ isEditingMembership() ? 'Edit Membership' : 'Add Membership' }}
+        </h3>
+        <button (click)="showMembershipModal.set(false)" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <form (ngSubmit)="saveMembership()" class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Organization Name</label>
+          <input
+            type="text"
+            [(ngModel)]="membershipForm().organization_name"
+            name="organization_name"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Position</label>
+          <input
+            type="text"
+            [(ngModel)]="membershipForm().position"
+            name="position"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Membership Type</label>
+          <select
+            [(ngModel)]="membershipForm().membership_type"
+            name="membership_type"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          >
+            <option value="">Select</option>
+            <option value="Regular">Regular</option>
+            <option value="Associate">Associate</option>
+            <option value="Honorary">Honorary</option>
+            <option value="Lifetime">Lifetime</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Date Joined</label>
+            <input
+              type="date"
+              [(ngModel)]="membershipForm().date_joined"
+              name="date_joined"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Date Ended</label>
+            <input
+              type="date"
+              [(ngModel)]="membershipForm().date_ended"
+              name="date_ended"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+          <input
+            type="checkbox"
+            [(ngModel)]="membershipForm().is_lifetime"
+            name="is_lifetime"
+            class="rounded-sm"
+          />
+          Lifetime Membership
+        </label>
+        <div class="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            (click)="showMembershipModal.set(false)"
+            class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
+          >
+            {{ isEditingMembership() ? 'Save Changes' : 'Add Membership' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Award Modal -->
+@if (showAwardModal()) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-xs font-semibold text-gray-800">
+          {{ isEditingAward() ? 'Edit Award' : 'Add Award' }}
+        </h3>
+        <button (click)="showAwardModal.set(false)" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <form (ngSubmit)="saveAward()" class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Award Title</label>
+          <input
+            type="text"
+            [(ngModel)]="awardForm().award_title"
+            name="award_title"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Awarding Body</label>
+          <input
+            type="text"
+            [(ngModel)]="awardForm().awarding_body"
+            name="awarding_body"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Date Received</label>
+            <input
+              type="date"
+              [(ngModel)]="awardForm().date_received"
+              name="date_received"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Level</label>
+            <select
+              [(ngModel)]="awardForm().level"
+              name="level"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            >
+              <option value="">Select</option>
+              <option value="International">International</option>
+              <option value="National">National</option>
+              <option value="Regional">Regional</option>
+              <option value="Campus">Campus</option>
+              <option value="Local">Local</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Description</label>
+          <textarea
+            [(ngModel)]="awardForm().description"
+            name="description"
+            rows="2"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+          ></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Certificate File</label>
+          <input
+            type="file"
+            accept="image/*,.pdf"
+            (change)="onAwardFileSelected($event)"
+            class="block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200"
+          />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            (click)="showAwardModal.set(false)"
+            class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
+          >
+            {{ isEditingAward() ? 'Save Changes' : 'Add Award' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Seminar Modal -->
+@if (showSeminarModal()) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-xs font-semibold text-gray-800">
+          {{ isEditingSeminar() ? 'Edit Seminar/Training' : 'Add Seminar/Training' }}
+        </h3>
+        <button (click)="showSeminarModal.set(false)" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <form (ngSubmit)="saveSeminar()" class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Title</label>
+          <input
+            type="text"
+            [(ngModel)]="seminarForm().title"
+            name="title"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Category</label>
+          <select
+            [(ngModel)]="seminarForm().category"
+            name="category"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          >
+            <option value="">Select</option>
+            <option value="Seminar">Seminar</option>
+            <option value="Training">Training</option>
+            <option value="Workshop">Workshop</option>
+            <option value="Conference">Conference</option>
+            <option value="Webinar">Webinar</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Date</label>
+            <input
+              type="date"
+              [(ngModel)]="seminarForm().date"
+              name="date"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Sponsoring Agency</label>
+            <input
+              type="text"
+              [(ngModel)]="seminarForm().sponsoring_agency"
+              name="sponsoring_agency"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Training Provider</label>
+          <input
+            type="text"
+            [(ngModel)]="seminarForm().training_provider"
+            name="training_provider"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Certificate File</label>
+          <input
+            type="file"
+            accept="image/*,.pdf"
+            (change)="onSeminarFileSelected($event)"
+            class="block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200"
+          />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            (click)="showSeminarModal.set(false)"
+            class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
+          >
+            {{ isEditingSeminar() ? 'Save Changes' : 'Add Seminar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Research Modal -->
+@if (showResearchModal()) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-xs font-semibold text-gray-800">
+          {{ isEditingResearch() ? 'Edit Research Activity' : 'Add Research Activity' }}
+        </h3>
+        <button (click)="showResearchModal.set(false)" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <form (ngSubmit)="saveResearch()" class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Research Title</label>
+          <input
+            type="text"
+            [(ngModel)]="researchForm().research_title"
+            name="research_title"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Category</label>
+          <input
+            type="text"
+            [(ngModel)]="researchForm().category"
+            name="category"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Date</label>
+            <input
+              type="date"
+              [(ngModel)]="researchForm().date"
+              name="date"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Sponsoring Agency</label>
+            <input
+              type="text"
+              [(ngModel)]="researchForm().sponsoring_agency"
+              name="sponsoring_agency"
+              class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Certificate File</label>
+          <input
+            type="file"
+            accept="image/*,.pdf"
+            (change)="onResearchFileSelected($event)"
+            class="block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200"
+          />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            (click)="showResearchModal.set(false)"
+            class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
+          >
+            {{ isEditingResearch() ? 'Save Changes' : 'Add Research' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Extension Modal -->
+@if (showExtensionModal()) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-xs font-semibold text-gray-800">
+          {{ isEditingExtension() ? 'Edit Extension Activity' : 'Add Extension Activity' }}
+        </h3>
+        <button (click)="showExtensionModal.set(false)" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <form (ngSubmit)="saveExtension()" class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1"
+            >Extension Activity Title</label
+          >
+          <input
+            type="text"
+            [(ngModel)]="extensionForm().extension_title"
+            name="extension_title"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Date of Implementation</label>
+          <input
+            type="date"
+            [(ngModel)]="extensionForm().date_of_implementation"
+            name="date_of_implementation"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Beneficiary</label>
+          <input
+            type="text"
+            [(ngModel)]="extensionForm().beneficiary"
+            name="beneficiary"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Location</label>
+          <input
+            type="text"
+            [(ngModel)]="extensionForm().location"
+            name="location"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Documentation File</label>
+          <input
+            type="file"
+            accept="image/*,.pdf"
+            (change)="onExtensionFileSelected($event)"
+            class="block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200"
+          />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            (click)="showExtensionModal.set(false)"
+            class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
+          >
+            {{ isEditingExtension() ? 'Save Changes' : 'Add Extension' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

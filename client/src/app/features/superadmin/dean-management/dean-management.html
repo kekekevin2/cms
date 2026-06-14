@@ -1,0 +1,592 @@
+<div class="p-3 space-y-5">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <select
+        (change)="filterByDepartment($any($event.target).value)"
+        class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 bg-white"
+      >
+        <option value="">All Departments</option>
+        @for (dept of allDepartments(); track dept.department_id) {
+          <option [value]="dept.department_id">{{ dept.department_name }}</option>
+        }
+      </select>
+      <div class="relative max-w-xs">
+        <i
+          class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"
+        ></i>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="searchDeans()"
+          placeholder="Search deans…"
+          class="w-full pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-200"
+        />
+      </div>
+    </div>
+    <button
+      (click)="openCreateModal()"
+      class="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white text-xs font-medium rounded-sm hover:bg-red-600 transition-colors"
+    >
+      <i class="pi pi-plus text-xs"></i>
+      Add Dean
+    </button>
+  </div>
+
+  <!-- Table Card -->
+  <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+    <table class="w-full text-xs">
+      <thead>
+        <tr class="border-b border-gray-100 bg-gray-50">
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-24 text-xs"
+          >
+            Emp. ID
+          </th>
+
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider text-xs"
+          >
+            Name
+          </th>
+
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider text-xs"
+          >
+            Email
+          </th>
+
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-40 text-xs"
+          >
+            Department
+          </th>
+
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-28 text-xs"
+          >
+            Status
+          </th>
+
+          <th
+            class="px-5 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider w-32 text-xs"
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        @if (loading()) {
+          <tr>
+            <td colspan="6" class="px-5 py-12 text-center">
+              <div class="inline-flex flex-col items-center gap-2 text-gray-400">
+                <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                <span class="text-xs">Loading…</span>
+              </div>
+            </td>
+          </tr>
+        } @else if (deansList().length === 0) {
+          <tr>
+            <td colspan="6" class="px-5 py-14 text-center">
+              <div class="inline-flex flex-col items-center gap-2">
+                <svg
+                  class="w-10 h-10 text-gray-200"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                <span class="text-xs text-gray-400">No deans found</span>
+              </div>
+            </td>
+          </tr>
+        } @else {
+          @for (dean of deansList(); track dean.dean_id) {
+            <tr class="hover:bg-gray-50/60 transition-colors">
+              <td class="px-5 py-3.5 text-gray-400 tabular-nums font-mono text-xs text-xs">
+                {{ dean.employee_id }}
+              </td>
+
+              <td class="px-5 py-3.5 font-medium text-gray-700 text-xs">{{ getFullName(dean) }}</td>
+
+              <td class="px-5 py-3.5 text-gray-500 text-xs">{{ dean.email }}</td>
+
+              <td class="px-5 py-3.5 text-xs">
+                @if (dean.department) {
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-blue-50 text-blue-700"
+                    >{{ dean.department }}</span
+                  >
+                } @else {
+                  <span class="text-gray-300 text-xs">—</span>
+                }
+              </td>
+
+              <td class="px-5 py-3.5 text-xs">
+                <span
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Active
+                </span>
+              </td>
+
+              <td class="px-5 py-3.5 text-xs">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button
+                    (click)="openEditModal(dean)"
+                    class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors inline-flex items-center gap-1.5"
+                  >
+                    <i class="pi pi-pencil text-xs"></i> Edit
+                  </button>
+                  <button
+                    (click)="openDeleteModal(dean)"
+                    class="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors inline-flex items-center gap-1.5"
+                  >
+                    <i class="pi pi-trash text-xs"></i> Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+
+    @if (totalPages() > 1) {
+      <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+        <span class="text-xs text-gray-400">
+          {{ (currentPage() - 1) * pageSize + 1 }}–{{
+            Math.min(currentPage() * pageSize, totalItems())
+          }}
+          of {{ totalItems() }}
+        </span>
+        <div class="flex items-center gap-1">
+          <button
+            (click)="changePage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          @for (page of getPageNumbers(); track $index) {
+            @if (page === -1) {
+              <span class="px-1 text-xs text-gray-300">…</span>
+            } @else {
+              <button
+                (click)="changePage(page)"
+                [class.bg-gray-900]="currentPage() === page"
+                [class.text-white]="currentPage() === page"
+                [class.text-gray-600]="currentPage() !== page"
+                class="min-w-7 h-7 px-1.5 text-xs font-medium rounded-md hover:bg-gray-100 transition-colors"
+              >
+                {{ page }}
+              </button>
+            }
+          }
+          <button
+            (click)="changePage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Create Modal -->
+@if (showCreateModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+      <div class="px-6 py-5 border-b border-gray-100">
+        <h3 class="text-xs font-semibold text-gray-900">Add New Dean</h3>
+        <p class="text-xs text-gray-400 mt-0.5">
+          Login credentials will be sent to the provided email
+        </p>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1">
+        <form (submit)="submitCreateForm(); $event.preventDefault()">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Employee ID <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="createForm.employee_id"
+                name="employee_id"
+                maxlength="5"
+                placeholder="5-digit code"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Email <span class="text-red-500">*</span></label
+              >
+              <input
+                type="email"
+                [(ngModel)]="createForm.email"
+                name="email"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >First Name <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="createForm.first_name"
+                name="first_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Middle Name</label
+              >
+              <input
+                type="text"
+                [(ngModel)]="createForm.middle_name"
+                name="middle_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Last Name <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="createForm.last_name"
+                name="last_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Contact Number</label
+              >
+              <input
+                type="text"
+                [(ngModel)]="createForm.contact_number"
+                name="contact_number"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Position Level</label
+              >
+              <select
+                [(ngModel)]="createForm.position_level"
+                name="position_level"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              >
+                <option value="">Select position level…</option>
+                @for (level of positionLevels(); track level.value) {
+                  <option [value]="level.value">{{ level.label }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Campus <span class="text-red-500">*</span></label
+              >
+              <select
+                [value]="createFormCampusId()"
+                (change)="
+                  createFormCampusId.set(+$any($event.target).value); createForm.department = ''
+                "
+                name="create_campus"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              >
+                <option [value]="0" disabled>Select campus…</option>
+                @for (campus of campusList(); track campus.campus_id) {
+                  <option [value]="campus.campus_id">{{ campus.campus_name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Department <span class="text-red-500">*</span></label
+              >
+              <select
+                [(ngModel)]="createForm.department"
+                name="department"
+                [disabled]="!createFormCampusId()"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition disabled:opacity-50"
+              >
+                <option value="">
+                  {{ createFormCampusId() ? 'Select department…' : 'Select a campus first' }}
+                </option>
+                @for (dept of getDeptsForCampus(createFormCampusId()); track dept.department_id) {
+                  <option [value]="dept.department_name">{{ dept.department_name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 mt-6">
+            <button
+              type="button"
+              (click)="closeCreateModal()"
+              [disabled]="createLoading()"
+              class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="createLoading()"
+              class="inline-flex items-center gap-2 px-4 py-2 text-xs text-white bg-red-500 rounded-sm hover:bg-red-600 transition-colors disabled:opacity-50"
+            >
+              @if (createLoading()) {
+                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  ></path>
+                </svg>
+                Creating…
+              } @else {
+                Create
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Modal -->
+@if (showEditModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+      <div class="px-6 py-5 border-b border-gray-100">
+        <h3 class="text-xs font-semibold text-gray-900">Edit Dean</h3>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1">
+        <form (submit)="submitEditForm(); $event.preventDefault()">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Employee ID <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="editForm.employee_id"
+                name="employee_id"
+                maxlength="5"
+                placeholder="5-digit code"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Email <span class="text-red-500">*</span></label
+              >
+              <input
+                type="email"
+                [(ngModel)]="editForm.email"
+                name="email"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >First Name <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="editForm.first_name"
+                name="first_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Middle Name</label
+              >
+              <input
+                type="text"
+                [(ngModel)]="editForm.middle_name"
+                name="middle_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Last Name <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="editForm.last_name"
+                name="last_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Contact Number</label
+              >
+              <input
+                type="text"
+                [(ngModel)]="editForm.contact_number"
+                name="contact_number"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Position Level</label
+              >
+              <select
+                [(ngModel)]="editForm.position_level"
+                name="position_level"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              >
+                <option value="">Select position level…</option>
+                @for (level of positionLevels(); track level.value) {
+                  <option [value]="level.value">{{ level.label }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Campus <span class="text-red-500">*</span></label
+              >
+              <select
+                [value]="editFormCampusId()"
+                (change)="
+                  editFormCampusId.set(+$any($event.target).value); editForm.department = ''
+                "
+                name="edit_campus"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              >
+                <option [value]="0" disabled>Select campus…</option>
+                @for (campus of campusList(); track campus.campus_id) {
+                  <option [value]="campus.campus_id">{{ campus.campus_name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Department <span class="text-red-500">*</span></label
+              >
+              <select
+                [(ngModel)]="editForm.department"
+                name="department"
+                [disabled]="!editFormCampusId()"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition disabled:opacity-50"
+              >
+                <option value="">
+                  {{ editFormCampusId() ? 'Select department…' : 'Select a campus first' }}
+                </option>
+                @for (dept of getDeptsForCampus(editFormCampusId()); track dept.department_id) {
+                  <option [value]="dept.department_name">{{ dept.department_name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 mt-6">
+            <button
+              type="button"
+              (click)="closeEditModal()"
+              [disabled]="updateLoading()"
+              class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="updateLoading()"
+              class="inline-flex items-center gap-2 px-4 py-2 text-xs text-white bg-red-500 rounded-sm hover:bg-red-600 transition-colors disabled:opacity-50"
+            >
+              @if (updateLoading()) {
+                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  ></path>
+                </svg>
+                Updating…
+              } @else {
+                Update
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

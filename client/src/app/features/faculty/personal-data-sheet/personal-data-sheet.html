@@ -1,0 +1,2436 @@
+<div class="p-3">
+  @if (loading()) {
+    <div class="flex justify-center py-16 text-gray-300">
+      <i class="pi pi-spin pi-spinner text-3xl"></i>
+    </div>
+  } @else {
+    <!-- Top Header Bar -->
+    <div class="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
+      <div>
+        <h2 class="text-sm font-semibold text-gray-900">Personal Data Sheet</h2>
+        <p class="text-xs text-gray-400">CS Form No. 212 (Revised 2025)</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span
+          class="px-2 py-1 rounded-sm border text-xs font-semibold"
+          [ngClass]="getStatusBadgeClass()"
+          >{{ getStatusText() }}</span
+        >
+        @if (pds().remarks) {
+          <span class="text-xs text-red-500">Reason: {{ pds().remarks }}</span>
+        }
+        @if (!isFormReadonly()) {
+          <button
+            (click)="autoFillFromProfile()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            <i class="pi pi-sync text-xs"></i> Sync Profile
+          </button>
+          <button
+            (click)="savePDS()"
+            [disabled]="loading()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50"
+          >
+            <i class="pi pi-save text-xs"></i> Save Draft
+          </button>
+          <button
+            (click)="submitPDS()"
+            [disabled]="loading()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+          >
+            <i class="pi pi-send text-xs"></i> Submit
+          </button>
+        }
+        <button
+          (click)="exportToExcel()"
+          [disabled]="loading()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+        >
+          @if (loading()) {
+            <i class="pi pi-spin pi-spinner text-xs"></i>
+          } @else {
+            <i class="pi pi-file-excel text-xs"></i>
+          }
+          Export
+        </button>
+      </div>
+    </div>
+
+    <div class="flex gap-5 items-start">
+      <!-- Left Nav -->
+      <div class="w-44 shrink-0 space-y-0.5 sticky top-20">
+        <button
+          (click)="scrollTo('section-personal')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-user text-xs text-gray-400 w-4 text-center"></i> Personal Info
+        </button>
+        <button
+          (click)="scrollTo('section-family')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-users text-xs text-gray-400 w-4 text-center"></i> Family Background
+        </button>
+        <button
+          (click)="scrollTo('section-education')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-graduation-cap text-xs text-gray-400 w-4 text-center"></i> Education
+        </button>
+        <button
+          (click)="scrollTo('section-eligibility')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-verified text-xs text-gray-400 w-4 text-center"></i> Eligibility
+        </button>
+        <button
+          (click)="scrollTo('section-work')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-briefcase text-xs text-gray-400 w-4 text-center"></i> Work Experience
+        </button>
+        <button
+          (click)="scrollTo('section-voluntary')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-heart text-xs text-gray-400 w-4 text-center"></i> Voluntary Work
+        </button>
+        <button
+          (click)="scrollTo('section-training')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-book text-xs text-gray-400 w-4 text-center"></i> Training
+        </button>
+        <button
+          (click)="scrollTo('section-other')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-star text-xs text-gray-400 w-4 text-center"></i> Other Info
+        </button>
+        <button
+          (click)="scrollTo('section-references')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-address-book text-xs text-gray-400 w-4 text-center"></i> References
+        </button>
+        <button
+          (click)="scrollTo('section-questionnaire')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-list-check text-xs text-gray-400 w-4 text-center"></i> Questionnaire
+        </button>
+        <button
+          (click)="scrollTo('section-photo')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-camera text-xs text-gray-400 w-4 text-center"></i> Photo & Signature
+        </button>
+      </div>
+
+      <!-- Right Scrollable Content -->
+      <div class="flex-1 space-y-4 min-w-0">
+        <!-- ──────────────────── SECTION 1: PERSONAL INFORMATION ──────────────────── -->
+        <div
+          id="section-personal"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
+            <i class="pi pi-user text-xs text-gray-400"></i>
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              I. Personal Information
+            </p>
+          </div>
+          <div class="p-4 space-y-4">
+            <!-- Name -->
+            <div>
+              <p class="text-xs font-medium text-gray-500 mb-2">Name</p>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Surname</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().surname"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">First Name</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().first_name"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Middle Name</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().middle_name"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >Extension (Jr., Sr., III)</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().name_extension"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Birth & Personal -->
+            <div>
+              <p class="text-xs font-medium text-gray-500 mb-2">Birth & Personal Details</p>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Date of Birth</label>
+                  <input
+                    type="date"
+                    [(ngModel)]="pds().date_of_birth"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Place of Birth</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().place_of_birth"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Sex at Birth</label>
+                  <div class="flex gap-4 pt-1">
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        [checked]="pds().sex === 'Male'"
+                        (change)="pds().sex = 'Male'"
+                        [disabled]="isFormReadonly()"
+                        class="w-3.5 h-3.5"
+                      />
+                      <span class="text-xs text-gray-700">Male</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        [checked]="pds().sex === 'Female'"
+                        (change)="pds().sex = 'Female'"
+                        [disabled]="isFormReadonly()"
+                        class="w-3.5 h-3.5"
+                      />
+                      <span class="text-xs text-gray-700">Female</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Civil Status</label>
+                  <select
+                    [(ngModel)]="pds().civil_status"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  >
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Widowed">Widowed</option>
+                    <option value="Separated">Separated</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Height (m)</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().height"
+                    [disabled]="isFormReadonly()"
+                    placeholder="e.g., 1.65"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Weight (kg)</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().weight"
+                    [disabled]="isFormReadonly()"
+                    placeholder="e.g., 60"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Blood Type</label>
+                  <select
+                    [(ngModel)]="pds().blood_type"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  >
+                    <option value="">Select</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Citizenship</label>
+                  <div class="flex gap-4 pt-1">
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        [checked]="pds().citizenship_type === 'Filipino'"
+                        (change)="pds().citizenship_type = 'Filipino'"
+                        [disabled]="isFormReadonly()"
+                        class="w-3.5 h-3.5"
+                      />
+                      <span class="text-xs text-gray-700">Filipino</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        [checked]="pds().citizenship_type === 'Dual Citizenship'"
+                        (change)="pds().citizenship_type = 'Dual Citizenship'"
+                        [disabled]="isFormReadonly()"
+                        class="w-3.5 h-3.5"
+                      />
+                      <span class="text-xs text-gray-700">Dual</span>
+                    </label>
+                  </div>
+                </div>
+                @if (pds().citizenship_type === 'Dual Citizenship') {
+                  <div>
+                    <label class="text-xs font-medium text-gray-500 mb-1 block">Country</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="pds().dual_citizenship_country"
+                      [disabled]="isFormReadonly()"
+                      class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Residential Address -->
+            <div>
+              <p class="text-xs font-medium text-gray-500 mb-2">Residential Address</p>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >House/Block/Lot No.</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().residential_house_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Street</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().residential_street"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >Subdivision/Village</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().residential_subdivision"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Barangay</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().residential_barangay"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >City/Municipality</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().residential_city"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Province</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().residential_province"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">ZIP Code</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().residential_zip_code"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Permanent Address -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-medium text-gray-500">Permanent Address</p>
+                @if (!isFormReadonly()) {
+                  <button
+                    (click)="copyResidentialToPermanent()"
+                    type="button"
+                    class="text-xs text-blue-500 hover:text-blue-600"
+                  >
+                    <i class="pi pi-copy text-xs"></i> Copy from Residential
+                  </button>
+                }
+              </div>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >House/Block/Lot No.</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().permanent_house_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Street</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().permanent_street"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >Subdivision/Village</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().permanent_subdivision"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Barangay</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().permanent_barangay"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >City/Municipality</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().permanent_city"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Province</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().permanent_province"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">ZIP Code</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().permanent_zip_code"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact -->
+            <div>
+              <p class="text-xs font-medium text-gray-500 mb-2">Contact Information</p>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Telephone No.</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().telephone_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Mobile No.</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().mobile_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Email Address</label>
+                  <input
+                    type="email"
+                    [(ngModel)]="pds().email_address"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Government IDs -->
+            <div>
+              <p class="text-xs font-medium text-gray-500 mb-2">Government Issued IDs</p>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">GSIS ID No.</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().gsis_id_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >PAG-IBIG ID No.</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().pag_ibig_id_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">PhilHealth No.</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().philhealth_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">SSS No.</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().sss_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">TIN No.</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().tin_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >Agency Employee No.</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().agency_employee_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ──────────────────── SECTION 2: FAMILY BACKGROUND ──────────────────── -->
+        <div id="section-family" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
+            <i class="pi pi-users text-xs text-gray-400"></i>
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              II. Family Background
+            </p>
+          </div>
+          <div class="p-4 space-y-4">
+            <!-- Spouse -->
+            <div>
+              <p class="text-xs font-medium text-gray-500 mb-2">Spouse's Information</p>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Surname</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().spouse_surname"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">First Name</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().spouse_first_name"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Middle Name</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().spouse_middle_name"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Occupation</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().spouse_occupation"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >Employer/Business</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().spouse_employer"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >Business Address</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().spouse_business_address"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Telephone No.</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().spouse_telephone"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Father -->
+            <div>
+              <p class="text-xs font-medium text-gray-500 mb-2">Father's Information</p>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Surname</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().father_surname"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">First Name</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().father_first_name"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Middle Name</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().father_middle_name"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Mother -->
+            <div>
+              <p class="text-xs font-medium text-gray-500 mb-2">Mother's Maiden Name</p>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Surname</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().mother_surname"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">First Name</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().mother_first_name"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Middle Name</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().mother_middle_name"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Children -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-medium text-gray-500">
+                  Children <span class="text-gray-400 font-normal">(start from youngest)</span>
+                </p>
+                @if (!isFormReadonly()) {
+                  <button
+                    type="button"
+                    (click)="showAddChildModal = true"
+                    class="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
+                  >
+                    <i class="pi pi-plus text-xs"></i> Add
+                  </button>
+                }
+              </div>
+              @if (pds().children && pds().children!.length > 0) {
+                <div class="space-y-2">
+                  @for (child of pds().children; track child; let i = $index) {
+                    <div
+                      class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50 flex items-center justify-between"
+                    >
+                      <div>
+                        <p class="text-xs text-gray-700 font-medium">{{ child.child_name }}</p>
+                        <p class="text-xs text-gray-400">Born: {{ child.date_of_birth }}</p>
+                      </div>
+                      @if (!isFormReadonly()) {
+                        <button
+                          (click)="removeChild(i)"
+                          type="button"
+                          class="text-xs text-red-400 hover:text-red-600"
+                        >
+                          <i class="pi pi-trash text-xs"></i>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="text-xs text-gray-400 italic">No children added yet</p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- ──────────────────── SECTION 3: EDUCATIONAL BACKGROUND ──────────────────── -->
+        <div
+          id="section-education"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-graduation-cap text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                III. Educational Background
+              </p>
+            </div>
+            @if (!isFormReadonly()) {
+              <button
+                type="button"
+                (click)="showAddEducationModal = true"
+                class="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
+              >
+                <i class="pi pi-plus text-xs"></i> Add
+              </button>
+            }
+          </div>
+          <div class="p-4">
+            @if (pds().education && pds().education!.length > 0) {
+              <div class="space-y-2">
+                @for (edu of pds().education; track edu; let i = $index) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="text-xs font-semibold text-gray-700">{{ edu.level }}</span>
+                          @if (edu.year_graduated) {
+                            <span class="text-xs text-gray-400"
+                              >· Graduated {{ edu.year_graduated }}</span
+                            >
+                          }
+                        </div>
+                        <p class="text-xs text-gray-600">{{ edu.school_name }}</p>
+                        @if (edu.degree_course) {
+                          <p class="text-xs text-gray-400">{{ edu.degree_course }}</p>
+                        }
+                        <div class="flex gap-3 mt-1">
+                          @if (edu.period_from || edu.period_to) {
+                            <span class="text-xs text-gray-400"
+                              >{{ edu.period_from }} – {{ edu.period_to }}</span
+                            >
+                          }
+                          @if (edu.scholarship_honors) {
+                            <span class="text-xs text-gray-400"
+                              >Honors: {{ edu.scholarship_honors }}</span
+                            >
+                          }
+                        </div>
+                      </div>
+                      @if (!isFormReadonly()) {
+                        <button
+                          (click)="removeEducation(i)"
+                          type="button"
+                          class="text-xs text-red-400 hover:text-red-600 ml-2"
+                        >
+                          <i class="pi pi-trash text-xs"></i>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-xs text-gray-400 italic">No educational background added yet</p>
+            }
+          </div>
+        </div>
+
+        <!-- ──────────────────── SECTION 4: CIVIL SERVICE ELIGIBILITY ──────────────────── -->
+        <div
+          id="section-eligibility"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-verified text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                IV. Civil Service Eligibility
+              </p>
+            </div>
+            @if (!isFormReadonly()) {
+              <button
+                type="button"
+                (click)="showAddEligibilityModal = true"
+                class="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
+              >
+                <i class="pi pi-plus text-xs"></i> Add
+              </button>
+            }
+          </div>
+          <div class="p-4">
+            @if (pds().eligibilities && pds().eligibilities!.length > 0) {
+              <div class="space-y-2">
+                @for (elig of pds().eligibilities; track elig; let i = $index) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <p class="text-xs font-semibold text-gray-700 mb-1">
+                          {{ elig.career_service }}
+                        </p>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-0.5">
+                          @if (elig.rating) {
+                            <span class="text-xs text-gray-400">Rating: {{ elig.rating }}</span>
+                          }
+                          @if (elig.date_of_examination) {
+                            <span class="text-xs text-gray-400"
+                              >Exam: {{ elig.date_of_examination }}</span
+                            >
+                          }
+                          @if (elig.place_of_examination) {
+                            <span class="text-xs text-gray-400"
+                              >Place: {{ elig.place_of_examination }}</span
+                            >
+                          }
+                          @if (elig.license_number) {
+                            <span class="text-xs text-gray-400"
+                              >License: {{ elig.license_number }}</span
+                            >
+                          }
+                          @if (elig.license_validity) {
+                            <span class="text-xs text-gray-400"
+                              >Valid until: {{ elig.license_validity }}</span
+                            >
+                          }
+                        </div>
+                      </div>
+                      @if (!isFormReadonly()) {
+                        <button
+                          (click)="removeEligibility(i)"
+                          type="button"
+                          class="text-xs text-red-400 hover:text-red-600 ml-2"
+                        >
+                          <i class="pi pi-trash text-xs"></i>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-xs text-gray-400 italic">No eligibility added yet</p>
+            }
+          </div>
+        </div>
+
+        <!-- ──────────────────── SECTION 5: WORK EXPERIENCE ──────────────────── -->
+        <div id="section-work" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
+            <i class="pi pi-briefcase text-xs text-gray-400"></i>
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              V. Work Experience
+            </p>
+          </div>
+          <div class="p-4">
+            <div
+              class="flex items-start gap-2 mb-3 p-2 bg-blue-50 rounded-sm border border-blue-100"
+            >
+              <i class="pi pi-info-circle text-xs text-blue-400 mt-0.5 shrink-0"></i>
+              <p class="text-xs text-blue-600">
+                Work experience is automatically imported from your Employment Profile in My
+                Profile. To add or edit, go to My Profile → Employment section.
+              </p>
+            </div>
+            @if (pds().work_experiences && pds().work_experiences!.length > 0) {
+              <div class="space-y-2">
+                @for (work of pds().work_experiences; track work; let i = $index) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
+                    <p class="text-xs font-semibold text-gray-700">{{ work.position_title }}</p>
+                    <p class="text-xs text-gray-500">{{ work.department_agency }}</p>
+                    <div class="flex flex-wrap gap-3 mt-1">
+                      <span class="text-xs text-gray-400"
+                        >{{ work.date_from }} – {{ work.date_to || 'Present' }}</span
+                      >
+                      @if (work.monthly_salary) {
+                        <span class="text-xs text-gray-400">₱{{ work.monthly_salary }}</span>
+                      }
+                      @if (work.salary_grade) {
+                        <span class="text-xs text-gray-400">SG {{ work.salary_grade }}</span>
+                      }
+                      @if (work.status_of_appointment) {
+                        <span class="text-xs text-gray-400">{{ work.status_of_appointment }}</span>
+                      }
+                      @if (
+                        work.is_government_service !== null &&
+                        work.is_government_service !== undefined
+                      ) {
+                        <span class="text-xs text-gray-400"
+                          >Gov't: {{ work.is_government_service ? 'Yes' : 'No' }}</span
+                        >
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="text-center py-6">
+                <i class="pi pi-briefcase text-2xl text-gray-300 mb-2 block"></i>
+                <p class="text-xs text-gray-400">No work experience added yet</p>
+                <p class="text-xs text-gray-300 mt-0.5">
+                  Add employment records in My Profile to see them here
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- ──────────────────── SECTION 6: VOLUNTARY WORK ──────────────────── -->
+        <div
+          id="section-voluntary"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-heart text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                VI. Voluntary Work
+              </p>
+            </div>
+            @if (!isFormReadonly()) {
+              <button
+                type="button"
+                (click)="showAddVoluntaryModal = true"
+                class="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
+              >
+                <i class="pi pi-plus text-xs"></i> Add
+              </button>
+            }
+          </div>
+          <div class="p-4">
+            @if (pds().voluntary_works && pds().voluntary_works!.length > 0) {
+              <div class="space-y-2">
+                @for (vol of pds().voluntary_works; track vol; let i = $index) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <p class="text-xs font-semibold text-gray-700">
+                          {{ vol.organization_name }}
+                        </p>
+                        <p class="text-xs text-gray-500">{{ vol.position_nature_of_work }}</p>
+                        <div class="flex gap-3 mt-1">
+                          <span class="text-xs text-gray-400"
+                            >{{ vol.date_from }} – {{ vol.date_to }}</span
+                          >
+                          @if (vol.number_of_hours) {
+                            <span class="text-xs text-gray-400">{{ vol.number_of_hours }} hrs</span>
+                          }
+                        </div>
+                      </div>
+                      @if (!isFormReadonly()) {
+                        <button
+                          (click)="removeVoluntaryWork(i)"
+                          type="button"
+                          class="text-xs text-red-400 hover:text-red-600 ml-2"
+                        >
+                          <i class="pi pi-trash text-xs"></i>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-xs text-gray-400 italic">No voluntary work added yet</p>
+            }
+          </div>
+        </div>
+
+        <!-- ──────────────────── SECTION 7: TRAINING ──────────────────── -->
+        <div
+          id="section-training"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-book text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                VII. Learning & Development / Training
+              </p>
+            </div>
+            @if (!isFormReadonly()) {
+              <button
+                type="button"
+                (click)="showAddTrainingModal = true"
+                class="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
+              >
+                <i class="pi pi-plus text-xs"></i> Add
+              </button>
+            }
+          </div>
+          <div class="p-4">
+            @if (pds().trainings && pds().trainings!.length > 0) {
+              <div class="space-y-2">
+                @for (train of pds().trainings; track train; let i = $index) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <p class="text-xs font-semibold text-gray-700">{{ train.title }}</p>
+                        <p class="text-xs text-gray-500">{{ train.conducted_by }}</p>
+                        <div class="flex gap-3 mt-1">
+                          <span class="text-xs text-gray-400"
+                            >{{ train.date_from }} – {{ train.date_to }}</span
+                          >
+                          @if (train.number_of_hours) {
+                            <span class="text-xs text-gray-400"
+                              >{{ train.number_of_hours }} hrs</span
+                            >
+                          }
+                          @if (train.type_of_ld) {
+                            <span class="text-xs text-gray-400">{{ train.type_of_ld }}</span>
+                          }
+                        </div>
+                      </div>
+                      @if (!isFormReadonly()) {
+                        <button
+                          (click)="removeTraining(i)"
+                          type="button"
+                          class="text-xs text-red-400 hover:text-red-600 ml-2"
+                        >
+                          <i class="pi pi-trash text-xs"></i>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-xs text-gray-400 italic">No training programs added yet</p>
+            }
+          </div>
+        </div>
+
+        <!-- ──────────────────── SECTION 8: OTHER INFORMATION ──────────────────── -->
+        <div id="section-other" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
+            <i class="pi pi-star text-xs text-gray-400"></i>
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              VIII. Other Information
+            </p>
+          </div>
+          <div class="p-4 space-y-4">
+            <!-- Special Skills -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-medium text-gray-500">Special Skills and Hobbies</p>
+              </div>
+              @if (!isFormReadonly()) {
+                <div class="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    [(ngModel)]="newSkill"
+                    placeholder="Enter skill or hobby"
+                    class="flex-1 px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                  <button
+                    (click)="addSkill()"
+                    type="button"
+                    class="px-3 py-2 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+                  >
+                    <i class="pi pi-plus text-xs"></i>
+                  </button>
+                </div>
+              }
+              @if (hasSkills()) {
+                <div class="flex flex-wrap gap-1.5">
+                  @for (info of pds().other_info; track info; let i = $index) {
+                    @if (info.info_type === 'SKILL') {
+                      <span
+                        class="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-sm border border-blue-100"
+                      >
+                        {{ info.details }}
+                        @if (!isFormReadonly()) {
+                          <button
+                            (click)="removeOtherInfo(i)"
+                            type="button"
+                            class="text-blue-400 hover:text-blue-600"
+                          >
+                            <i class="pi pi-times text-xs"></i>
+                          </button>
+                        }
+                      </span>
+                    }
+                  }
+                </div>
+              } @else {
+                <p class="text-xs text-gray-400 italic">No skills added yet</p>
+              }
+            </div>
+
+            <!-- Recognition -->
+            <div>
+              <p class="text-xs font-medium text-gray-500 mb-2">
+                Non-Academic Distinctions / Recognition
+              </p>
+              @if (!isFormReadonly()) {
+                <div class="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    [(ngModel)]="newRecognition"
+                    placeholder="Enter recognition or award"
+                    class="flex-1 px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                  <button
+                    (click)="addRecognition()"
+                    type="button"
+                    class="px-3 py-2 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+                  >
+                    <i class="pi pi-plus text-xs"></i>
+                  </button>
+                </div>
+              }
+              @if (hasRecognitions()) {
+                <div class="space-y-1">
+                  @for (info of pds().other_info; track info; let i = $index) {
+                    @if (info.info_type === 'RECOGNITION') {
+                      <div class="flex items-center gap-2">
+                        <i class="pi pi-check text-xs text-green-500"></i>
+                        <span class="text-xs text-gray-700">{{ info.details }}</span>
+                        @if (!isFormReadonly()) {
+                          <button
+                            (click)="removeOtherInfo(i)"
+                            type="button"
+                            class="text-xs text-red-400 hover:text-red-600"
+                          >
+                            <i class="pi pi-times text-xs"></i>
+                          </button>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+              } @else {
+                <p class="text-xs text-gray-400 italic">No recognition added yet</p>
+              }
+            </div>
+
+            <!-- Membership -->
+            <div>
+              <p class="text-xs font-medium text-gray-500 mb-2">
+                Membership in Association/Organization
+              </p>
+              @if (!isFormReadonly()) {
+                <div class="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    [(ngModel)]="newMembership"
+                    placeholder="Enter organization name"
+                    class="flex-1 px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                  <button
+                    (click)="addMembership()"
+                    type="button"
+                    class="px-3 py-2 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+                  >
+                    <i class="pi pi-plus text-xs"></i>
+                  </button>
+                </div>
+              }
+              @if (hasMemberships()) {
+                <div class="space-y-1">
+                  @for (info of pds().other_info; track info; let i = $index) {
+                    @if (info.info_type === 'MEMBERSHIP') {
+                      <div class="flex items-center gap-2">
+                        <i class="pi pi-circle-fill text-xs text-gray-300"></i>
+                        <span class="text-xs text-gray-700">{{ info.details }}</span>
+                        @if (!isFormReadonly()) {
+                          <button
+                            (click)="removeOtherInfo(i)"
+                            type="button"
+                            class="text-xs text-red-400 hover:text-red-600"
+                          >
+                            <i class="pi pi-times text-xs"></i>
+                          </button>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+              } @else {
+                <p class="text-xs text-gray-400 italic">No membership added yet</p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- ──────────────────── SECTION 9: REFERENCES ──────────────────── -->
+        <div
+          id="section-references"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-address-book text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                IX. Character References
+              </p>
+            </div>
+            @if (!isFormReadonly()) {
+              <button
+                type="button"
+                (click)="showAddReferenceModal = true"
+                class="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
+              >
+                <i class="pi pi-plus text-xs"></i> Add
+              </button>
+            }
+          </div>
+          <div class="p-4">
+            <p class="text-xs text-gray-400 mb-3">
+              List at least 3 references not related by consanguinity or affinity to you or to any
+              appointing authority.
+            </p>
+            @if (pds().references && pds().references!.length > 0) {
+              <div class="space-y-2">
+                @for (ref of pds().references; track ref; let i = $index) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <p class="text-xs font-semibold text-gray-700">{{ ref.name }}</p>
+                        <p class="text-xs text-gray-500">{{ ref.address }}</p>
+                        @if (ref.telephone_number) {
+                          <p class="text-xs text-gray-400">Tel: {{ ref.telephone_number }}</p>
+                        }
+                      </div>
+                      @if (!isFormReadonly()) {
+                        <button
+                          (click)="removeReference(i)"
+                          type="button"
+                          class="text-xs text-red-400 hover:text-red-600 ml-2"
+                        >
+                          <i class="pi pi-trash text-xs"></i>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-xs text-gray-400 italic">No references added yet</p>
+            }
+          </div>
+        </div>
+
+        <!-- ──────────────────── SECTION 10: QUESTIONNAIRE ──────────────────── -->
+        <div
+          id="section-questionnaire"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
+            <i class="pi pi-list-check text-xs text-gray-400"></i>
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Questionnaire</p>
+          </div>
+          <div class="p-4 space-y-3">
+            <p class="text-xs text-gray-400">
+              Answer all questions truthfully. Any misrepresentation may be grounds for dismissal.
+            </p>
+
+            <!-- Q34 -->
+            <div class="border border-gray-100 rounded-sm p-3">
+              <p class="text-xs font-medium text-gray-700 mb-2">
+                34. Are you related by consanguinity or affinity to the appointing or recommending
+                authority?
+              </p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q34_a_answer"
+                    (ngModelChange)="setPdsField('q34_a_answer', $event)"
+                    name="q34_a_answer"
+                    [value]="true"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">Yes</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q34_a_answer"
+                    (ngModelChange)="setPdsField('q34_a_answer', $event)"
+                    name="q34_a_answer"
+                    [value]="false"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">No</span>
+                </label>
+              </div>
+              @if (pds().q34_a_answer) {
+                <div class="mt-2">
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >If yes, give details:</label
+                  >
+                  <textarea
+                    [(ngModel)]="pds().q34_a_details"
+                    [disabled]="isFormReadonly()"
+                    rows="2"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                  ></textarea>
+                </div>
+              }
+            </div>
+
+            <!-- Q35a -->
+            <div class="border border-gray-100 rounded-sm p-3">
+              <p class="text-xs font-medium text-gray-700 mb-2">
+                35. a) Have you ever been found guilty of any administrative offense?
+              </p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q35_a_answer"
+                    (ngModelChange)="setPdsField('q35_a_answer', $event)"
+                    name="q35_a_answer"
+                    [value]="true"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">Yes</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q35_a_answer"
+                    (ngModelChange)="setPdsField('q35_a_answer', $event)"
+                    name="q35_a_answer"
+                    [value]="false"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">No</span>
+                </label>
+              </div>
+              @if (pds().q35_a_answer) {
+                <div class="mt-2">
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >If yes, give details:</label
+                  >
+                  <textarea
+                    [(ngModel)]="pds().q35_a_details"
+                    [disabled]="isFormReadonly()"
+                    rows="2"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                  ></textarea>
+                </div>
+              }
+            </div>
+
+            <!-- Q35b -->
+            <div class="border border-gray-100 rounded-sm p-3">
+              <p class="text-xs font-medium text-gray-700 mb-2">
+                35. b) Have you been criminally charged before any court?
+              </p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q35_b_answer"
+                    (ngModelChange)="setPdsField('q35_b_answer', $event)"
+                    name="q35_b_answer"
+                    [value]="true"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">Yes</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q35_b_answer"
+                    (ngModelChange)="setPdsField('q35_b_answer', $event)"
+                    name="q35_b_answer"
+                    [value]="false"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">No</span>
+                </label>
+              </div>
+              @if (pds().q35_b_answer) {
+                <div class="mt-2">
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >If yes, give details:</label
+                  >
+                  <textarea
+                    [(ngModel)]="pds().q35_b_details"
+                    [disabled]="isFormReadonly()"
+                    rows="2"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                  ></textarea>
+                </div>
+              }
+            </div>
+
+            <!-- Q36 -->
+            <div class="border border-gray-100 rounded-sm p-3">
+              <p class="text-xs font-medium text-gray-700 mb-2">
+                36. Have you ever been convicted of any crime or violation of any law?
+              </p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q36_answer"
+                    (ngModelChange)="setPdsField('q36_answer', $event)"
+                    name="q36_answer"
+                    [value]="true"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">Yes</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q36_answer"
+                    (ngModelChange)="setPdsField('q36_answer', $event)"
+                    name="q36_answer"
+                    [value]="false"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">No</span>
+                </label>
+              </div>
+              @if (pds().q36_answer) {
+                <div class="mt-2">
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >If yes, give details:</label
+                  >
+                  <textarea
+                    [(ngModel)]="pds().q36_details"
+                    [disabled]="isFormReadonly()"
+                    rows="2"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                  ></textarea>
+                </div>
+              }
+            </div>
+
+            <!-- Q37 -->
+            <div class="border border-gray-100 rounded-sm p-3">
+              <p class="text-xs font-medium text-gray-700 mb-2">
+                37. Have you ever been separated from the service in any of the following modes?
+              </p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q37_answer"
+                    (ngModelChange)="setPdsField('q37_answer', $event)"
+                    name="q37_answer"
+                    [value]="true"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">Yes</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q37_answer"
+                    (ngModelChange)="setPdsField('q37_answer', $event)"
+                    name="q37_answer"
+                    [value]="false"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">No</span>
+                </label>
+              </div>
+              @if (pds().q37_answer) {
+                <div class="mt-2">
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >If yes, give details:</label
+                  >
+                  <textarea
+                    [(ngModel)]="pds().q37_details"
+                    [disabled]="isFormReadonly()"
+                    rows="2"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                  ></textarea>
+                </div>
+              }
+            </div>
+
+            <!-- Q38a -->
+            <div class="border border-gray-100 rounded-sm p-3">
+              <p class="text-xs font-medium text-gray-700 mb-2">
+                38. a) Have you ever been a candidate in a national or local election?
+              </p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q38_answer"
+                    (ngModelChange)="setPdsField('q38_answer', $event)"
+                    name="q38_answer"
+                    [value]="true"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">Yes</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q38_answer"
+                    (ngModelChange)="setPdsField('q38_answer', $event)"
+                    name="q38_answer"
+                    [value]="false"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">No</span>
+                </label>
+              </div>
+              @if (pds().q38_answer) {
+                <div class="mt-2">
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >If yes, give details:</label
+                  >
+                  <textarea
+                    [(ngModel)]="pds().q38_details"
+                    [disabled]="isFormReadonly()"
+                    rows="2"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                  ></textarea>
+                </div>
+              }
+            </div>
+
+            <!-- Q38b -->
+            <div class="border border-gray-100 rounded-sm p-3">
+              <p class="text-xs font-medium text-gray-700 mb-2">
+                38. b) Have you resigned from the government service during the three-month period
+                before the last election?
+              </p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q39_answer"
+                    (ngModelChange)="setPdsField('q39_answer', $event)"
+                    name="q39_answer"
+                    [value]="true"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">Yes</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q39_answer"
+                    (ngModelChange)="setPdsField('q39_answer', $event)"
+                    name="q39_answer"
+                    [value]="false"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">No</span>
+                </label>
+              </div>
+              @if (pds().q39_answer) {
+                <div class="mt-2">
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >If yes, give details:</label
+                  >
+                  <textarea
+                    [(ngModel)]="pds().q39_details"
+                    [disabled]="isFormReadonly()"
+                    rows="2"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                  ></textarea>
+                </div>
+              }
+            </div>
+
+            <!-- Q39 -->
+            <div class="border border-gray-100 rounded-sm p-3">
+              <p class="text-xs font-medium text-gray-700 mb-2">
+                39. Have you acquired the status of an immigrant or permanent resident of another
+                country?
+              </p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q40_answer"
+                    (ngModelChange)="setPdsField('q40_answer', $event)"
+                    name="q40_answer"
+                    [value]="true"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">Yes</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q40_answer"
+                    (ngModelChange)="setPdsField('q40_answer', $event)"
+                    name="q40_answer"
+                    [value]="false"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">No</span>
+                </label>
+              </div>
+              @if (pds().q40_answer) {
+                <div class="mt-2">
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >If yes, give details:</label
+                  >
+                  <textarea
+                    [(ngModel)]="pds().q39_details"
+                    [disabled]="isFormReadonly()"
+                    rows="2"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                  ></textarea>
+                </div>
+              }
+            </div>
+
+            <!-- Q40a -->
+            <div class="border border-gray-100 rounded-sm p-3">
+              <p class="text-xs font-medium text-gray-700 mb-2">
+                40. a) Are you a member of any indigenous group?
+              </p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q41_answer"
+                    (ngModelChange)="setPdsField('q41_answer', $event)"
+                    name="q41_answer"
+                    [value]="true"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">Yes</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q41_answer"
+                    (ngModelChange)="setPdsField('q41_answer', $event)"
+                    name="q41_answer"
+                    [value]="false"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">No</span>
+                </label>
+              </div>
+              @if (pds().q41_answer) {
+                <div class="mt-2">
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >If yes, please specify:</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().q41_country"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              }
+            </div>
+
+            <!-- Q40b -->
+            <div class="border border-gray-100 rounded-sm p-3">
+              <p class="text-xs font-medium text-gray-700 mb-2">
+                40. b) Are you a person with disability?
+              </p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q43_answer"
+                    (ngModelChange)="setPdsField('q43_answer', $event)"
+                    name="q43_answer"
+                    [value]="true"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">Yes</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q43_answer"
+                    (ngModelChange)="setPdsField('q43_answer', $event)"
+                    name="q43_answer"
+                    [value]="false"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">No</span>
+                </label>
+              </div>
+              @if (pds().q43_answer) {
+                <div class="mt-2">
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >If yes, please specify ID No.:</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().q43_id_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              }
+            </div>
+
+            <!-- Q40c -->
+            <div class="border border-gray-100 rounded-sm p-3">
+              <p class="text-xs font-medium text-gray-700 mb-2">40. c) Are you a solo parent?</p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q44_answer"
+                    (ngModelChange)="setPdsField('q44_answer', $event)"
+                    name="q44_answer"
+                    [value]="true"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">Yes</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    [ngModel]="pds().q44_answer"
+                    (ngModelChange)="setPdsField('q44_answer', $event)"
+                    name="q44_answer"
+                    [value]="false"
+                    [disabled]="isFormReadonly()"
+                    class="w-3.5 h-3.5"
+                  />
+                  <span class="text-xs text-gray-700">No</span>
+                </label>
+              </div>
+              @if (pds().q44_answer) {
+                <div class="mt-2">
+                  <label class="text-xs font-medium text-gray-500 mb-1 block"
+                    >If yes, please specify ID No.:</label
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="pds().q44_id_no"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- ──────────────────── SECTION 11: PHOTO & SIGNATURE ──────────────────── -->
+        <div id="section-photo" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
+            <i class="pi pi-camera text-xs text-gray-400"></i>
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              Photo & Signature
+            </p>
+          </div>
+          <div class="p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Photo -->
+              <div>
+                <p class="text-xs font-medium text-gray-500 mb-2">Passport Photo</p>
+                <div
+                  class="border-2 border-dashed border-gray-200 rounded-sm p-4 text-center bg-gray-50"
+                >
+                  @if (photoPreview()) {
+                    <div class="flex flex-col items-center gap-2">
+                      <img
+                        [src]="photoPreview()"
+                        alt="Photo preview"
+                        class="w-32 h-32 object-cover rounded-sm border border-gray-200"
+                      />
+                      @if (!isFormReadonly()) {
+                        <button
+                          (click)="photoPreview.set('')"
+                          type="button"
+                          class="text-xs text-red-400 hover:text-red-600"
+                        >
+                          <i class="pi pi-times text-xs"></i> Remove
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <i class="pi pi-camera text-2xl text-gray-300 mb-2 block"></i>
+                    <p class="text-xs text-gray-400 mb-2">Passport-sized photo (4.5cm × 3.5cm)</p>
+                    @if (!isFormReadonly()) {
+                      <input
+                        type="file"
+                        #photoInput
+                        (change)="onPhotoSelected($event)"
+                        accept="image/jpeg,image/jpg,image/png"
+                        class="hidden"
+                        id="photoInput"
+                      />
+                      <label
+                        for="photoInput"
+                        class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+                      >
+                        <i class="pi pi-upload text-xs"></i> Choose Photo
+                      </label>
+                    }
+                  }
+                </div>
+                @if (photoFile && !isFormReadonly()) {
+                  <button
+                    (click)="uploadPhoto()"
+                    type="button"
+                    class="mt-2 w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+                  >
+                    <i class="pi pi-upload text-xs"></i> Upload Photo
+                  </button>
+                }
+              </div>
+
+              <!-- Signature -->
+              <div>
+                <p class="text-xs font-medium text-gray-500 mb-2">Signature / ID</p>
+                <div
+                  class="border-2 border-dashed border-gray-200 rounded-sm p-4 text-center bg-gray-50"
+                >
+                  @if (signaturePreview()) {
+                    <div class="flex flex-col items-center gap-2">
+                      <img
+                        [src]="signaturePreview()"
+                        alt="Signature preview"
+                        class="max-w-full h-20 object-contain bg-white rounded-sm border border-gray-200"
+                      />
+                      @if (!isFormReadonly()) {
+                        <button
+                          (click)="signaturePreview.set('')"
+                          type="button"
+                          class="text-xs text-red-400 hover:text-red-600"
+                        >
+                          <i class="pi pi-times text-xs"></i> Remove
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <i class="pi pi-pencil text-2xl text-gray-300 mb-2 block"></i>
+                    <p class="text-xs text-gray-400 mb-2">Upload signature or government ID</p>
+                    @if (!isFormReadonly()) {
+                      <input
+                        type="file"
+                        #signatureInput
+                        (change)="onSignatureSelected($event)"
+                        accept="image/jpeg,image/jpg,image/png"
+                        class="hidden"
+                        id="signatureInput"
+                      />
+                      <label
+                        for="signatureInput"
+                        class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+                      >
+                        <i class="pi pi-upload text-xs"></i> Choose File
+                      </label>
+                    }
+                  }
+                </div>
+                @if (signatureFile && !isFormReadonly()) {
+                  <button
+                    (click)="uploadSignature()"
+                    type="button"
+                    class="mt-2 w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+                  >
+                    <i class="pi pi-upload text-xs"></i> Upload Signature
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Declaration -->
+            <div class="mt-4 p-3 bg-blue-50 rounded-sm border border-blue-100">
+              <p class="text-xs font-semibold text-gray-700 mb-1">DECLARATION</p>
+              <p class="text-xs text-gray-500 leading-relaxed">
+                I declare under oath that I have personally accomplished this Personal Data Sheet
+                which is a true, correct and complete statement pursuant to the provisions of
+                pertinent laws, rules and regulations of the Republic of the Philippines. I
+                authorize the agency head/authorized representative to verify/validate the contents
+                stated herein. I agree that any misrepresentation made in this document and its
+                attachments shall cause the filing of administrative/criminal case/s against me.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- ──────────────────── MODALS ──────────────────── -->
+
+<!-- Add Child Modal -->
+@if (showAddChildModal) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <p class="text-xs font-semibold text-gray-700">Add Child</p>
+        <button (click)="showAddChildModal = false" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Child's Full Name</label>
+          <input
+            type="text"
+            [(ngModel)]="newChild.child_name"
+            placeholder="Full Name"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Date of Birth</label>
+          <input
+            type="date"
+            [(ngModel)]="newChild.date_of_birth"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+      </div>
+      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+        <button
+          (click)="showAddChildModal = false"
+          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="addChild(); showAddChildModal = false"
+          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+        >
+          Add Child
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Add Education Modal -->
+@if (showAddEducationModal) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <p class="text-xs font-semibold text-gray-700">Add Education</p>
+        <button (click)="showAddEducationModal = false" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <div class="p-4 grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Level</label>
+          <select
+            [(ngModel)]="newEducation.level"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          >
+            <option value="ELEMENTARY">Elementary</option>
+            <option value="SECONDARY">Secondary</option>
+            <option value="VOCATIONAL">Vocational/Trade Course</option>
+            <option value="COLLEGE">College</option>
+            <option value="GRADUATE_STUDIES">Graduate Studies</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">School Name</label>
+          <input
+            type="text"
+            [(ngModel)]="newEducation.school_name"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div class="col-span-2">
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Degree/Course</label>
+          <input
+            type="text"
+            [(ngModel)]="newEducation.degree_course"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">From (Year)</label>
+          <input
+            type="text"
+            [(ngModel)]="newEducation.period_from"
+            placeholder="YYYY"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">To (Year)</label>
+          <input
+            type="text"
+            [(ngModel)]="newEducation.period_to"
+            placeholder="YYYY"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block"
+            >Highest Level/Units Earned</label
+          >
+          <input
+            type="text"
+            [(ngModel)]="newEducation.highest_level_earned"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Year Graduated</label>
+          <input
+            type="text"
+            [(ngModel)]="newEducation.year_graduated"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div class="col-span-2">
+          <label class="text-xs font-medium text-gray-500 mb-1 block"
+            >Scholarship/Academic Honors</label
+          >
+          <input
+            type="text"
+            [(ngModel)]="newEducation.scholarship_honors"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+      </div>
+      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+        <button
+          (click)="showAddEducationModal = false"
+          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="addEducation(); showAddEducationModal = false"
+          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+        >
+          Add Education
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Add Eligibility Modal -->
+@if (showAddEligibilityModal) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <p class="text-xs font-semibold text-gray-700">Add Eligibility</p>
+        <button (click)="showAddEligibilityModal = false" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <div class="p-4 grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="text-xs font-medium text-gray-500 mb-1 block"
+            >Career Service / RA 1080 (BOARD/BAR)</label
+          >
+          <input
+            type="text"
+            [(ngModel)]="newEligibility.career_service"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Rating</label>
+          <input
+            type="text"
+            [(ngModel)]="newEligibility.rating"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Date of Examination</label>
+          <input
+            type="date"
+            [(ngModel)]="newEligibility.date_of_examination"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Place of Examination</label>
+          <input
+            type="text"
+            [(ngModel)]="newEligibility.place_of_examination"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">License Number</label>
+          <input
+            type="text"
+            [(ngModel)]="newEligibility.license_number"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Date of Validity</label>
+          <input
+            type="date"
+            [(ngModel)]="newEligibility.license_validity"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+      </div>
+      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+        <button
+          (click)="showAddEligibilityModal = false"
+          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="addEligibility(); showAddEligibilityModal = false"
+          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+        >
+          Add Eligibility
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Add Voluntary Work Modal -->
+@if (showAddVoluntaryModal) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <p class="text-xs font-semibold text-gray-700">Add Voluntary Work</p>
+        <button (click)="showAddVoluntaryModal = false" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <div class="p-4 grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="text-xs font-medium text-gray-500 mb-1 block"
+            >Name & Address of Organization</label
+          >
+          <input
+            type="text"
+            [(ngModel)]="newVoluntaryWork.organization_name"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">From</label>
+          <input
+            type="date"
+            [(ngModel)]="newVoluntaryWork.date_from"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">To</label>
+          <input
+            type="date"
+            [(ngModel)]="newVoluntaryWork.date_to"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Number of Hours</label>
+          <input
+            type="number"
+            [(ngModel)]="newVoluntaryWork.number_of_hours"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block"
+            >Position / Nature of Work</label
+          >
+          <input
+            type="text"
+            [(ngModel)]="newVoluntaryWork.position_nature_of_work"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+      </div>
+      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+        <button
+          (click)="showAddVoluntaryModal = false"
+          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="addVoluntaryWork(); showAddVoluntaryModal = false"
+          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Add Training Modal -->
+@if (showAddTrainingModal) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <p class="text-xs font-semibold text-gray-700">Add Training / Seminar</p>
+        <button (click)="showAddTrainingModal = false" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <div class="p-4 grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Training Program Title</label>
+          <input
+            type="text"
+            [(ngModel)]="newTraining.title"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">From</label>
+          <input
+            type="date"
+            [(ngModel)]="newTraining.date_from"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">To</label>
+          <input
+            type="date"
+            [(ngModel)]="newTraining.date_to"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Number of Hours</label>
+          <input
+            type="number"
+            [(ngModel)]="newTraining.number_of_hours"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Type of LD</label>
+          <input
+            type="text"
+            [(ngModel)]="newTraining.type_of_ld"
+            placeholder="e.g., Seminar, Workshop"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div class="col-span-2">
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Conducted/Sponsored By</label>
+          <input
+            type="text"
+            [(ngModel)]="newTraining.conducted_by"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+      </div>
+      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+        <button
+          (click)="showAddTrainingModal = false"
+          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="addTraining(); showAddTrainingModal = false"
+          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+        >
+          Add Training
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Add Reference Modal -->
+@if (showAddReferenceModal) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <p class="text-xs font-semibold text-gray-700">Add Reference</p>
+        <button (click)="showAddReferenceModal = false" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Name</label>
+          <input
+            type="text"
+            [(ngModel)]="newReference.name"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Address</label>
+          <input
+            type="text"
+            [(ngModel)]="newReference.address"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Telephone No.</label>
+          <input
+            type="text"
+            [(ngModel)]="newReference.telephone_number"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+      </div>
+      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+        <button
+          (click)="showAddReferenceModal = false"
+          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="addReference(); showAddReferenceModal = false"
+          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+        >
+          Add Reference
+        </button>
+      </div>
+    </div>
+  </div>
+}

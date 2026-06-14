@@ -1,0 +1,337 @@
+<div class="p-3 space-y-5">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="relative max-w-xs">
+      <i
+        class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"
+      ></i>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="searchOrganizations()"
+        placeholder="Search organizations…"
+        class="w-full pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-200"
+      />
+    </div>
+    <button
+      (click)="openCreateModal()"
+      [disabled]="loading()"
+      class="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white text-xs font-medium rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+    >
+      <i class="pi pi-plus text-xs"></i> Add Organization
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+    <table class="w-full text-xs">
+      <thead>
+        <tr class="border-b border-gray-100 bg-gray-50">
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+          >
+            Organization Name
+          </th>
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+          >
+            Email
+          </th>
+          <th
+            class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-40"
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        @if (loading()) {
+          <tr>
+            <td colspan="3" class="px-5 py-12 text-center text-gray-400">
+              <div class="inline-flex flex-col items-center gap-2">
+                <i class="pi pi-spin pi-spinner text-xl"></i>
+                <span class="text-xs">Loading…</span>
+              </div>
+            </td>
+          </tr>
+        } @else if (organizationsList().length === 0) {
+          <tr>
+            <td colspan="3" class="px-5 py-14 text-center text-gray-400">
+              <div class="inline-flex flex-col items-center gap-2">
+                <i class="pi pi-sitemap text-5xl text-gray-200"></i>
+                <span class="text-xs">No organizations found</span>
+              </div>
+            </td>
+          </tr>
+        } @else {
+          @for (org of organizationsList(); track org.organization_id) {
+            <tr class="hover:bg-gray-50/60 transition-colors">
+              <td class="px-5 py-3.5 font-medium text-gray-700 text-xs">
+                {{ org.organization_name }}
+              </td>
+              <td class="px-5 py-3.5 text-gray-500 text-xs">{{ org.email || '—' }}</td>
+              <td class="px-5 py-3.5">
+                <div class="flex items-center justify-end gap-1">
+                  <button
+                    (click)="viewAnalytics(org)"
+                    title="Analytics"
+                    class="px-2 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition inline-flex items-center gap-1"
+                  >
+                    <i class="pi pi-chart-bar text-xs"></i>
+                  </button>
+                  <button
+                    (click)="viewDemographics(org)"
+                    title="Demographics"
+                    class="px-2 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition inline-flex items-center gap-1"
+                  >
+                    <i class="pi pi-users text-xs"></i>
+                  </button>
+                  <button
+                    (click)="openEditModal(org)"
+                    title="Edit"
+                    class="px-2 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition inline-flex items-center gap-1"
+                  >
+                    <i class="pi pi-pencil text-xs"></i>
+                  </button>
+                  <button
+                    (click)="resetPassword(org)"
+                    title="Reset Password"
+                    class="px-2 py-1.5 text-xs font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition inline-flex items-center gap-1"
+                  >
+                    <i class="pi pi-key text-xs"></i>
+                  </button>
+                  <button
+                    (click)="openDeleteModal(org)"
+                    title="Delete"
+                    class="px-2 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition inline-flex items-center gap-1"
+                  >
+                    <i class="pi pi-trash text-xs"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+
+    @if (totalPages() > 1) {
+      <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+        <span class="text-xs text-gray-400">
+          {{ (currentPage() - 1) * pageSize + 1 }}–{{
+            Math.min(currentPage() * pageSize, totalItems())
+          }}
+          of {{ totalItems() }}
+        </span>
+        <div class="flex items-center gap-1">
+          <button
+            (click)="changePage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            <i class="pi pi-chevron-left text-xs"></i>
+          </button>
+          @for (page of getPageNumbers(); track $index) {
+            @if (page === -1) {
+              <span class="px-1 text-xs text-gray-300">…</span>
+            } @else {
+              <button
+                (click)="changePage(page)"
+                [class.bg-gray-900]="currentPage() === page"
+                [class.text-white]="currentPage() === page"
+                [class.text-gray-600]="currentPage() !== page"
+                class="min-w-7 h-7 px-1.5 text-xs font-medium rounded-md hover:bg-gray-100 transition-colors"
+              >
+                {{ page }}
+              </button>
+            }
+          }
+          <button
+            (click)="changePage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            <i class="pi pi-chevron-right text-xs"></i>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Create Modal -->
+@if (showCreateModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
+      <div class="px-6 py-5 border-b border-gray-100">
+        <h3 class="text-xs font-semibold text-gray-900">Add New Organization</h3>
+        <p class="text-xs text-gray-400 mt-0.5">
+          Login credentials will be sent to the provided email
+        </p>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1 space-y-4">
+        <form (submit)="submitCreateForm(); $event.preventDefault()">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Organization Name <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="createForm.organization_name"
+                name="organization_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Description</label>
+              <textarea
+                [(ngModel)]="createForm.description"
+                name="description"
+                rows="3"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition resize-none"
+              ></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Adviser 1 <span class="text-red-500">*</span></label
+              >
+              <select
+                [(ngModel)]="createForm.adviser_id_1"
+                name="adviser_id_1"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+                required
+              >
+                <option value="0">Select Adviser 1</option>
+                @for (faculty of facultyList(); track faculty.faculty_id) {
+                  <option [value]="faculty.faculty_id">
+                    {{ faculty.first_name }} {{ faculty.last_name }} ({{ faculty.employee_id }})
+                  </option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Adviser 2 <span class="text-red-500">*</span></label
+              >
+              <select
+                [(ngModel)]="createForm.adviser_id_2"
+                name="adviser_id_2"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+                required
+              >
+                <option value="0">Select Adviser 2</option>
+                @for (faculty of facultyList(); track faculty.faculty_id) {
+                  <option [value]="faculty.faculty_id">
+                    {{ faculty.first_name }} {{ faculty.last_name }} ({{ faculty.employee_id }})
+                  </option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Email <span class="text-red-500">*</span></label
+              >
+              <input
+                type="email"
+                [(ngModel)]="createForm.email"
+                name="email"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+                required
+              />
+              <p class="text-xs text-gray-400 mt-1">Organization login email</p>
+            </div>
+            <div class="p-3 bg-blue-50 border border-blue-100 rounded-sm">
+              <p class="text-xs text-blue-700">
+                <i class="pi pi-info-circle text-xs mr-1"></i>
+                A secure password will be automatically generated and displayed after creation.
+              </p>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+            <button
+              type="button"
+              (click)="closeCreateModal()"
+              [disabled]="loading()"
+              class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="loading()"
+              class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+            >
+              @if (loading()) {
+                <i class="pi pi-spin pi-spinner text-xs"></i> Creating…
+              } @else {
+                Create
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Modal -->
+@if (showEditModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-md mx-4">
+      <div class="px-6 py-5 border-b border-gray-100">
+        <h3 class="text-xs font-semibold text-gray-900">Edit Organization</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Update the organization details below</p>
+      </div>
+      <div class="p-6 space-y-4">
+        <form (submit)="submitEditForm(); $event.preventDefault()">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Organization Name <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="editForm.organization_name"
+                name="organization_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Description</label>
+              <textarea
+                [(ngModel)]="editForm.description"
+                name="description"
+                rows="3"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition resize-none"
+              ></textarea>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+            <button
+              type="button"
+              (click)="closeEditModal()"
+              [disabled]="loading()"
+              class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="loading()"
+              class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+            >
+              @if (loading()) {
+                <i class="pi pi-spin pi-spinner text-xs"></i> Updating…
+              } @else {
+                Save Changes
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

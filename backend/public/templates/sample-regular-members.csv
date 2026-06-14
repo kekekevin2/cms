@@ -1,0 +1,6 @@
+sr_code,student_name,email,year_level,section,program,department,gender,position
+21-00001,John Doe,john.doe@example.com,1st Year,A,BSIT,CCS,Male,Member
+21-00002,Jane Smith,jane.smith@example.com,2nd Year,B,BSCS,CCS,Female,Member
+21-00003,Bob Johnson,bob.johnson@example.com,3rd Year,A,BSIS,CCS,Male,Member
+21-00004,Alice Brown,alice.brown@example.com,1st Year,C,BSIT,CCS,Female,Member
+21-00005,Charlie Wilson,charlie.wilson@example.com,2nd Year,A,BSCS,CCS,Male,Member

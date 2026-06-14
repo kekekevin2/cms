@@ -1,0 +1,68 @@
+<!-- dean-analytics.component.html -->
+<div class="analytics-container">
+  <h1 class="page-title">Faculty Analytics Dashboard</h1>
+
+  <div class="charts-grid">
+    <!-- Research Involvement Chart -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h2 class="chart-title">
+          Faculty Involvement in Research-related Seminars/Workshops/Trainings/Conferences
+        </h2>
+        <p class="chart-subtitle">(Permanent and Temporary) FY 2022-2025</p>
+      </div>
+      <div class="chart-body">
+        <div *ngIf="loading.research" class="loading">
+          <div class="spinner"></div>
+          <p>Loading chart...</p>
+        </div>
+        <div *ngIf="error.research" class="error">
+          <p>{{ error.research }}</p>
+        </div>
+        <div *ngIf="!loading.research && !error.research" class="chart-wrapper">
+          <canvas #researchChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extension Services Chart -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h2 class="chart-title">Faculty Involvement in Extension Services</h2>
+        <p class="chart-subtitle">(Permanent and Temporary) FY 2022-2025</p>
+      </div>
+      <div class="chart-body">
+        <div *ngIf="loading.extension" class="loading">
+          <div class="spinner"></div>
+          <p>Loading chart...</p>
+        </div>
+        <div *ngIf="error.extension" class="error">
+          <p>{{ error.extension }}</p>
+        </div>
+        <div *ngIf="!loading.extension && !error.extension" class="chart-wrapper">
+          <canvas #extensionChart></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seminars/Trainings Chart -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h2 class="chart-title">Faculty Involvement in Seminars/Workshops/Trainings/Conferences</h2>
+        <p class="chart-subtitle">(Permanent and Temporary) FY 2022-2025</p>
+      </div>
+      <div class="chart-body">
+        <div *ngIf="loading.seminars" class="loading">
+          <div class="spinner"></div>
+          <p>Loading chart...</p>
+        </div>
+        <div *ngIf="error.seminars" class="error">
+          <p>{{ error.seminars }}</p>
+        </div>
+        <div *ngIf="!loading.seminars && !error.seminars" class="chart-wrapper">
+          <canvas #seminarsChart></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

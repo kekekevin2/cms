@@ -1,0 +1,391 @@
+<!-- Sidebar -->
+<aside
+  [class.translate-x-0]="isSidebarOpen()"
+  [class.-translate-x-full]="!isSidebarOpen()"
+  class="fixed top-0 left-0 z-50 w-64 h-full transition-transform bg-white border-r border-gray-200"
+>
+  <div class="h-full px-3 py-4 overflow-y-auto">
+    <!-- Logo/Brand -->
+    <div class="mb-6 px-2 flex flex-col items-center">
+      <img src="/assets/logo.png" alt="Logo" class="h-24 mb-3" />
+      <h2 class="text-lg font-bold text-gray-900 text-center">Super Admin Portal</h2>
+    </div>
+
+    <ul class="space-y-2 font-medium">
+      <!-- Dashboard -->
+      <li>
+        <button
+          (click)="selectTab('dashboard')"
+          [class.bg-green-50]="activeTab() === 'dashboard'"
+          [class.text-green-600]="activeTab() === 'dashboard'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-chart-pie shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Dashboard</span>
+        </button>
+      </li>
+
+      <li class="pt-2 mt-2 border-t border-gray-200"></li>
+
+      <!-- College Dean -->
+      <li>
+        <button
+          (click)="selectTab('college-department')"
+          [class.bg-green-50]="activeTab() === 'college-department'"
+          [class.text-green-600]="activeTab() === 'college-department'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-building shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">College Department</span>
+        </button>
+      </li>
+
+      <!-- Faculty -->
+      <li>
+        <button
+          (click)="selectTab('faculty')"
+          [class.bg-green-50]="activeTab() === 'faculty'"
+          [class.text-green-600]="activeTab() === 'faculty'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-users shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Faculty</span>
+        </button>
+      </li>
+
+      <!-- Organization -->
+      <li>
+        <button
+          (click)="selectTab('organization')"
+          [class.bg-green-50]="activeTab() === 'organization'"
+          [class.text-green-600]="activeTab() === 'organization'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-sitemap shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Organization</span>
+        </button>
+      </li>
+
+      <li class="pt-2 mt-2 border-t border-gray-200"></li>
+
+      <!-- Settings Section -->
+      <li>
+        <div class="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">Settings</div>
+      </li>
+
+      <!-- Academic Year -->
+      <li>
+        <button
+          (click)="selectTab('academic-year')"
+          [class.bg-green-50]="activeTab() === 'academic-year'"
+          [class.text-green-600]="activeTab() === 'academic-year'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-calendar shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Academic Year</span>
+        </button>
+      </li>
+
+      <!-- Campus Management -->
+      <li>
+        <button
+          (click)="selectTab('campus')"
+          [class.bg-green-50]="activeTab() === 'campus'"
+          [class.text-green-600]="activeTab() === 'campus'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-map-marker shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Campus</span>
+        </button>
+      </li>
+
+      <!-- Department Management -->
+      <li>
+        <button
+          (click)="selectTab('department')"
+          [class.bg-green-50]="activeTab() === 'department'"
+          [class.text-green-600]="activeTab() === 'department'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-table shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Departments</span>
+        </button>
+      </li>
+    </ul>
+  </div>
+</aside>
+
+<!-- Top Bar -->
+<div
+  class="fixed top-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300"
+  [class.left-64]="isSidebarOpen()"
+  [class.left-0]="!isSidebarOpen()"
+  [class.right-0]="true"
+>
+  <div class="flex items-center gap-4">
+    <button
+      (click)="toggleSidebar()"
+      type="button"
+      class="text-gray-900 bg-transparent hover:bg-gray-200 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm p-2 focus:outline-none"
+    >
+      <i class="pi pi-bars text-lg"></i>
+    </button>
+    <h1 class="text-sm font-semibold text-gray-900">{{ getPageTitle() }}</h1>
+  </div>
+
+  <!-- Right Section: User Menu -->
+  <div class="flex items-center gap-3">
+    <!-- User Menu -->
+    <div class="relative">
+      <button
+        (click)="toggleUserMenu()"
+        class="inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
+      >
+        <i class="pi pi-user text-sm"></i>
+        <span class="text-xs font-medium">Super Admin</span>
+        <i
+          class="pi pi-chevron-down text-xs transition-transform"
+          [class.rotate-180]="isUserMenuOpen()"
+        ></i>
+      </button>
+
+      @if (isUserMenuOpen()) {
+        <div
+          class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg"
+        >
+          <button
+            (click)="themeService.toggleTheme()"
+            class="inline-flex items-center gap-2 w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-t-lg transition"
+          >
+            @if (themeService.isDarkMode()) {
+              <i class="pi pi-sun text-sm text-yellow-500"></i>
+              <span class="text-xs">Light Mode</span>
+            } @else {
+              <i class="pi pi-moon text-sm text-indigo-600"></i>
+              <span class="text-xs">Dark Mode</span>
+            }
+          </button>
+          <button
+            (click)="isChangePasswordOpen.set(true); isUserMenuOpen.set(false)"
+            class="inline-flex items-center gap-2 w-full px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 transition"
+          >
+            <i class="pi pi-lock text-sm"></i>
+            <span class="text-xs">Change Password</span>
+          </button>
+          <button
+            (click)="logout()"
+            class="inline-flex items-center gap-2 w-full px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-b-lg transition"
+          >
+            <i class="pi pi-sign-out text-sm"></i>
+            <span class="text-xs">Sign Out</span>
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300" [class.ml-64]="isSidebarOpen()">
+  @if (activeTab() === 'dashboard') {
+    <div class="space-y-4">
+      <!-- Active Academic Year Banner -->
+      @if (statistics().active_academic_year) {
+        <div
+          class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-sm text-xs text-green-700"
+        >
+          <i class="pi pi-calendar text-xs"></i>
+          Active Academic Year:
+          <span class="font-semibold">{{ statistics().active_academic_year }}</span>
+        </div>
+      }
+
+      <!-- Primary Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div
+          class="bg-linear-to-br from-green-500 to-green-600 text-white rounded-sm shadow p-4 cursor-pointer hover:shadow-md transition"
+          (click)="selectTab('college-department')"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-medium opacity-80">Total Deans</p>
+            <i class="pi pi-user text-white/60 text-sm"></i>
+          </div>
+          <p class="text-2xl font-bold">{{ statistics().total_deans }}</p>
+          <p class="text-xs opacity-70 mt-1">College department heads</p>
+        </div>
+        <div
+          class="bg-linear-to-br from-blue-500 to-blue-600 text-white rounded-sm shadow p-4 cursor-pointer hover:shadow-md transition"
+          (click)="selectTab('faculty')"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-medium opacity-80">Total Faculty</p>
+            <i class="pi pi-users text-white/60 text-sm"></i>
+          </div>
+          <p class="text-2xl font-bold">{{ statistics().total_faculty }}</p>
+          <p class="text-xs opacity-70 mt-1">Across all departments</p>
+        </div>
+        <div
+          class="bg-linear-to-br from-purple-500 to-purple-600 text-white rounded-sm shadow p-4 cursor-pointer hover:shadow-md transition"
+          (click)="selectTab('organization')"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-medium opacity-80">Total Organizations</p>
+            <i class="pi pi-sitemap text-white/60 text-sm"></i>
+          </div>
+          <p class="text-2xl font-bold">{{ statistics().total_organizations }}</p>
+          <p class="text-xs opacity-70 mt-1">Student organizations</p>
+        </div>
+      </div>
+
+      <!-- System Health Row -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div
+          class="bg-white border border-gray-100 rounded-sm p-3 cursor-pointer hover:bg-gray-50 transition"
+          (click)="selectTab('campus')"
+        >
+          <div class="flex items-center gap-2 mb-1">
+            <i class="pi pi-map-marker text-xs text-gray-400"></i>
+            <p class="text-xs text-gray-500">Campuses</p>
+          </div>
+          <p class="text-xl font-bold text-gray-700">{{ statistics().active_campuses }}</p>
+          <p class="text-xs text-gray-400">of {{ statistics().total_campuses }} active</p>
+        </div>
+        <div
+          class="bg-white border border-gray-100 rounded-sm p-3 cursor-pointer hover:bg-gray-50 transition"
+          (click)="selectTab('department')"
+        >
+          <div class="flex items-center gap-2 mb-1">
+            <i class="pi pi-table text-xs text-gray-400"></i>
+            <p class="text-xs text-gray-500">Departments</p>
+          </div>
+          <p class="text-xl font-bold text-gray-700">{{ statistics().active_departments }}</p>
+          <p class="text-xs text-gray-400">of {{ statistics().total_departments }} active</p>
+        </div>
+        <div
+          class="bg-white border border-gray-100 rounded-sm p-3 cursor-pointer hover:bg-gray-50 transition"
+          (click)="selectTab('college-department')"
+        >
+          <div class="flex items-center gap-2 mb-1">
+            <i class="pi pi-building text-xs text-gray-400"></i>
+            <p class="text-xs text-gray-500">College Depts</p>
+          </div>
+          <p class="text-xl font-bold text-gray-700">
+            {{ statistics().total_college_departments }}
+          </p>
+          <p class="text-xs text-gray-400">registered</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-sm p-3">
+          <div class="flex items-center gap-2 mb-1">
+            <i class="pi pi-file text-xs text-gray-400"></i>
+            <p class="text-xs text-gray-500">Total Files</p>
+          </div>
+          <p class="text-xl font-bold text-gray-700">{{ statistics().total_files }}</p>
+          <p class="text-xs text-gray-400">{{ statistics().storage_mb }} MB used</p>
+        </div>
+      </div>
+
+      <!-- Submissions + Quick Nav -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- Submission Status -->
+        <div class="bg-white border border-gray-100 rounded-sm p-4">
+          <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">
+            Requirement Submissions
+          </p>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                <span class="text-xs text-gray-600">Pending Review</span>
+              </div>
+              <span class="text-xs font-semibold text-gray-700">{{
+                statistics().files_by_status.pending
+              }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                <span class="text-xs text-gray-600">Returned</span>
+              </div>
+              <span class="text-xs font-semibold text-gray-700">{{
+                statistics().files_by_status.returned
+              }}</span>
+            </div>
+            <div class="pt-2 border-t border-gray-50 flex items-center justify-between">
+              <span class="text-xs text-gray-400">Total submitted files</span>
+              <span class="text-xs font-semibold text-gray-700">{{
+                statistics().total_files
+              }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Nav -->
+        <div class="bg-white border border-gray-100 rounded-sm p-4">
+          <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">
+            Quick Navigation
+          </p>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              (click)="selectTab('college-department')"
+              class="inline-flex items-center gap-2 px-3 py-2 text-xs text-gray-600 bg-gray-50 rounded-sm hover:bg-green-50 hover:text-green-700 transition"
+            >
+              <i class="pi pi-building text-xs"></i> College Dept
+            </button>
+            <button
+              (click)="selectTab('faculty')"
+              class="inline-flex items-center gap-2 px-3 py-2 text-xs text-gray-600 bg-gray-50 rounded-sm hover:bg-blue-50 hover:text-blue-700 transition"
+            >
+              <i class="pi pi-users text-xs"></i> Faculty
+            </button>
+            <button
+              (click)="selectTab('organization')"
+              class="inline-flex items-center gap-2 px-3 py-2 text-xs text-gray-600 bg-gray-50 rounded-sm hover:bg-purple-50 hover:text-purple-700 transition"
+            >
+              <i class="pi pi-sitemap text-xs"></i> Organizations
+            </button>
+            <button
+              (click)="selectTab('academic-year')"
+              class="inline-flex items-center gap-2 px-3 py-2 text-xs text-gray-600 bg-gray-50 rounded-sm hover:bg-gray-100 transition"
+            >
+              <i class="pi pi-calendar text-xs"></i> Academic Year
+            </button>
+            <button
+              (click)="selectTab('campus')"
+              class="inline-flex items-center gap-2 px-3 py-2 text-xs text-gray-600 bg-gray-50 rounded-sm hover:bg-gray-100 transition"
+            >
+              <i class="pi pi-map-marker text-xs"></i> Campus
+            </button>
+            <button
+              (click)="selectTab('department')"
+              class="inline-flex items-center gap-2 px-3 py-2 text-xs text-gray-600 bg-gray-50 rounded-sm hover:bg-gray-100 transition"
+            >
+              <i class="pi pi-table text-xs"></i> Departments
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+  @if (activeTab() === 'college-department') {
+    <app-superadmin-college-department-management />
+  }
+  @if (activeTab() === 'faculty') {
+    <app-superadmin-faculty-view />
+  }
+  @if (activeTab() === 'organization') {
+    <app-superadmin-organization-view />
+  }
+  @if (activeTab() === 'academic-year') {
+    <app-superadmin-academic-year-management />
+  }
+  @if (activeTab() === 'campus') {
+    <app-superadmin-campus-management />
+  }
+  @if (activeTab() === 'department') {
+    <app-superadmin-department-management />
+  }
+</div>
+
+@if (isChangePasswordOpen()) {
+  <app-change-password-modal (close)="isChangePasswordOpen.set(false)" />
+}

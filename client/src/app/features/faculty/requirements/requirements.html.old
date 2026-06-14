@@ -1,0 +1,379 @@
+<div class="p-4">
+  <!-- Action Bar -->
+  <div class="mb-4 flex flex-col sm:flex-row justify-between gap-4">
+    <div class="flex gap-2">
+      <!-- Academic Year Filter -->
+      <select
+        [(ngModel)]="selectedAcademicYear"
+        (change)="filterAssignments()"
+        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+      >
+        <option [value]="0">All Academic Years</option>
+        @for (year of academicYearsList(); track year.academic_year_id) {
+          <option [value]="year.academic_year_id">{{ year.year_start }}-{{ year.year_end }}</option>
+        }
+      </select>
+
+      <!-- Semester Filter -->
+      <select
+        [(ngModel)]="selectedSemester"
+        (change)="filterAssignments()"
+        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+      >
+        <option value="">All Semesters</option>
+        <option value="1st Sem">1st Semester</option>
+        <option value="2nd Sem">2nd Semester</option>
+        <option value="Midterm 1">Midterm 1</option>
+        <option value="Midterm 2">Midterm 2</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <table class="w-full text-sm text-left text-gray-500">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+        <tr>
+          <th scope="col" class="px-6 py-3">Course Code</th>
+          <th scope="col" class="px-6 py-3">Course Name</th>
+          <th scope="col" class="px-6 py-3">Section</th>
+          <th scope="col" class="px-6 py-3">Academic Year</th>
+          <th scope="col" class="px-6 py-3">Semester</th>
+          <th scope="col" class="px-6 py-3 text-center">Progress</th>
+          <th scope="col" class="px-6 py-3 text-center">Status</th>
+          <th scope="col" class="px-6 py-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="8" class="px-6 py-4 text-center text-sm">Loading...</td>
+          </tr>
+        } @else if (assignments().length === 0) {
+          <tr>
+            <td colspan="8" class="px-6 py-8 text-center">
+              <div class="text-gray-400 mb-2">
+                <svg
+                  class="mx-auto h-12 w-12"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <p class="text-gray-900 font-medium text-sm">No Assignments Found</p>
+              <p class="text-gray-600 text-sm">You don't have any course assignments yet.</p>
+            </td>
+          </tr>
+        } @else {
+          @for (assignment of assignments(); track assignment.assignment_id) {
+            <tr class="bg-white border-b hover:bg-gray-50">
+              <td class="px-6 py-4 font-semibold text-gray-900 text-sm">
+                {{ assignment.course?.course_code }}
+              </td>
+              <td class="px-6 py-4 font-medium text-gray-900 text-sm">
+                {{ assignment.course?.course_name }}
+              </td>
+              <td class="px-6 py-4 text-sm">
+                {{ assignment.section?.section_name }}
+                <span class="text-xs text-gray-500 block">
+                  {{ getYearLevelDisplay(assignment.section?.year_level || 0) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm">
+                {{ assignment.academic_year?.year_start }}-{{ assignment.academic_year?.year_end }}
+              </td>
+              <td class="px-6 py-4 text-sm">{{ assignment.semester }}</td>
+              <td class="px-6 py-4 text-center">
+                <div class="flex flex-col items-center">
+                  <span class="text-base font-semibold text-gray-900">
+                    {{ getCompletionStats(assignment).submitted }}/{{
+                      getCompletionStats(assignment).total
+                    }}
+                  </span>
+                  <div class="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                    <div
+                      class="bg-green-600 h-2 rounded-full"
+                      [style.width.%]="getCompletionStats(assignment).percentage"
+                    ></div>
+                  </div>
+                  <span class="text-xs text-gray-600 mt-1">
+                    {{ getCompletionStats(assignment).percentage }}%
+                  </span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <div class="flex flex-col gap-1 items-center">
+                  @if (getCompletionStats(assignment).cleared > 0) {
+                    <span
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                    >
+                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fill-rule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      {{ getCompletionStats(assignment).cleared }} Cleared
+                    </span>
+                  }
+                  @if (getCompletionStats(assignment).pending > 0) {
+                    <span
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+                    >
+                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fill-rule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      {{ getCompletionStats(assignment).pending }} Pending
+                    </span>
+                  }
+                  @if (getCompletionStats(assignment).returned > 0) {
+                    <span
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                    >
+                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fill-rule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      {{ getCompletionStats(assignment).returned }} Returned
+                    </span>
+                  }
+                  @if (
+                    getCompletionStats(assignment).submitted === 0 &&
+                    getCompletionStats(assignment).cleared === 0
+                  ) {
+                    <span
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                    >
+                      Not Started
+                    </span>
+                  }
+                </div>
+              </td>
+              <td class="px-6 py-4 text-sm">
+                <button
+                  (click)="openSubmitModal(assignment)"
+                  class="text-green-600 hover:underline"
+                >
+                  View Requirements
+                </button>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex justify-between items-center mt-4">
+    <div class="text-sm text-gray-700">
+      Showing {{ (currentPage() - 1) * pageSize + 1 }} to
+      {{ Math.min(currentPage() * pageSize, totalItems()) }} of {{ totalItems() }} results
+    </div>
+    <div class="flex gap-2">
+      <button
+        (click)="changePage(currentPage() - 1)"
+        [disabled]="currentPage() === 1"
+        class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+      >
+        Previous
+      </button>
+      @for (page of getPageNumbers(); track page) {
+        @if (page === -1) {
+          <span class="px-3 py-1 text-sm">...</span>
+        } @else {
+          <button
+            (click)="changePage(page)"
+            [class.bg-green-600]="page === currentPage()"
+            [class.text-white]="page === currentPage()"
+            class="px-3 py-1 border rounded hover:bg-gray-100 text-sm"
+          >
+            {{ page }}
+          </button>
+        }
+      }
+      <button
+        (click)="changePage(currentPage() + 1)"
+        [disabled]="currentPage() === totalPages()"
+        class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</div>
+@if (showSubmitModal()) {
+  <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+    <div
+      class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+    >
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-2xl font-bold text-gray-800">Accomplishments</h2>
+        @if (selectedAssignment()) {
+          <p class="text-gray-600 mt-1">
+            {{ selectedAssignment()!.course?.course_code }} -
+            {{ selectedAssignment()!.course?.course_name }}
+          </p>
+        }
+      </div>
+
+      <!-- Modal Body -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <div class="space-y-4">
+          @for (req of requirements(); track req.requirement_number) {
+            <div
+              class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+            >
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <h3 class="font-medium text-gray-800">
+                    {{ req.requirement_number }}. {{ req.requirement_type }}
+                  </h3>
+                  @if (req.submission) {
+                    <div class="mt-2 space-y-2">
+                      <p class="text-sm text-gray-600">
+                        <strong>File:</strong> {{ req.submission.file_name }}
+                      </p>
+                      <p class="text-sm text-gray-600">
+                        <strong>Submitted:</strong>
+                        {{ req.submission.submission_date | date: 'medium' }}
+                      </p>
+                      <p>
+                        <span
+                          [class]="
+                            'inline-block px-3 py-1 rounded-full text-sm font-medium ' +
+                            getStatusClass(req.submission.status)
+                          "
+                        >
+                          {{ req.submission.status | titlecase }}
+                        </span>
+                      </p>
+                      @if (req.submission.dean_remarks) {
+                        <div class="mt-2 bg-blue-50 border-l-4 border-blue-500 p-3">
+                          <p class="text-sm font-medium text-blue-800">Dean Remarks:</p>
+                          <p class="text-sm text-blue-700 mt-1">
+                            {{ req.submission.dean_remarks }}
+                          </p>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <p class="text-sm text-gray-500 mt-1">Not yet submitted</p>
+                  }
+                </div>
+                <div class="flex space-x-2 ml-4">
+                  @if (req.submission) {
+                    <button
+                      (click)="downloadFile(req.submission.submission_id)"
+                      class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                    >
+                      Download
+                    </button>
+                    @if (req.submission.status !== 'validated') {
+                      <button
+                        (click)="deleteSubmission(req.submission.submission_id)"
+                        class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                      >
+                        Delete
+                      </button>
+                    }
+                  }
+                  @if (!req.submission || req.submission.status === 'returned') {
+                    <button
+                      (click)="selectRequirement(req)"
+                      class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      {{ req.submission ? 'Resubmit' : 'Submit' }}
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <button
+          (click)="closeSubmitModal()"
+          class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- File Upload Modal -->
+@if (selectedRequirement()) {
+  <div class="fixed inset-0 flex items-center justify-center z-60 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-xl font-bold text-gray-800">Upload File</h3>
+        <p class="text-sm text-gray-600 mt-1">
+          {{ selectedRequirement()!.requirement_number }}.
+          {{ selectedRequirement()!.requirement_type }}
+        </p>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6">
+        <label class="block mb-2 text-sm font-medium text-gray-700">
+          Select File (PDF, Word, Excel, or Images)
+        </label>
+        <input
+          type="file"
+          (change)="onFileSelected($event)"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+          class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+        />
+        @if (selectedFile) {
+          <p class="mt-2 text-sm text-gray-600">
+            Selected: {{ selectedFile.name }} ({{
+              (selectedFile.size / 1024 / 1024).toFixed(2)
+            }}
+            MB)
+          </p>
+        }
+        <p class="mt-2 text-xs text-gray-500">Maximum file size: 10MB</p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end space-x-3">
+        <button
+          (click)="selectedRequirement.set(null); selectedFile = null"
+          [disabled]="uploading()"
+          class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="submitRequirement()"
+          [disabled]="!selectedFile || uploading()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ uploading() ? 'Uploading...' : 'Submit' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

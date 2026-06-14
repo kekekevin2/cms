@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-05-20T21:15:25.750Z",
+  "testResults": {
+    "dashboardTests": 15,
+    "facultyManagementTests": 0,
+    "organizationTests": 0,
+    "profileTests": 0,
+    "analyticsTests": 0,
+    "navigationTests": 0,
+    "inputTests": 4,
+    "clickTests": 11,
+    "formSubmissions": 0,
+    "errors": 16,
+    "totalActions": 15,
+    "testedFeatures": [
+      "Dashboard"
+    ]
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "successRate": -6.7
+}

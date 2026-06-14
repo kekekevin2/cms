@@ -1,0 +1,195 @@
+<div class="container mx-auto p-6">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">Organization Advisers Management</h2>
+    <p class="text-gray-600">Assign up to 2 faculty advisers per organization</p>
+  </div>
+
+  <!-- Success/Error Messages -->
+  @if (successMessage()) {
+    <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center">
+      <i class="fas fa-check-circle text-green-600 mr-3"></i>
+      <span class="text-green-800">{{ successMessage() }}</span>
+    </div>
+  }
+  @if (errorMessage()) {
+    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
+      <i class="fas fa-exclamation-circle text-red-600 mr-3"></i>
+      <span class="text-red-800">{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <div class="grid md:grid-cols-3 gap-6">
+    <!-- Organizations List -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Organizations</h3>
+      <div class="space-y-2">
+        @for (org of organizations(); track org.organization_id) {
+          <button
+            (click)="selectOrganization(org)"
+            [class.bg-blue-50]="selectedOrganization()?.organization_id === org.organization_id"
+            [class.border-blue-300]="
+              selectedOrganization()?.organization_id === org.organization_id
+            "
+            [class.bg-white]="selectedOrganization()?.organization_id !== org.organization_id"
+            class="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:shadow-md transition"
+          >
+            <p class="font-medium text-gray-900">{{ org.organization_name }}</p>
+            <p class="text-xs text-gray-600 mt-1">{{ org.department }}</p>
+          </button>
+        } @empty {
+          <p class="text-gray-500 text-sm text-center py-4">No organizations found</p>
+        }
+      </div>
+    </div>
+
+    <!-- Advisers Details -->
+    <div class="md:col-span-2">
+      @if (selectedOrganization()) {
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <h3 class="text-xl font-semibold text-gray-900">
+                {{ selectedOrganization().organization_name }}
+              </h3>
+              <p class="text-sm text-gray-600 mt-1">{{ selectedOrganization().department }}</p>
+            </div>
+            @if (canAssignMoreAdvisers()) {
+              <button
+                (click)="openAssignModal()"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              >
+                <i class="fas fa-plus mr-2"></i>
+                Assign Adviser
+              </button>
+            } @else {
+              <span class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg">
+                Maximum advisers assigned (2)
+              </span>
+            }
+          </div>
+
+          <!-- Active Advisers -->
+          <div class="mb-6">
+            <h4 class="font-semibold text-gray-900 mb-3">Active Advisers</h4>
+            @if (getActiveAdvisers().length > 0) {
+              <div class="space-y-3">
+                @for (adviser of getActiveAdvisers(); track adviser.adviser_id) {
+                  <div
+                    class="border border-gray-200 rounded-lg p-4 flex items-start justify-between"
+                  >
+                    <div class="flex items-start">
+                      <div
+                        class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg mr-4"
+                      >
+                        {{ adviser.Faculty.first_name.charAt(0)
+                        }}{{ adviser.Faculty.last_name.charAt(0) }}
+                      </div>
+                      <div>
+                        <h5 class="font-semibold text-gray-900">
+                          {{ getFacultyFullName(adviser.Faculty) }}
+                        </h5>
+                        <p class="text-sm text-gray-600">{{ adviser.Faculty.email }}</p>
+                        @if (adviser.Faculty.contact_number) {
+                          <p class="text-sm text-gray-600">{{ adviser.Faculty.contact_number }}</p>
+                        }
+                        <p class="text-xs text-gray-500 mt-2">
+                          <i class="fas fa-calendar mr-1"></i>
+                          Assigned: {{ adviser.assigned_date }}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      (click)="removeAdviser(adviser.adviser_id)"
+                      class="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
+                    >
+                      <i class="fas fa-times mr-1"></i>
+                      Remove
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-user-tie text-4xl mb-3"></i>
+                <p>No active advisers assigned</p>
+              </div>
+            }
+          </div>
+
+          <!-- Info Box -->
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h5 class="font-semibold text-blue-900 mb-2">
+              <i class="fas fa-info-circle mr-2"></i>
+              Adviser Assignment Guidelines
+            </h5>
+            <ul class="text-sm text-blue-800 space-y-1">
+              <li>• Each organization can have a maximum of 2 faculty advisers</li>
+              <li>• Advisers should be from the same department as the organization</li>
+              <li>• Advisers can guide multiple organizations</li>
+              <li>• Remove advisers before assigning new ones if limit is reached</li>
+            </ul>
+          </div>
+        </div>
+      } @else {
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <i class="fas fa-hand-pointer text-gray-400 text-5xl mb-4"></i>
+          <p class="text-gray-600 text-lg">Select an organization to manage advisers</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Assign Adviser Modal -->
+@if (showAssignModal()) {
+  <div class="fixed inset-0 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-xl font-semibold text-gray-900">Assign Adviser</h3>
+      </div>
+      <div class="p-6">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Select Faculty</label>
+          <select
+            [(ngModel)]="selectedFacultyId"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          >
+            <option [value]="null">-- Select Faculty --</option>
+            @for (faculty of getAvailableFaculty(); track faculty.faculty_id) {
+              <option [value]="faculty.faculty_id">
+                {{ getFacultyFullName(faculty) }} - {{ faculty.email }}
+              </option>
+            }
+          </select>
+          @if (getAvailableFaculty().length === 0) {
+            <p class="text-sm text-gray-500 mt-2">
+              All available faculty are already assigned as advisers
+            </p>
+          }
+        </div>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+          <p class="text-xs text-yellow-800">
+            <i class="fas fa-exclamation-triangle mr-1"></i>
+            Note: Organizations can have a maximum of 2 advisers. Current count:
+            {{ getActiveAdvisers().length }}/2
+          </p>
+        </div>
+      </div>
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+        <button
+          (click)="closeAssignModal()"
+          class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="assignAdviser()"
+          [disabled]="!selectedFacultyId()"
+          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          Assign Adviser
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,141 @@
+<section class="min-h-screen flex">
+  <!-- Left Panel -->
+  <div
+    class="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 relative overflow-hidden"
+    style="
+      background-image: url('/assets/cover.jpg');
+      background-size: cover;
+      background-position: center;
+    "
+  >
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-green-950/70"></div>
+    <div class="relative z-10 text-center text-white">
+      <img src="/assets/logo.png" alt="Logo" class="mx-auto mb-6 w-28 h-auto drop-shadow-lg" />
+      <h1 class="text-2xl font-bold mb-2 drop-shadow-md">College Management Portal</h1>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 relative bg-white">
+    <!-- Dark Mode Toggle -->
+    <button
+      (click)="themeService.toggleTheme()"
+      class="absolute top-4 right-4 p-2 rounded-sm bg-white border border-gray-300 shadow-md hover:bg-gray-50 transition"
+      title="Toggle Dark Mode"
+    >
+      @if (themeService.isDarkMode()) {
+        <i class="pi pi-sun text-sm text-yellow-500"></i>
+      } @else {
+        <i class="pi pi-moon text-sm text-gray-700"></i>
+      }
+    </button>
+
+    <div class="w-full max-w-sm" style="min-width: 320px">
+      <!-- Mobile logo -->
+      <div class="lg:hidden text-center mb-8">
+        <img src="/assets/logo.png" alt="Logo" class="mx-auto mb-3 w-20 h-auto" />
+        <h1 class="text-lg font-bold text-gray-900">College Management Portal</h1>
+      </div>
+
+      <div class="mb-6">
+        <h2 class="text-lg font-semibold text-gray-900">Welcome back</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Sign in to your account to continue</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        <!-- Email -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5">Email Address</label>
+          <div class="relative">
+            <i
+              class="pi pi-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"
+            ></i>
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="Enter your email"
+              style="
+                background-color: #f9fafb !important;
+                color: #111827 !important;
+                border-color: #e5e7eb !important;
+              "
+              class="w-full pl-9 pr-4 py-2.5 text-xs rounded-sm outline-none focus:ring-0 placeholder-gray-400 transition"
+            />
+          </div>
+          @if (loginData['email'].touched && loginData['email'].errors?.['required']) {
+            <p class="text-red-500 text-xs mt-1">Email is required</p>
+          }
+          @if (loginData['email'].touched && loginData['email'].errors?.['email']) {
+            <p class="text-red-500 text-xs mt-1">Invalid email format</p>
+          }
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5">Password</label>
+          <div class="relative">
+            <i
+              class="pi pi-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"
+            ></i>
+            <input
+              [type]="isPasswordVisible ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Enter your password"
+              style="
+                background-color: #f9fafb !important;
+                color: #111827 !important;
+                border-color: #e5e7eb !important;
+              "
+              class="w-full pl-9 pr-10 py-2.5 text-xs rounded-sm outline-none focus:ring-0 placeholder-gray-400 transition"
+            />
+            <button
+              type="button"
+              (click)="togglePasswordVisibility()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <i
+                class="pi text-xs"
+                [class.pi-eye]="!isPasswordVisible"
+                [class.pi-eye-slash]="isPasswordVisible"
+              ></i>
+            </button>
+          </div>
+          @if (loginData['password'].touched && loginData['password'].errors?.['required']) {
+            <p class="text-red-500 text-xs mt-1">Password is required</p>
+          }
+        </div>
+
+        <!-- reCAPTCHA -->
+        <div class="flex justify-center overflow-visible">
+          <div id="recaptcha-container"></div>
+        </div>
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          [disabled]="loginForm.invalid || isLoading()"
+          class="w-full inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-sm text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          @if (isLoading()) {
+            <i class="pi pi-spin pi-spinner text-xs"></i>
+            <span>Signing in…</span>
+          } @else {
+            <i class="pi pi-sign-in text-xs"></i>
+            <span>Sign In</span>
+          }
+        </button>
+
+        <!-- Forgot Password -->
+        <div class="text-center">
+          <a
+            routerLink="/forgot-password"
+            class="text-xs text-green-600 hover:text-green-700 hover:underline"
+          >
+            Forgot your password?
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

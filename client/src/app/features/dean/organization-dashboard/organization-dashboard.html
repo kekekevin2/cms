@@ -1,0 +1,209 @@
+<div class="p-3 space-y-4">
+  @if (loading()) {
+    <div class="flex justify-center py-16 text-gray-400">
+      <i class="pi pi-spin pi-spinner text-2xl"></i>
+    </div>
+  } @else {
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-linear-to-br from-indigo-500 to-indigo-600 text-white rounded-sm shadow p-4">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-medium opacity-80">Total Organizations</p>
+          <i class="pi pi-sitemap text-white/60 text-sm"></i>
+        </div>
+        <p class="text-2xl font-bold">{{ statistics().totalOrganizations }}</p>
+      </div>
+      <div class="bg-linear-to-br from-green-500 to-green-600 text-white rounded-sm shadow p-4">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-medium opacity-80">Approved Events</p>
+          <i class="pi pi-check-circle text-white/60 text-sm"></i>
+        </div>
+        <p class="text-2xl font-bold">{{ statistics().approvedEvents }}</p>
+        <p class="text-xs opacity-70 mt-1">{{ statistics().pendingEvents }} pending</p>
+      </div>
+      <div class="bg-linear-to-br from-purple-500 to-purple-600 text-white rounded-sm shadow p-4">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-medium opacity-80">Total Documents</p>
+          <i class="pi pi-file text-white/60 text-sm"></i>
+        </div>
+        <p class="text-2xl font-bold">{{ statistics().totalDocuments }}</p>
+      </div>
+      <div class="bg-linear-to-br from-blue-500 to-blue-600 text-white rounded-sm shadow p-4">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-medium opacity-80">Pending Review</p>
+          <i class="pi pi-clock text-white/60 text-sm"></i>
+        </div>
+        <p class="text-2xl font-bold">
+          {{ (statistics().pendingDocuments || 0) + (statistics().pendingEvents || 0) }}
+        </p>
+        <p class="text-xs opacity-70 mt-1">
+          {{ statistics().pendingDocuments || 0 }} docs ·
+          {{ statistics().pendingEvents || 0 }} events
+        </p>
+      </div>
+    </div>
+
+    <!-- Document Status + SDG Chart -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <!-- Doc Status -->
+      <div class="bg-white rounded-sm border border-gray-100 p-4 space-y-3">
+        <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Document Status</p>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs text-gray-600">Approved</span>
+            <span class="text-xs font-semibold text-green-600"
+              >{{ statistics().approvedDocuments }} ({{ getApprovalRate() }}%)</span
+            >
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-1.5">
+            <div
+              class="bg-green-500 h-1.5 rounded-full transition-all"
+              [style.width.%]="getApprovalRate()"
+            ></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs text-gray-600">Pending</span>
+            <span class="text-xs font-semibold text-yellow-600">{{
+              statistics().pendingDocuments
+            }}</span>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-1.5">
+            <div
+              class="bg-yellow-400 h-1.5 rounded-full transition-all"
+              [style.width.%]="
+                statistics().totalDocuments > 0
+                  ? (statistics().pendingDocuments / statistics().totalDocuments) * 100
+                  : 0
+              "
+            ></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs text-gray-600">Rejected</span>
+            <span class="text-xs font-semibold text-red-500">{{
+              statistics().rejectedDocuments
+            }}</span>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-1.5">
+            <div
+              class="bg-red-400 h-1.5 rounded-full transition-all"
+              [style.width.%]="
+                statistics().totalDocuments > 0
+                  ? (statistics().rejectedDocuments / statistics().totalDocuments) * 100
+                  : 0
+              "
+            ></div>
+          </div>
+        </div>
+        <div class="pt-2 border-t border-gray-50 flex items-center justify-between">
+          <span class="text-xs text-gray-400">Active Advisers</span>
+          <span class="text-xs font-semibold text-indigo-600">{{
+            statistics().totalAdvisers
+          }}</span>
+        </div>
+      </div>
+
+      <!-- SDG Chart -->
+      <div class="lg:col-span-2 bg-white rounded-sm border border-gray-100 p-4">
+        <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">
+          Reports per SDG per Year
+        </p>
+        <app-sdg-events-chart [data]="sdgEventData()" />
+      </div>
+    </div>
+
+    <!-- Recent Documents -->
+    <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
+        <i class="pi pi-inbox text-xs text-gray-400"></i>
+        <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+          Recent Report Submissions
+        </p>
+      </div>
+      <div class="p-4">
+        @if (recentDocuments().length === 0) {
+          <div class="text-center py-8 text-gray-400">
+            <i class="pi pi-file text-3xl text-gray-200 mb-2 block"></i>
+            <p class="text-xs">No reports submitted yet</p>
+          </div>
+        } @else {
+          <div class="space-y-2">
+            @for (doc of recentDocuments(); track doc.document_id) {
+              <div
+                class="flex items-center justify-between p-3 bg-gray-50 rounded-sm hover:bg-gray-100 transition-colors"
+              >
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-medium text-gray-800 truncate">{{ doc.document_title }}</p>
+                  <p class="text-xs text-gray-500">{{ doc.organization.organization_name }}</p>
+                  <p class="text-xs text-gray-400">
+                    {{ doc.document_type.type_name }} · {{ getTimeAgo(doc.submitted_date) }}
+                  </p>
+                </div>
+                <span
+                  class="ml-3 shrink-0 px-2 py-0.5 rounded-full text-xs font-medium"
+                  [ngClass]="getStatusColor(doc.status)"
+                >
+                  {{ getStatusText(doc.status) }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Organizations Overview -->
+    <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
+        <i class="pi pi-sitemap text-xs text-gray-400"></i>
+        <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+          Organizations Overview
+        </p>
+      </div>
+      <div class="p-4">
+        @if (organizationStats().length === 0) {
+          <div class="text-center py-8 text-gray-400">
+            <i class="pi pi-users text-3xl text-gray-200 mb-2 block"></i>
+            <p class="text-xs">No organizations found</p>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            @for (org of organizationStats(); track org.organization_id) {
+              <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50 transition-colors">
+                <div class="flex items-start justify-between mb-2">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold text-gray-800 truncate">
+                      {{ org.organization_name }}
+                    </p>
+                    <p class="text-xs text-gray-500 mt-0.5">
+                      <i class="pi pi-user text-xs mr-1 text-gray-400"></i>{{ getFacultyName(org) }}
+                    </p>
+                  </div>
+                  @if (getPendingCount(org) > 0) {
+                    <span
+                      class="shrink-0 ml-2 px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full"
+                    >
+                      {{ getPendingCount(org) }}
+                    </span>
+                  }
+                </div>
+                <div class="flex items-center gap-4 text-xs text-gray-500">
+                  <span class="flex items-center gap-1">
+                    <i class="pi pi-users text-xs text-gray-400"></i
+                    >{{ getMemberCount(org) }} members
+                  </span>
+                  <span class="flex items-center gap-1">
+                    <i class="pi pi-file text-xs text-gray-400"></i>{{ getDocumentCount(org) }} docs
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

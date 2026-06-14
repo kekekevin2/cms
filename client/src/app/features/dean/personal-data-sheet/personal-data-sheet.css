@@ -1,0 +1,153 @@
+/* Component-specific styles */
+:host {
+  display: block;
+}
+
+/* Tabs */
+.border-b {
+  border-bottom-width: 1px;
+}
+
+/* Form inputs focus states */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .grid-cols-2,
+  .grid-cols-3,
+  .md\\:grid-cols-2,
+  .md\\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fa-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Custom scrollbar for long content */
+:host ::ng-deep {
+  scrollbar-width: thin;
+}
+
+/* Print styles */
+@media print {
+  .px-6 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  button {
+    display: none !important;
+  }
+
+  .shadow-md {
+    box-shadow: none;
+  }
+}
+
+/* File input preview */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Status badges */
+.border-green-300 {
+  background-color: #d1fae5;
+}
+
+.border-blue-300 {
+  background-color: #dbeafe;
+}
+
+.border-red-300 {
+  background-color: #fee2e2;
+}
+
+.border-gray-300 {
+  background-color: #f3f4f6;
+}
+
+/* Questionnaire section background */
+.bg-yellow-50 {
+  background-color: #fffbeb;
+}
+
+.border-yellow-300 {
+  border-color: #fcd34d;
+}
+
+/* Declaration box */
+.bg-blue-50 {
+  background-color: #eff6ff;
+}
+
+.border-blue-200 {
+  border-color: #bfdbfe;
+}
+
+/* Photo/Signature upload boxes */
+.border-dashed {
+  border-style: dashed;
+}
+
+/* List styles */
+.list-disc {
+  list-style-type: disc;
+}
+
+.list-inside {
+  list-style-position: inside;
+}
+
+/* Chip/Tag styles for skills */
+.rounded-full {
+  border-radius: 9999px;
+}
+
+/* Hover effects */
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Disabled state */
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Transition effects */
+button,
+input,
+select,
+textarea {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Tab active indicator */
+[class*='border-blue-600'] {
+  border-bottom-width: 2px;
+  font-weight: 600;
+}

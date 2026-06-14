@@ -1,0 +1,155 @@
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Modal Content */
+.modal-content {
+  background: white;
+  border-radius: 0.5rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Dark mode modal */
+:global(.dark) .modal-content,
+.dark .modal-content {
+  background: #1f2937;
+  color: #f9fafb;
+}
+
+/* Scrollbar Styling */
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* ===== DARK MODE OVERRIDES ===== */
+
+:host-context(.dark) .bg-white {
+  background-color: #1f2937 !important;
+}
+
+:host-context(.dark) .bg-gray-50 {
+  background-color: #111827 !important;
+}
+
+:host-context(.dark) .text-gray-800,
+:host-context(.dark) .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+:host-context(.dark) .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+:host-context(.dark) .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+:host-context(.dark) .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+:host-context(.dark) .border-gray-200 {
+  border-color: #374151 !important;
+}
+
+:host-context(.dark) .border-gray-300 {
+  border-color: #4b5563 !important;
+}
+
+:host-context(.dark) input,
+:host-context(.dark) select,
+:host-context(.dark) textarea {
+  background-color: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+}
+
+:host-context(.dark) input::placeholder,
+:host-context(.dark) textarea::placeholder {
+  color: #6b7280;
+}
+
+/* Modal dark mode */
+:host-context(.dark) .modal-content {
+  background: #1f2937;
+  color: #f9fafb;
+}
+
+:host-context(.dark) .modal-content::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+/* Pill/badge dark mode */
+:host-context(.dark) .bg-green-100 {
+  background-color: #064e3b !important;
+}
+
+:host-context(.dark) .text-green-800 {
+  color: #6ee7b7 !important;
+}
+
+:host-context(.dark) .bg-blue-100 {
+  background-color: #1e3a5f !important;
+}
+
+:host-context(.dark) .text-blue-800 {
+  color: #93c5fd !important;
+}
+
+:host-context(.dark) .bg-yellow-100 {
+  background-color: #422006 !important;
+}
+
+:host-context(.dark) .text-yellow-800 {
+  color: #fde68a !important;
+}
+
+:host-context(.dark) .bg-red-100 {
+  background-color: #450a0a !important;
+}
+
+:host-context(.dark) .text-red-800 {
+  color: #fca5a5 !important;
+}
+
+/* Hover states on record cards */
+:host-context(.dark) .hover\:bg-blue-50:hover {
+  background-color: #1e3a5f !important;
+}
+
+:host-context(.dark) .hover\:bg-red-50:hover {
+  background-color: #450a0a !important;
+}
+
+:host-context(.dark) .hover\:shadow-md:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4) !important;
+}

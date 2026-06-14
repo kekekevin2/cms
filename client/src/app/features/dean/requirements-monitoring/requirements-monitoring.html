@@ -1,0 +1,391 @@
+<div class="p-3 space-y-5">
+  <!-- Filters -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="flex items-center gap-2 flex-wrap">
+      <select
+        [(ngModel)]="selectedAcademicYear"
+        (change)="filterData()"
+        class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 bg-white"
+      >
+        @for (year of academicYearsList(); track year.academic_year_id) {
+          <option [value]="year.academic_year_id">{{ year.year_start }}-{{ year.year_end }}</option>
+        }
+      </select>
+      <select
+        [(ngModel)]="selectedSemester"
+        (change)="filterData()"
+        class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 bg-white"
+      >
+        <option value="1st Semester">1st Semester</option>
+        <option value="2nd Semester">2nd Semester</option>
+        <option value="Summer 1">Summer 1</option>
+        <option value="Summer 2">Summer 2</option>
+      </select>
+      <select
+        [(ngModel)]="selectedFacultyId"
+        (change)="loadFacultyRequirements()"
+        class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 bg-white"
+      >
+        <option [value]="0">Select a faculty…</option>
+        @for (faculty of facultyList(); track faculty.faculty_id) {
+          <option [value]="faculty.faculty_id">
+            {{ getFacultyName(faculty) }} ({{ faculty.employee_id }})
+          </option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (!selectedFacultyRequirements() && !loading()) {
+    <div class="bg-white rounded-sm border border-gray-100 px-5 py-14 text-center">
+      <div class="inline-flex flex-col items-center gap-2 text-gray-400">
+        <i class="pi pi-folder-open text-5xl text-gray-200"></i>
+        <span class="text-xs">Select a faculty member to view their portfolio</span>
+      </div>
+    </div>
+  }
+
+  @if (selectedFacultyRequirements()) {
+    <!-- Faculty Info + Clearance -->
+    <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+      <div
+        class="px-5 py-4 border-b border-gray-50 flex items-center justify-between flex-wrap gap-3"
+      >
+        <div>
+          <p class="text-xs font-semibold text-gray-900">
+            {{ getFacultyName(selectedFacultyRequirements()!.faculty) }}
+          </p>
+          <p class="text-xs text-gray-400">
+            Emp. ID: {{ selectedFacultyRequirements()!.faculty.employee_id }}
+          </p>
+        </div>
+        @if (isSpecificPeriodSelected()) {
+          <span
+            [class]="
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ' +
+              getClearanceStatusClass(
+                selectedFacultyRequirements()!.period_clearance?.clearance_status
+              )
+            "
+          >
+            {{
+              getClearanceStatusText(
+                selectedFacultyRequirements()!.period_clearance?.clearance_status
+              )
+            }}
+          </span>
+        } @else {
+          <span
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500"
+          >
+            Select year &amp; semester
+          </span>
+        }
+      </div>
+
+      @if (selectedFacultyRequirements()!.period_clearance?.clearance_remarks) {
+        <div class="mx-5 mt-4 px-3 py-2 bg-blue-50 border border-blue-100 rounded-sm">
+          <p class="text-xs font-medium text-blue-700">
+            Remarks:
+            <span class="font-normal">{{
+              selectedFacultyRequirements()!.period_clearance!.clearance_remarks
+            }}</span>
+          </p>
+        </div>
+      }
+
+      <!-- Stats -->
+      <div class="px-5 py-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="text-center p-3 bg-blue-50 rounded-sm border border-blue-100">
+          <p class="text-xl font-bold text-blue-600">
+            {{ selectedFacultyRequirements()!.statistics.total_requirements }}
+          </p>
+          <p class="text-xs text-gray-500 mt-0.5">Total</p>
+        </div>
+        <div class="text-center p-3 bg-green-50 rounded-sm border border-green-100">
+          <p class="text-xl font-bold text-green-600">
+            {{ selectedFacultyRequirements()!.statistics.validated }}
+          </p>
+          <p class="text-xs text-gray-500 mt-0.5">Validated</p>
+        </div>
+        <div class="text-center p-3 bg-yellow-50 rounded-sm border border-yellow-100">
+          <p class="text-xl font-bold text-yellow-600">
+            {{ selectedFacultyRequirements()!.statistics.pending }}
+          </p>
+          <p class="text-xs text-gray-500 mt-0.5">Pending</p>
+        </div>
+        <div class="text-center p-3 bg-purple-50 rounded-sm border border-purple-100">
+          <p class="text-xl font-bold text-purple-600">
+            {{ selectedFacultyRequirements()!.statistics.completion_rate }}%
+          </p>
+          <p class="text-xs text-gray-500 mt-0.5">Complete</p>
+        </div>
+      </div>
+
+      <!-- Clearance Actions -->
+      <div class="px-5 pb-4 border-t border-gray-50 pt-3">
+        <p class="text-xs font-medium text-gray-600 mb-2">Set Clearance Status:</p>
+        @if (!isSpecificPeriodSelected()) {
+          <p class="text-xs text-yellow-600 flex items-center gap-1.5 mb-2">
+            <i class="pi pi-exclamation-triangle text-xs"></i> Select a specific academic year and
+            semester first
+          </p>
+        }
+        <div class="flex gap-2 flex-wrap">
+          <button
+            (click)="setFacultyClearanceStatus('cleared')"
+            [disabled]="!isSpecificPeriodSelected()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-sm hover:bg-green-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <i class="pi pi-check text-xs"></i> Set as Cleared
+          </button>
+          <button
+            (click)="setFacultyClearanceStatus('withholding')"
+            [disabled]="!isSpecificPeriodSelected()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <i class="pi pi-times-circle text-xs"></i> Set as For Review
+          </button>
+          <button
+            (click)="setFacultyClearanceStatus('pending')"
+            [disabled]="!isSpecificPeriodSelected()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-yellow-500 rounded-sm hover:bg-yellow-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <i class="pi pi-clock text-xs"></i> Set as Pending
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Requirements Table -->
+    <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-3 border-b border-gray-50">
+        <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+          Submitted Requirements
+        </p>
+      </div>
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50">
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+            >
+              Requirement
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28"
+            >
+              Academic Year
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28"
+            >
+              Semester
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+            >
+              File
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32"
+            >
+              Submitted
+            </th>
+            <th
+              class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-24"
+            >
+              Status
+            </th>
+            <th
+              class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-32"
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          @if (selectedFacultyRequirements()!.requirements.length === 0) {
+            <tr>
+              <td colspan="7" class="px-5 py-14 text-center text-gray-400">
+                <div class="inline-flex flex-col items-center gap-2">
+                  <i class="pi pi-inbox text-5xl text-gray-200"></i>
+                  <span class="text-xs">No requirements submitted yet</span>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (
+              submission of selectedFacultyRequirements()!.requirements;
+              track submission.submission_id
+            ) {
+              <tr class="hover:bg-gray-50/60 transition-colors">
+                <td class="px-5 py-3.5 font-medium text-gray-700 text-xs">
+                  {{ submission.requirement_name }}
+                </td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs">
+                  @if (submission.academic_year) {
+                    {{ submission.academic_year.year_start }}-{{
+                      submission.academic_year.year_end
+                    }}
+                  } @else {
+                    N/A
+                  }
+                </td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs">
+                  {{ getSemesterLabel(submission.semester) }}
+                </td>
+                <td class="px-5 py-3.5 text-xs">
+                  <span class="inline-flex items-center gap-1.5 text-gray-500">
+                    <i class="pi pi-file-pdf text-red-400 text-xs"></i>
+                    {{ submission.file_name }}
+                  </span>
+                </td>
+                <td class="px-5 py-3.5 text-gray-400 text-xs">
+                  {{ submission.submission_date | date: 'MMM d, y' }}
+                </td>
+                <td class="px-5 py-3.5 text-center">
+                  <span
+                    [class]="
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ' +
+                      getStatusClass(submission.status)
+                    "
+                  >
+                    {{ submission.status | titlecase }}
+                  </span>
+                </td>
+                <td class="px-5 py-3.5">
+                  <div class="flex items-center justify-end gap-1">
+                    <button
+                      (click)="openViewModal(submission)"
+                      title="View"
+                      class="px-2 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-eye text-xs"></i>
+                    </button>
+                    <button
+                      (click)="downloadFile(submission.submission_id)"
+                      title="Download"
+                      class="px-2 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-download text-xs"></i>
+                    </button>
+                    @if (submission.status === 'pending') {
+                      <button
+                        (click)="openViewModal(submission)"
+                        title="Clear"
+                        class="px-2 py-1.5 text-xs font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition inline-flex items-center gap-1"
+                      >
+                        <i class="pi pi-check text-xs"></i>
+                      </button>
+                      <button
+                        (click)="openViewModal(submission)"
+                        title="Return"
+                        class="px-2 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition inline-flex items-center gap-1"
+                      >
+                        <i class="pi pi-undo text-xs"></i>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- View Modal -->
+@if (showViewModal() && selectedSubmission()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
+      <div class="px-6 py-5 border-b border-gray-100">
+        <h3 class="text-xs font-semibold text-gray-900">Requirement Details</h3>
+        <p class="text-xs text-gray-400 mt-0.5">
+          {{ getFacultyName(selectedFacultyRequirements()!.faculty) }}
+        </p>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs text-gray-400 mb-0.5">Academic Year</p>
+            <p class="text-xs font-medium text-gray-700">
+              @if (selectedSubmission()!.academic_year) {
+                {{ selectedSubmission()!.academic_year.year_start }}-{{
+                  selectedSubmission()!.academic_year.year_end
+                }}
+              } @else {
+                N/A
+              }
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-400 mb-0.5">Semester</p>
+            <p class="text-xs font-medium text-gray-700">
+              {{ getSemesterLabel(selectedSubmission()!.semester) }}
+            </p>
+          </div>
+          <div class="col-span-2">
+            <p class="text-xs text-gray-400 mb-0.5">Requirement</p>
+            <p class="text-xs font-medium text-gray-700">
+              {{ selectedSubmission()!.requirement_name }}
+            </p>
+          </div>
+          <div class="col-span-2">
+            <p class="text-xs text-gray-400 mb-0.5">File</p>
+            <p class="text-xs font-medium text-gray-700">{{ selectedSubmission()!.file_name }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-400 mb-0.5">Status</p>
+            <span
+              [class]="
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ' +
+                getStatusClass(selectedSubmission()!.status)
+              "
+            >
+              {{ selectedSubmission()!.status | titlecase }}
+            </span>
+          </div>
+        </div>
+        @if (selectedSubmission()!.dean_remarks) {
+          <div class="p-3 bg-blue-50 border border-blue-100 rounded-sm">
+            <p class="text-xs font-medium text-blue-700 mb-0.5">Previous Remarks</p>
+            <p class="text-xs text-blue-600">{{ selectedSubmission()!.dean_remarks }}</p>
+          </div>
+        }
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-2">
+        <button
+          (click)="closeViewModal()"
+          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+        >
+          Close
+        </button>
+        <div class="flex gap-2">
+          <button
+            (click)="downloadFile(selectedSubmission()!.submission_id)"
+            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-sm hover:bg-blue-700 transition"
+          >
+            <i class="pi pi-download text-xs"></i> Download
+          </button>
+          @if (selectedSubmission()!.status === 'pending') {
+            <button
+              (click)="validateRequirement()"
+              class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-green-600 rounded-sm hover:bg-green-700 transition"
+            >
+              <i class="pi pi-check text-xs"></i> Validate
+            </button>
+            <button
+              (click)="returnRequirement()"
+              class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition"
+            >
+              <i class="pi pi-undo text-xs"></i> Return
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

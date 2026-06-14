@@ -1,0 +1,519 @@
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h3 class="text-lg font-semibold text-gray-900">Organization Events</h3>
+      <p class="text-sm text-gray-600 mt-1">Manage events</p>
+    </div>
+    <button
+      (click)="openEventModal()"
+      class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition flex items-center gap-2"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Add Event
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="text-center py-12">
+      <div
+        class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"
+      ></div>
+      <p class="text-gray-600 mt-4">Loading events...</p>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @else if (events().length === 0) {
+    <div class="text-center py-12 bg-gray-50 rounded-lg">
+      <svg
+        class="mx-auto w-16 h-16 text-gray-400 mb-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        />
+      </svg>
+      <p class="text-gray-700 text-lg font-medium">No events yet</p>
+      <p class="text-gray-500 text-sm mt-2">Create your first event to get started</p>
+    </div>
+  }
+
+  <!-- Events Table -->
+  @else {
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+            >
+              Title
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+            >
+              Date
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+            >
+              Time
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+            >
+              Status
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+            >
+              SDGs
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+            >
+              File
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          @for (event of events(); track event.id) {
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3">
+                <div class="font-medium text-gray-900">{{ event.title }}</div>
+                @if (event.description) {
+                  <div class="text-sm text-gray-500 truncate max-w-xs">{{ event.description }}</div>
+                }
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ event.date_implemented }}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">
+                @if (event.start_time && event.end_time) {
+                  {{ event.start_time }} - {{ event.end_time }}
+                } @else {
+                  <span class="text-gray-400">Not set</span>
+                }
+              </td>
+              <td class="px-4 py-3">
+                <span
+                  [class]="
+                    'px-2 py-1 text-xs font-semibold rounded-full ' + getStatusColor(event.status)
+                  "
+                >
+                  {{ event.status }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                @if (event.sdgs && event.sdgs.length > 0) {
+                  <button
+                    (click)="openSDGModal(event)"
+                    class="flex flex-wrap gap-1 hover:opacity-80 transition"
+                    title="Click to view all SDGs"
+                  >
+                    @for (sdg of event.sdgs.slice(0, 3); track sdg) {
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold text-white"
+                        [style.background-color]="getSDGColor(sdg)"
+                      >
+                        {{ sdg }}
+                      </span>
+                    }
+                    @if (event.sdgs.length > 3) {
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-600 text-white"
+                      >
+                        +{{ event.sdgs.length - 3 }}
+                      </span>
+                    }
+                  </button>
+                } @else {
+                  <span class="text-gray-400 text-sm">None</span>
+                }
+              </td>
+              <td class="px-4 py-3">
+                @if (event.file_path) {
+                  <button
+                    (click)="downloadFile(event.id!)"
+                    class="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center gap-1"
+                    title="Download PDF"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    {{ event.original_filename }}
+                  </button>
+                } @else {
+                  <span class="text-gray-400 text-sm">No file</span>
+                }
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <button
+                    (click)="openEventModal(event)"
+                    class="text-blue-600 hover:text-blue-700 p-1"
+                    title="Edit"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    (click)="deleteEvent(event.id!)"
+                    class="text-red-600 hover:text-red-700 p-1"
+                    title="Delete"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Event Modal -->
+@if (showEventModal()) {
+  <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div
+        class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center"
+      >
+        <h3 class="text-xl font-bold text-gray-900">
+          {{ isEditing() ? 'Edit Event' : 'Add New Event' }}
+        </h3>
+        <button (click)="showEventModal.set(false)" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <form (ngSubmit)="saveEvent()" class="p-6 space-y-6">
+        <!-- Basic Information -->
+        <div class="space-y-4">
+          <h4 class="font-semibold text-gray-900 border-b pb-2">Basic Information</h4>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Event Title *</label>
+            <input
+              type="text"
+              [(ngModel)]="eventForm().title"
+              name="title"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Enter event title"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+              <input
+                type="date"
+                [(ngModel)]="eventForm().date_implemented"
+                name="date_implemented"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                [(ngModel)]="eventForm().status"
+                name="status"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+              >
+                <option value="Planned">Planned</option>
+                <option value="Ongoing">Ongoing</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+              <input
+                type="time"
+                [(ngModel)]="eventForm().start_time"
+                name="start_time"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+              <input
+                type="time"
+                [(ngModel)]="eventForm().end_time"
+                name="end_time"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea
+              [(ngModel)]="eventForm().description"
+              name="description"
+              rows="3"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Enter event description"
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Upload PDF File (Optional)
+            </label>
+            <input
+              type="file"
+              accept=".pdf"
+              (change)="onFileSelect($event)"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+            />
+            @if (eventForm().file_path && !selectedFile) {
+              <p class="text-sm text-green-600 mt-1 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Current file: {{ eventForm().original_filename }}
+              </p>
+            }
+            @if (selectedFile) {
+              <p class="text-sm text-blue-600 mt-1 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                New file selected: {{ selectedFile.name }}
+              </p>
+            }
+          </div>
+        </div>
+
+        <!-- SDG Alignment -->
+        <div class="space-y-4">
+          <h4 class="font-semibold text-gray-900 border-b pb-2">SDG Alignment</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            @for (sdg of sdgList; track sdg) {
+              <button
+                type="button"
+                (click)="toggleSDG(sdg)"
+                [class]="
+                  selectedSDGs().includes(sdg)
+                    ? 'text-white border-2'
+                    : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50'
+                "
+                [style.background-color]="selectedSDGs().includes(sdg) ? getSDGColor(sdg) : ''"
+                [style.border-color]="selectedSDGs().includes(sdg) ? getSDGColor(sdg) : ''"
+                class="px-3 py-2 rounded-lg font-medium text-sm transition text-left flex items-center gap-2"
+              >
+                <span class="font-bold">{{ sdg }}</span>
+                <span class="flex-1">{{ getSDGName(sdg) }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Guests -->
+        <div class="space-y-4">
+          <h4 class="font-semibold text-gray-900 border-b pb-2">Event Guests (Optional)</h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input
+              type="text"
+              [(ngModel)]="newGuest().guest_name"
+              name="guest_name"
+              placeholder="Guest Name"
+              class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+            />
+            <input
+              type="text"
+              [(ngModel)]="newGuest().guest_title"
+              name="guest_title"
+              placeholder="Title/Position"
+              class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+            />
+            <div class="flex gap-2">
+              <input
+                type="text"
+                [(ngModel)]="newGuest().guest_affiliation"
+                name="guest_affiliation"
+                placeholder="Affiliation"
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+              />
+              <button
+                type="button"
+                (click)="addGuest()"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          @if (guestsList().length > 0) {
+            <div class="space-y-2">
+              @for (guest of guestsList(); track $index) {
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p class="font-medium text-gray-900">{{ guest.guest_name }}</p>
+                    <p class="text-sm text-gray-600">
+                      {{ guest.guest_title }}
+                      @if (guest.guest_affiliation) {
+                        - {{ guest.guest_affiliation }}
+                      }
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="removeGuest($index)"
+                    class="text-red-600 hover:text-red-700"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 pt-4 border-t">
+          <button
+            type="button"
+            (click)="showEventModal.set(false)"
+            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+          >
+            {{ isEditing() ? 'Update Event' : 'Create Event' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- SDG Details Modal -->
+@if (showSDGModal()) {
+  <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div
+        class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center"
+      >
+        <div>
+          <h3 class="text-xl font-bold text-gray-900">Sustainable Development Goals</h3>
+          <p class="text-sm text-gray-600 mt-1">{{ selectedEventTitle() }}</p>
+        </div>
+        <button (click)="showSDGModal.set(false)" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-6">
+        @if (selectedEventSDGs().length === 0) {
+          <div class="text-center py-8 text-gray-500">
+            <p>No SDGs assigned to this event</p>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 gap-3">
+            @for (sdg of selectedEventSDGs(); track sdg) {
+              <div
+                class="flex items-center p-4 rounded-lg border-2 transition hover:shadow-md"
+                [style.border-color]="getSDGColor(sdg)"
+              >
+                <div
+                  class="flex-shrink-0 w-16 h-16 rounded-lg flex items-center justify-center text-white font-bold text-2xl mr-4"
+                  [style.background-color]="getSDGColor(sdg)"
+                >
+                  {{ sdg }}
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-gray-900 text-lg">SDG {{ sdg }}</h4>
+                  <p class="text-gray-600 text-sm">{{ getSDGName(sdg) }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
+        <button
+          (click)="showSDGModal.set(false)"
+          class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+}

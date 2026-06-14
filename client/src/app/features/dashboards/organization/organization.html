@@ -1,0 +1,663 @@
+<!-- Sidebar -->
+<aside
+  [class.translate-x-0]="isSidebarOpen()"
+  [class.-translate-x-full]="!isSidebarOpen()"
+  class="fixed top-0 left-0 z-50 w-64 h-full transition-transform bg-white border-r border-gray-200"
+>
+  <div class="h-full px-3 py-4 overflow-y-auto">
+    <!-- Logo/Brand -->
+    <div class="mb-6 px-2 flex flex-col items-center">
+      <img src="/assets/logo.png" alt="Logo" class="h-24 mb-3" />
+      <h2 class="text-xl font-bold text-gray-900 text-center">Organization Portal</h2>
+      <p class="text-sm text-gray-600 text-center mt-1">{{ organizationName() }}</p>
+    </div>
+
+    <ul class="space-y-2 font-medium">
+      <!-- Dashboard -->
+      <li>
+        <button
+          (click)="selectTab('dashboard')"
+          [class.bg-green-50]="activeTab() === 'dashboard'"
+          [class.text-green-600]="activeTab() === 'dashboard'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <svg class="shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 6.025A7.5 7.5 0 1 0 17.975 14H10V6.025Z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13.5 3c-.169 0-.334.014-.5.025V11h7.975c.011-.166.025-.331.025-.5A7.5 7.5 0 0 0 13.5 3Z"
+            />
+          </svg>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left">Dashboard</span>
+        </button>
+      </li>
+
+      <li class="pt-2 mt-2 border-t border-gray-200"></li>
+
+      <!-- Members -->
+      <li>
+        <button
+          (click)="selectTab('members')"
+          [class.bg-green-50]="activeTab() === 'members'"
+          [class.text-green-600]="activeTab() === 'members'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <svg class="shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left">Members</span>
+        </button>
+      </li>
+
+      <!-- Reports -->
+      <li>
+        <button
+          (click)="selectTab('documents')"
+          [class.bg-green-50]="activeTab() === 'documents'"
+          [class.text-green-600]="activeTab() === 'documents'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <svg class="shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left">Reports</span>
+        </button>
+      </li>
+    </ul>
+  </div>
+</aside>
+
+<!-- Top Bar -->
+<div
+  class="fixed top-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300"
+  [class.left-64]="isSidebarOpen()"
+  [class.left-0]="!isSidebarOpen()"
+  [class.right-0]="true"
+>
+  <div class="flex items-center gap-4">
+    <button
+      (click)="toggleSidebar()"
+      type="button"
+      class="text-gray-900 bg-transparent hover:bg-gray-200 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm p-2 focus:outline-none"
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h10" />
+      </svg>
+    </button>
+    <h1 class="text-xl font-bold text-gray-900">{{ getPageTitle() }}</h1>
+  </div>
+
+  <!-- Right Section: Dark Mode + User Menu -->
+  <div class="flex items-center gap-3">
+    <!-- Dark Mode Toggle Button -->
+    <button
+      (click)="themeService.toggleTheme()"
+      class="flex items-center justify-center p-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 border border-gray-300 dark:border-gray-600"
+      title="Toggle Dark Mode"
+      aria-label="Toggle Dark Mode"
+    >
+      @if (themeService.isDarkMode()) {
+        <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          />
+        </svg>
+      } @else {
+        <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+          />
+        </svg>
+      }
+    </button>
+
+    <!-- User Menu -->
+    <div class="relative">
+      <button
+        (click)="toggleUserMenu()"
+        class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
+      >
+        <div
+          class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm"
+        >
+          {{ organizationName().charAt(0) }}
+        </div>
+        <span class="font-medium hidden sm:inline">{{ organizationName() }}</span>
+        <svg
+          class="w-4 h-4 transition-transform"
+        [class.rotate-180]="isUserMenuOpen()"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+
+    @if (isUserMenuOpen()) {
+      <div class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg">
+        <button
+          (click)="isChangePasswordOpen.set(true); isUserMenuOpen.set(false)"
+          class="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-t-lg transition"
+        >
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+            />
+          </svg>
+          <span>Change Password</span>
+        </button>
+        <button
+          (click)="logout()"
+          class="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-b-lg transition"
+        >
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
+          </svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    }
+  </div>
+</div>
+</div>
+
+<!-- Main Content -->
+<div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300" [class.ml-64]="isSidebarOpen()">
+  @if (activeTab() === 'dashboard') {
+    <div class="p-4 border border-gray-200 border-dashed rounded-lg">
+      <!-- Dashboard Tabs -->
+      <div class="mb-6 border-b border-gray-200">
+        <nav class="flex space-x-8">
+          <button
+            (click)="selectDashboardTab('analytics')"
+            [class.border-green-600]="dashboardTab() === 'analytics'"
+            [class.text-green-600]="dashboardTab() === 'analytics'"
+            [class.border-transparent]="dashboardTab() !== 'analytics'"
+            [class.text-gray-500]="dashboardTab() !== 'analytics'"
+            class="py-4 px-1 border-b-2 font-medium text-sm hover:text-green-600 hover:border-green-300 transition"
+          >
+            Organization Analytics
+          </button>
+          <button
+            (click)="selectDashboardTab('demographics')"
+            [class.border-green-600]="dashboardTab() === 'demographics'"
+            [class.text-green-600]="dashboardTab() === 'demographics'"
+            [class.border-transparent]="dashboardTab() !== 'demographics'"
+            [class.text-gray-500]="dashboardTab() !== 'demographics'"
+            class="py-4 px-1 border-b-2 font-medium text-sm hover:text-green-600 hover:border-green-300 transition"
+          >
+            Member Demographics
+          </button>
+        </nav>
+      </div>
+
+      <!-- Analytics Tab Content -->
+      @if (dashboardTab() === 'analytics') {
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div
+            class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg p-6"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-medium opacity-90 mb-1">Total Events</h3>
+                <p class="text-4xl font-bold">{{ stats().approvedEvents }}</p>
+                <p class="text-xs opacity-75 mt-1">All organization events</p>
+              </div>
+              <div class="text-5xl opacity-30">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-medium opacity-90 mb-1">Documents Submitted</h3>
+                <p class="text-4xl font-bold">{{ stats().documentsSubmitted }}</p>
+                <p class="text-xs opacity-75 mt-1">{{ stats().documentsPending }} pending</p>
+              </div>
+              <div class="text-5xl opacity-30">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-medium opacity-90 mb-1">Approved Documents</h3>
+                <p class="text-4xl font-bold">{{ stats().documentsApproved }}</p>
+                <p class="text-xs opacity-75 mt-1">{{ stats().documentsRejected }} rejected</p>
+              </div>
+              <div class="text-5xl opacity-30">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 gap-6 mb-6">
+          <!-- SDG Reports Chart -->
+          <app-sdg-events-chart
+            [data]="sdgEventData()"
+            [title]="'Reports per SDG per Year - ' + organizationName()"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <!-- Members by Position Chart -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Members by Position</h3>
+            @if (stats().membersByPosition.length === 0) {
+              <div class="text-center py-8 text-gray-500">
+                <p>No member data available</p>
+              </div>
+            } @else {
+              <div class="space-y-3">
+                @for (item of stats().membersByPosition.slice(0, 8); track item.position) {
+                  <div class="flex items-center">
+                    <div class="w-32 text-sm font-medium text-gray-700 truncate">
+                      {{ item.position }}
+                    </div>
+                    <div class="flex-1 mx-3">
+                      <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div
+                          class="bg-gradient-to-r from-purple-500 to-purple-600 h-full rounded-full flex items-center justify-end pr-2 text-xs font-semibold text-white transition-all duration-500"
+                          [style.width.%]="(item.count / stats().totalMembers) * 100"
+                        >
+                          @if ((item.count / stats().totalMembers) * 100 > 15) {
+                            {{ item.count }}
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    <div class="w-12 text-right text-sm font-semibold text-gray-900">
+                      {{ item.count }}
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Members by Year Level Chart -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Members by Year Level</h3>
+            @if (stats().membersByYearLevel.length === 0) {
+              <div class="text-center py-8 text-gray-500">
+                <p>No member data available</p>
+              </div>
+            } @else {
+              <div class="space-y-3">
+                @for (item of stats().membersByYearLevel; track item.year) {
+                  <div class="flex items-center">
+                    <div class="w-28 text-sm font-medium text-gray-700">{{ item.year }}</div>
+                    <div class="flex-1 mx-3">
+                      <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <div
+                          class="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full flex items-center justify-end pr-2 text-xs font-semibold text-white transition-all duration-500"
+                          [style.width.%]="(item.count / stats().totalMembers) * 100"
+                        >
+                          @if ((item.count / stats().totalMembers) * 100 > 15) {
+                            {{ item.count }}
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    <div class="w-12 text-right text-sm font-semibold text-gray-900">
+                      {{ item.count }}
+                    </div>
+                    <div class="w-16 text-right text-xs text-gray-500">
+                      {{ ((item.count / stats().totalMembers) * 100).toFixed(0) }}%
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Demographics Tab Content -->
+      } @else if (dashboardTab() === 'demographics') {
+        <div class="space-y-6">
+          <!-- Filters for Demographics -->
+          <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                <select
+                  [(ngModel)]="demographicsAcademicYear"
+                  (ngModelChange)="loadDemographics()"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option [ngValue]="undefined">All Years</option>
+                  <!-- Add academic years here -->
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <select
+                  [(ngModel)]="demographicsSemester"
+                  (ngModelChange)="loadDemographics()"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option [ngValue]="undefined">All Semesters</option>
+                  <option value="1st Semester">1st Semester</option>
+                  <option value="2nd Semester">2nd Semester</option>
+                  <option value="Summer">Summer</option>
+                </select>
+              </div>
+              <div class="flex items-end">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="demographicsActiveOnly"
+                    (ngModelChange)="loadDemographics()"
+                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <span class="text-sm font-medium text-gray-700">Active Only</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Member Demographics</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div
+                class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200"
+              >
+                <p class="text-sm text-purple-700 font-medium mb-1">Total Members</p>
+                <p class="text-3xl font-bold text-purple-900">{{ stats().totalMembers }}</p>
+              </div>
+              <div
+                class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200"
+              >
+                <p class="text-sm text-blue-700 font-medium mb-1">Active Members</p>
+                <p class="text-3xl font-bold text-blue-900">{{ stats().activeMembers || 0 }}</p>
+              </div>
+              <div
+                class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200"
+              >
+                <p class="text-sm text-green-700 font-medium mb-1">Male Members</p>
+                <p class="text-3xl font-bold text-green-900">{{ demographics().maleCount || 0 }}</p>
+              </div>
+              <div
+                class="bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg p-4 border border-pink-200"
+              >
+                <p class="text-sm text-pink-700 font-medium mb-1">Female Members</p>
+                <p class="text-3xl font-bold text-pink-900">
+                  {{ demographics().femaleCount || 0 }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Gender Distribution with Pie Chart -->
+            <div class="mb-6">
+              <h4 class="text-md font-semibold text-gray-800 mb-4">Gender Distribution</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Pie Chart -->
+                <div class="flex justify-center items-center">
+                  @if (demographics().maleCount > 0 || demographics().femaleCount > 0) {
+                    <div class="relative w-64 h-64">
+                      <svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                        <!-- Background circle -->
+                        <circle
+                          cx="100"
+                          cy="100"
+                          r="80"
+                          fill="none"
+                          stroke="#e5e7eb"
+                          stroke-width="40"
+                        />
+
+                        <!-- Male segment (Blue) -->
+                        @if (demographics().malePercentage > 0) {
+                          <circle
+                            cx="100"
+                            cy="100"
+                            r="80"
+                            fill="none"
+                            stroke="#3b82f6"
+                            stroke-width="40"
+                            [attr.stroke-dasharray]="
+                              (demographics().malePercentage / 100) * 502.65 + ' 502.65'
+                            "
+                            stroke-dashoffset="0"
+                          />
+                        }
+
+                        <!-- Female segment (Pink) -->
+                        @if (demographics().femalePercentage > 0) {
+                          <circle
+                            cx="100"
+                            cy="100"
+                            r="80"
+                            fill="none"
+                            stroke="#ec4899"
+                            stroke-width="40"
+                            [attr.stroke-dasharray]="
+                              (demographics().femalePercentage / 100) * 502.65 + ' 502.65'
+                            "
+                            [attr.stroke-dashoffset]="
+                              -(demographics().malePercentage / 100) * 502.65
+                            "
+                          />
+                        }
+                      </svg>
+
+                      <!-- Center text -->
+                      <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <p class="text-3xl font-bold text-gray-900">{{ stats().totalMembers }}</p>
+                        <p class="text-sm text-gray-600">Total</p>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="text-center py-12 text-gray-500">
+                      <p>No gender data available</p>
+                    </div>
+                  }
+                </div>
+
+                <!-- Legend and Stats -->
+                <div class="flex flex-col justify-center space-y-4">
+                  <div class="flex items-center">
+                    <div class="w-6 h-6 bg-blue-500 rounded mr-3"></div>
+                    <div class="flex-1">
+                      <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-700">Male</span>
+                        <span class="text-lg font-bold text-gray-900">{{
+                          demographics().maleCount || 0
+                        }}</span>
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        {{ demographics().malePercentage || 0 }}% of total
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center">
+                    <div class="w-6 h-6 bg-pink-500 rounded mr-3"></div>
+                    <div class="flex-1">
+                      <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-700">Female</span>
+                        <span class="text-lg font-bold text-gray-900">{{
+                          demographics().femaleCount || 0
+                        }}</span>
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        {{ demographics().femalePercentage || 0 }}% of total
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Program Distribution with Pie Chart -->
+            <div class="mb-6">
+              <h4 class="text-md font-semibold text-gray-800 mb-4">Members by Program</h4>
+              @if (demographics().byProgram && demographics().byProgram.length > 0) {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <!-- Pie Chart -->
+                  <div class="flex justify-center items-center">
+                    <div class="relative w-64 h-64">
+                      <svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                        <!-- Background circle -->
+                        <circle
+                          cx="100"
+                          cy="100"
+                          r="80"
+                          fill="none"
+                          stroke="#e5e7eb"
+                          stroke-width="40"
+                        />
+
+                        <!-- Program segments -->
+                        @for (
+                          program of demographics().byProgram;
+                          track program.program;
+                          let i = $index
+                        ) {
+                          <circle
+                            cx="100"
+                            cy="100"
+                            r="80"
+                            fill="none"
+                            [attr.stroke]="getProgramColor(i)"
+                            stroke-width="40"
+                            [attr.stroke-dasharray]="
+                              (((program.count / stats().totalMembers) * 100) / 100) * 502.65 +
+                              ' 502.65'
+                            "
+                            [attr.stroke-dashoffset]="-getAccumulatedOffset(i)"
+                          />
+                        }
+                      </svg>
+
+                      <!-- Center text -->
+                      <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <p class="text-3xl font-bold text-gray-900">
+                          {{ demographics().byProgram.length }}
+                        </p>
+                        <p class="text-sm text-gray-600">Programs</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Legend -->
+                  <div class="flex flex-col justify-center space-y-3 max-h-64 overflow-y-auto">
+                    @for (
+                      program of demographics().byProgram;
+                      track program.program;
+                      let i = $index
+                    ) {
+                      <div class="flex items-center">
+                        <div
+                          class="w-6 h-6 rounded mr-3"
+                          [style.background-color]="getProgramColor(i)"
+                        ></div>
+                        <div class="flex-1 min-w-0">
+                          <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-700 truncate">{{
+                              program.program
+                            }}</span>
+                            <span class="text-sm font-bold text-gray-900 ml-2">{{
+                              program.count
+                            }}</span>
+                          </div>
+                          <div class="text-xs text-gray-500">
+                            {{ ((program.count / stats().totalMembers) * 100).toFixed(1) }}%
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <p class="text-gray-500 text-center py-4">No program data available</p>
+              }
+            </div>
+
+            <!-- Year Level Distribution -->
+            <div>
+              <h4 class="text-md font-semibold text-gray-800 mb-3">Members by Year Level</h4>
+              @if (stats().membersByYearLevel && stats().membersByYearLevel.length > 0) {
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  @for (yearLevel of stats().membersByYearLevel; track yearLevel.year) {
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
+                      <p class="text-sm text-gray-600 mb-1">{{ yearLevel.year }}</p>
+                      <p class="text-2xl font-bold text-gray-900">{{ yearLevel.count }}</p>
+                      <p class="text-xs text-gray-500 mt-1">
+                        {{ ((yearLevel.count / stats().totalMembers) * 100).toFixed(1) }}%
+                      </p>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="text-gray-500 text-center py-4">No year level data available</p>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (activeTab() === 'members') {
+    <app-organization-members />
+  } @else if (activeTab() === 'documents') {
+    <app-organization-documents />
+  }
+</div>
+
+@if (isChangePasswordOpen()) {
+  <app-change-password-modal (close)="isChangePasswordOpen.set(false)" />
+}

@@ -1,0 +1,268 @@
+/* Component-specific styles */
+:host {
+  display: block;
+}
+
+/* Tabs */
+.border-b {
+  border-bottom-width: 1px;
+}
+
+/* Form inputs focus states */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .grid-cols-2,
+  .grid-cols-3,
+  .md\\:grid-cols-2,
+  .md\\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fa-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Custom scrollbar for long content */
+:host ::ng-deep {
+  scrollbar-width: thin;
+}
+
+/* Print styles */
+@media print {
+  .px-6 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  button {
+    display: none !important;
+  }
+
+  .shadow-md {
+    box-shadow: none;
+  }
+}
+
+/* File input preview */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Status badges */
+.border-green-300 {
+  background-color: #d1fae5;
+}
+
+.border-blue-300 {
+  background-color: #dbeafe;
+}
+
+.border-red-300 {
+  background-color: #fee2e2;
+}
+
+.border-gray-300 {
+  background-color: #f3f4f6;
+}
+
+/* Questionnaire section background */
+.bg-yellow-50 {
+  background-color: #fffbeb;
+}
+
+.border-yellow-300 {
+  border-color: #fcd34d;
+}
+
+/* Declaration box */
+.bg-blue-50 {
+  background-color: #eff6ff;
+}
+
+.border-blue-200 {
+  border-color: #bfdbfe;
+}
+
+/* Photo/Signature upload boxes */
+.border-dashed {
+  border-style: dashed;
+}
+
+/* List styles */
+.list-disc {
+  list-style-type: disc;
+}
+
+.list-inside {
+  list-style-position: inside;
+}
+
+/* Chip/Tag styles for skills */
+.rounded-full {
+  border-radius: 9999px;
+}
+
+/* Hover effects */
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Disabled state */
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Dark mode disabled state */
+:host-context(.dark) input:disabled,
+:host-context(.dark) select:disabled,
+:host-context(.dark) textarea:disabled {
+  background-color: #374151;
+}
+
+/* Transition effects */
+button,
+input,
+select,
+textarea {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Tab active indicator */
+[class*='border-blue-600'] {
+  border-bottom-width: 2px;
+  font-weight: 600;
+}
+
+/* ===== DARK MODE OVERRIDES ===== */
+
+/* Containers / cards */
+:host-context(.dark) .bg-white {
+  background-color: #1f2937 !important;
+}
+
+:host-context(.dark) .bg-gray-50 {
+  background-color: #111827 !important;
+}
+
+/* Text */
+:host-context(.dark) .text-gray-800,
+:host-context(.dark) .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+:host-context(.dark) .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+:host-context(.dark) .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+:host-context(.dark) .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+/* Borders */
+:host-context(.dark) .border-gray-200 {
+  border-color: #374151 !important;
+}
+
+:host-context(.dark) .border-gray-300 {
+  border-color: #4b5563 !important;
+}
+
+/* Inputs */
+:host-context(.dark) input,
+:host-context(.dark) select,
+:host-context(.dark) textarea {
+  background-color: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+}
+
+:host-context(.dark) input::placeholder,
+:host-context(.dark) textarea::placeholder {
+  color: #6b7280;
+}
+
+/* Stepper circles */
+:host-context(.dark) .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+:host-context(.dark) .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+/* Section headers */
+:host-context(.dark) .border-b {
+  border-color: #374151;
+}
+
+/* Questionnaire warning box */
+:host-context(.dark) .bg-yellow-50 {
+  background-color: #422006 !important;
+}
+
+:host-context(.dark) .text-yellow-800 {
+  color: #fde68a !important;
+}
+
+/* Work experience info box */
+:host-context(.dark) .bg-blue-50 {
+  background-color: #1e3a5f !important;
+}
+
+:host-context(.dark) .text-blue-800 {
+  color: #93c5fd !important;
+}
+
+/* Photo/signature upload area */
+:host-context(.dark) .border-dashed {
+  border-color: #4b5563;
+}
+
+/* Navigation buttons (Previous / Next) */
+:host-context(.dark) button.bg-white,
+:host-context(.dark) button[class*='bg-white'] {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+  border-color: #4b5563 !important;
+}
+
+/* Questionnaire radio buttons label text */
+:host-context(.dark) .text-gray-700 label,
+:host-context(.dark) label.text-gray-700 {
+  color: #d1d5db !important;
+}
+
+/* Declaration box text */
+:host-context(.dark) .text-gray-600 {
+  color: #9ca3af !important;
+}

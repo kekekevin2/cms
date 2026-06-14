@@ -1,0 +1,611 @@
+<div class="p-3 space-y-5">
+  <!-- Tab Navigation -->
+  <div class="flex items-center gap-1 border-b border-gray-100">
+    <button
+      (click)="switchTab('active')"
+      class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+      [class.border-green-500]="activeTab() === 'active'"
+      [class.text-green-600]="activeTab() === 'active'"
+      [class.border-transparent]="activeTab() !== 'active'"
+      [class.text-gray-500]="activeTab() !== 'active'"
+    >
+      <span class="inline-flex items-center gap-1.5">
+        <i class="pi pi-users text-xs"></i>
+        Active Faculty
+        <span
+          class="px-1.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700"
+          >{{ totalItems() }}</span
+        >
+      </span>
+    </button>
+    <button
+      (click)="switchTab('disabled')"
+      class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+      [class.border-red-500]="activeTab() === 'disabled'"
+      [class.text-red-600]="activeTab() === 'disabled'"
+      [class.border-transparent]="activeTab() !== 'disabled'"
+      [class.text-gray-500]="activeTab() !== 'disabled'"
+    >
+      <span class="inline-flex items-center gap-1.5">
+        <i class="pi pi-ban text-xs"></i>
+        Disabled Accounts
+        @if (disabledTotalItems() > 0) {
+          <span class="px-1.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">{{
+            disabledTotalItems()
+          }}</span>
+        }
+      </span>
+    </button>
+  </div>
+
+  <!-- Active Faculty Tab -->
+  @if (activeTab() === 'active') {
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="relative max-w-xs">
+        <i
+          class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"
+        ></i>
+        <input
+          type="text"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          (keyup.enter)="searchFaculty()"
+          placeholder="Search faculty…"
+          class="w-full pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-200"
+        />
+      </div>
+      <button
+        (click)="openCreateModal()"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white text-xs font-medium rounded-sm hover:bg-red-600 transition-colors"
+      >
+        <i class="pi pi-plus text-xs"></i>
+        Add Faculty
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50">
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28"
+            >
+              Emp. ID
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+            >
+              Name
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+            >
+              Email
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28"
+            >
+              Contact
+            </th>
+            <th
+              class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-48"
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          @if (loading()) {
+            <tr>
+              <td colspan="5" class="px-5 py-12 text-center text-gray-400">
+                <div class="inline-flex flex-col items-center gap-2">
+                  <i class="pi pi-spin pi-spinner text-xl"></i>
+                  <span class="text-xs">Loading…</span>
+                </div>
+              </td>
+            </tr>
+          } @else if (facultyList().length === 0) {
+            <tr>
+              <td colspan="5" class="px-5 py-14 text-center text-gray-400">
+                <div class="inline-flex flex-col items-center gap-2">
+                  <i class="pi pi-users text-5xl text-gray-200"></i>
+                  <span class="text-xs">No faculty found</span>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (faculty of facultyList(); track faculty.faculty_id) {
+              <tr class="hover:bg-gray-50/60 transition-colors">
+                <td class="px-5 py-3.5 text-gray-400 tabular-nums font-mono text-xs">
+                  {{ faculty.employee_id }}
+                </td>
+                <td class="px-5 py-3.5 font-medium text-gray-700 text-xs">
+                  {{ getFullName(faculty) }}
+                </td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs">{{ faculty.email }}</td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs">
+                  {{ faculty.contact_number || '—' }}
+                </td>
+                <td class="px-5 py-3.5">
+                  <div class="flex items-center justify-end gap-1">
+                    <button
+                      (click)="openEditModal(faculty)"
+                      title="Edit"
+                      class="px-2 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-pencil text-xs"></i>
+                    </button>
+                    <button
+                      (click)="resetPassword(faculty)"
+                      title="Reset Password"
+                      class="px-2 py-1.5 text-xs font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition-colors inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-key text-xs"></i>
+                    </button>
+                    <button
+                      (click)="downloadFacultyPDS(faculty)"
+                      title="Download PDS"
+                      class="px-2 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-md hover:bg-purple-100 transition-colors inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-download text-xs"></i>
+                    </button>
+                    <button
+                      (click)="downloadFacultyProfile(faculty)"
+                      title="Faculty Profile PDF"
+                      class="px-2 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-id-card text-xs"></i>
+                    </button>
+                    <button
+                      (click)="generateAllActivitiesPDF(faculty)"
+                      title="All Activities PDF"
+                      class="px-2 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-file-pdf text-xs"></i>
+                    </button>
+                    <button
+                      (click)="disableFaculty(faculty)"
+                      title="Disable Account"
+                      class="px-2 py-1.5 text-xs font-medium text-orange-600 bg-orange-50 rounded-md hover:bg-orange-100 transition-colors inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-ban text-xs"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+
+      @if (totalPages() > 1) {
+        <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+          <span class="text-xs text-gray-400">
+            {{ (currentPage() - 1) * pageSize + 1 }}–{{
+              Math.min(currentPage() * pageSize, totalItems())
+            }}
+            of {{ totalItems() }}
+          </span>
+          <div class="flex items-center gap-1">
+            <button
+              (click)="changePage(currentPage() - 1)"
+              [disabled]="currentPage() === 1"
+              class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              <i class="pi pi-chevron-left text-xs"></i>
+            </button>
+            @for (page of getPageNumbers(); track $index) {
+              @if (page === -1) {
+                <span class="px-1 text-xs text-gray-300">…</span>
+              } @else {
+                <button
+                  (click)="changePage(page)"
+                  [class.bg-gray-900]="currentPage() === page"
+                  [class.text-white]="currentPage() === page"
+                  [class.text-gray-600]="currentPage() !== page"
+                  class="min-w-7 h-7 px-1.5 text-xs font-medium rounded-md hover:bg-gray-100 transition-colors"
+                >
+                  {{ page }}
+                </button>
+              }
+            }
+            <button
+              (click)="changePage(currentPage() + 1)"
+              [disabled]="currentPage() === totalPages()"
+              class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              <i class="pi pi-chevron-right text-xs"></i>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Disabled Accounts Tab -->
+  @if (activeTab() === 'disabled') {
+    <!-- Header -->
+    <div class="flex justify-end">
+      <div class="relative max-w-xs">
+        <i
+          class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"
+        ></i>
+        <input
+          type="text"
+          [ngModel]="disabledSearchQuery()"
+          (ngModelChange)="disabledSearchQuery.set($event)"
+          (keyup.enter)="searchDisabledFaculty()"
+          placeholder="Search disabled accounts…"
+          class="w-full pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-200"
+        />
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50">
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28"
+            >
+              Emp. ID
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+            >
+              Name
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+            >
+              Email
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28"
+            >
+              Contact
+            </th>
+            <th
+              class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-24"
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          @if (disabledLoading()) {
+            <tr>
+              <td colspan="5" class="px-5 py-12 text-center text-gray-400">
+                <div class="inline-flex flex-col items-center gap-2">
+                  <i class="pi pi-spin pi-spinner text-xl"></i>
+                  <span class="text-xs">Loading…</span>
+                </div>
+              </td>
+            </tr>
+          } @else if (disabledFacultyList().length === 0) {
+            <tr>
+              <td colspan="5" class="px-5 py-14 text-center text-gray-400">
+                <div class="inline-flex flex-col items-center gap-2">
+                  <i class="pi pi-check-circle text-5xl text-gray-200"></i>
+                  <span class="text-xs">No disabled accounts</span>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (faculty of disabledFacultyList(); track faculty.faculty_id) {
+              <tr class="hover:bg-gray-50/60 transition-colors">
+                <td class="px-5 py-3.5 text-gray-400 tabular-nums font-mono text-xs">
+                  {{ faculty.employee_id }}
+                </td>
+                <td class="px-5 py-3.5 font-medium text-gray-700 text-xs">
+                  {{ getFullName(faculty) }}
+                </td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs">{{ faculty.email }}</td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs">
+                  {{ faculty.contact_number || '—' }}
+                </td>
+                <td class="px-5 py-3.5">
+                  <div class="flex items-center justify-end gap-1">
+                    <button
+                      (click)="restoreFaculty(faculty)"
+                      title="Restore Account"
+                      class="px-2 py-1.5 text-xs font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition-colors inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-undo text-xs"></i>
+                    </button>
+                    <button
+                      (click)="permanentlyDeleteFaculty(faculty)"
+                      title="Permanently Delete"
+                      class="px-2 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-trash text-xs"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+
+      @if (disabledTotalPages() > 1) {
+        <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+          <span class="text-xs text-gray-400">
+            {{ (disabledCurrentPage() - 1) * pageSize + 1 }}–{{
+              Math.min(disabledCurrentPage() * pageSize, disabledTotalItems())
+            }}
+            of {{ disabledTotalItems() }}
+          </span>
+          <div class="flex items-center gap-1">
+            <button
+              (click)="changeDisabledPage(disabledCurrentPage() - 1)"
+              [disabled]="disabledCurrentPage() === 1"
+              class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              <i class="pi pi-chevron-left text-xs"></i>
+            </button>
+            @for (page of getPageNumbers(); track $index) {
+              @if (page === -1) {
+                <span class="px-1 text-xs text-gray-300">…</span>
+              } @else {
+                <button
+                  (click)="changeDisabledPage(page)"
+                  [class.bg-gray-900]="disabledCurrentPage() === page"
+                  [class.text-white]="disabledCurrentPage() === page"
+                  [class.text-gray-600]="disabledCurrentPage() !== page"
+                  class="min-w-7 h-7 px-1.5 text-xs font-medium rounded-md hover:bg-gray-100 transition-colors"
+                >
+                  {{ page }}
+                </button>
+              }
+            }
+            <button
+              (click)="changeDisabledPage(disabledCurrentPage() + 1)"
+              [disabled]="disabledCurrentPage() === disabledTotalPages()"
+              class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              <i class="pi pi-chevron-right text-xs"></i>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Create Modal -->
+@if (showCreateModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
+      <div class="px-6 py-5 border-b border-gray-100">
+        <h3 class="text-xs font-semibold text-gray-900">Add New Faculty</h3>
+        <p class="text-xs text-gray-400 mt-0.5">
+          Login credentials will be sent to the provided email
+        </p>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1">
+        <form (submit)="submitCreateForm(); $event.preventDefault()">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Employee ID <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="createForm.employee_id"
+                name="employee_id"
+                maxlength="5"
+                placeholder="5-digit code"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Email <span class="text-red-500">*</span></label
+              >
+              <input
+                type="email"
+                [(ngModel)]="createForm.email"
+                name="email"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >First Name <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="createForm.first_name"
+                name="first_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Middle Name</label>
+              <input
+                type="text"
+                [(ngModel)]="createForm.middle_name"
+                name="middle_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Last Name <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="createForm.last_name"
+                name="last_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Contact Number</label>
+              <input
+                type="text"
+                [(ngModel)]="createForm.contact_number"
+                name="contact_number"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Position Level</label>
+              <select
+                [(ngModel)]="createForm.position_level"
+                name="position_level"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              >
+                <option value="">Select position level…</option>
+                @for (level of positionLevels(); track level.value) {
+                  <option [value]="level.value">{{ level.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+            <button
+              type="button"
+              (click)="closeCreateModal()"
+              [disabled]="createLoading()"
+              class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="createLoading()"
+              class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition-colors disabled:opacity-50"
+            >
+              @if (createLoading()) {
+                <i class="pi pi-spin pi-spinner text-xs"></i> Creating…
+              } @else {
+                Create
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Modal -->
+@if (showEditModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
+      <div class="px-6 py-5 border-b border-gray-100">
+        <h3 class="text-xs font-semibold text-gray-900">Edit Faculty</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Update the faculty details below</p>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1">
+        <form (submit)="submitEditForm(); $event.preventDefault()">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Employee ID <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="editForm.employee_id"
+                name="employee_id"
+                maxlength="5"
+                placeholder="5-digit code"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Email <span class="text-red-500">*</span></label
+              >
+              <input
+                type="email"
+                [(ngModel)]="editForm.email"
+                name="email"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >First Name <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="editForm.first_name"
+                name="first_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Middle Name</label>
+              <input
+                type="text"
+                [(ngModel)]="editForm.middle_name"
+                name="middle_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5"
+                >Last Name <span class="text-red-500">*</span></label
+              >
+              <input
+                type="text"
+                [(ngModel)]="editForm.last_name"
+                name="last_name"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Contact Number</label>
+              <input
+                type="text"
+                [(ngModel)]="editForm.contact_number"
+                name="contact_number"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Position Level</label>
+              <select
+                [(ngModel)]="editForm.position_level"
+                name="position_level"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
+              >
+                <option value="">Select position level…</option>
+                @for (level of positionLevels(); track level.value) {
+                  <option [value]="level.value">{{ level.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+            <button
+              type="button"
+              (click)="closeEditModal()"
+              [disabled]="updateLoading()"
+              class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="updateLoading()"
+              class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition-colors disabled:opacity-50"
+            >
+              @if (updateLoading()) {
+                <i class="pi pi-spin pi-spinner text-xs"></i> Updating…
+              } @else {
+                Save Changes
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

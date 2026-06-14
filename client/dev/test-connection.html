@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        button {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto;
+        }
+        button:hover {
+            background: #15803d;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .info {
+            background: #dbeafe;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Connection Test Tool</h1>
+    
+    <div class="info">
+        <strong>Purpose:</strong> I-test kung working ang backend at frontend connections.
+    </div>
+
+    <button onclick="runAllTests()">Run All Tests</button>
+
+    <div class="test-card">
+        <h3>Test 1: Backend Server <span class="status pending" id="status1">Pending</span></h3>
+        <p>Testing: <code>http://localhost:3000/api/hello</code></p>
+        <div class="result" id="result1">Click "Run All Tests" to start...</div>
+    </div>
+
+    <div class="test-card">
+        <h3>Test 2: Frontend Server <span class="status pending" id="status2">Pending</span></h3>
+        <p>Testing: <code>http://localhost:4200</code></p>
+        <div class="result" id="result2">Click "Run All Tests" to start...</div>
+    </div>
+
+    <div class="test-card">
+        <h3>Test 3: CORS Configuration <span class="status pending" id="status3">Pending</span></h3>
+        <p>Testing: Cross-origin requests from frontend to backend</p>
+        <div class="result" id="result3">Click "Run All Tests" to start...</div>
+    </div>
+
+    <div class="test-card">
+        <h3>Test 4: Browser Storage <span class="status pending" id="status4">Pending</span></h3>
+        <p>Testing: localStorage and sessionStorage availability</p>
+        <div class="result" id="result4">Click "Run All Tests" to start...</div>
+    </div>
+
+    <script>
+        async function runAllTests() {
+            console.log('Starting tests...');
+            
+            // Test 1: Backend Server
+            await testBackend();
+            
+            // Test 2: Frontend Server
+            await testFrontend();
+            
+            // Test 3: CORS
+            await testCORS();
+            
+            // Test 4: Browser Storage
+            testStorage();
+            
+            console.log('All tests completed!');
+        }
+
+        async function testBackend() {
+            const statusEl = document.getElementById('status1');
+            const resultEl = document.getElementById('result1');
+            
+            statusEl.textContent = 'Testing...';
+            statusEl.className = 'status pending';
+            resultEl.textContent = 'Connecting to backend...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/hello');
+                const data = await response.json();
+                
+                statusEl.textContent = 'Success';
+                statusEl.className = 'status success';
+                resultEl.innerHTML = `
+                    <strong>✅ Backend is running!</strong><br>
+                    Status: ${response.status}<br>
+                    Response: ${JSON.stringify(data, null, 2)}
+                `;
+            } catch (error) {
+                statusEl.textContent = 'Error';
+                statusEl.className = 'status error';
+                resultEl.innerHTML = `
+                    <strong>❌ Backend is NOT running!</strong><br>
+                    Error: ${error.message}<br><br>
+                    <strong>Fix:</strong><br>
+                    1. Open terminal<br>
+                    2. cd backend<br>
+                    3. npm start
+                `;
+            }
+        }
+
+        async function testFrontend() {
+            const statusEl = document.getElementById('status2');
+            const resultEl = document.getElementById('result2');
+            
+            statusEl.textContent = 'Testing...';
+            statusEl.className = 'status pending';
+            resultEl.textContent = 'Checking frontend server...';
+            
+            try {
+                const response = await fetch('http://localhost:4200');
+                
+                if (response.ok) {
+                    statusEl.textContent = 'Success';
+                    statusEl.className = 'status success';
+                    resultEl.innerHTML = `
+                        <strong>✅ Frontend is running!</strong><br>
+                        Status: ${response.status}<br>
+                        URL: http://localhost:4200
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                statusEl.textContent = 'Error';
+                statusEl.className = 'status error';
+                resultEl.innerHTML = `
+                    <strong>❌ Frontend is NOT running!</strong><br>
+                    Error: ${error.message}<br><br>
+                    <strong>Fix:</strong><br>
+                    1. Open terminal<br>
+                    2. cd client<br>
+                    3. ng serve
+                `;
+            }
+        }
+
+        async function testCORS() {
+            const statusEl = document.getElementById('status3');
+            const resultEl = document.getElementById('result3');
+            
+            statusEl.textContent = 'Testing...';
+            statusEl.className = 'status pending';
+            resultEl.textContent = 'Testing CORS...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/hello', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                statusEl.textContent = 'Success';
+                statusEl.className = 'status success';
+                resultEl.innerHTML = `
+                    <strong>✅ CORS is configured correctly!</strong><br>
+                    Cross-origin requests are allowed.
+                `;
+            } catch (error) {
+                if (error.message.includes('CORS')) {
+                    statusEl.textContent = 'Error';
+                    statusEl.className = 'status error';
+                    resultEl.innerHTML = `
+                        <strong>❌ CORS Error!</strong><br>
+                        Error: ${error.message}<br><br>
+                        <strong>Fix:</strong> Check backend CORS configuration in index.js
+                    `;
+                } else {
+                    statusEl.textContent = 'Warning';
+                    statusEl.className = 'status pending';
+                    resultEl.innerHTML = `
+                        <strong>⚠️ Cannot test CORS</strong><br>
+                        Backend might not be running.<br>
+                        Error: ${error.message}
+                    `;
+                }
+            }
+        }
+
+        function testStorage() {
+            const statusEl = document.getElementById('status4');
+            const resultEl = document.getElementById('result4');
+            
+            statusEl.textContent = 'Testing...';
+            statusEl.className = 'status pending';
+            
+            try {
+                // Test localStorage
+                localStorage.setItem('test', 'value');
+                const localTest = localStorage.getItem('test');
+                localStorage.removeItem('test');
+                
+                // Test sessionStorage
+                sessionStorage.setItem('test', 'value');
+                const sessionTest = sessionStorage.getItem('test');
+                sessionStorage.removeItem('test');
+                
+                if (localTest === 'value' && sessionTest === 'value') {
+                    statusEl.textContent = 'Success';
+                    statusEl.className = 'status success';
+                    resultEl.innerHTML = `
+                        <strong>✅ Browser storage is working!</strong><br>
+                        localStorage: Available<br>
+                        sessionStorage: Available
+                    `;
+                } else {
+                    throw new Error('Storage test failed');
+                }
+            } catch (error) {
+                statusEl.textContent = 'Error';
+                statusEl.className = 'status error';
+                resultEl.innerHTML = `
+                    <strong>❌ Browser storage error!</strong><br>
+                    Error: ${error.message}<br><br>
+                    <strong>Fix:</strong><br>
+                    1. Check browser privacy settings<br>
+                    2. Try incognito/private mode<br>
+                    3. Clear browser cache
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

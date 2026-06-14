@@ -1,0 +1,1436 @@
+<!-- Sidebar -->
+<aside
+  [class.translate-x-0]="isSidebarOpen()"
+  [class.-translate-x-full]="!isSidebarOpen()"
+  class="fixed top-0 left-0 z-50 w-64 h-full transition-transform bg-white border-r border-gray-200"
+>
+  <div class="h-full px-3 py-4 overflow-y-auto">
+    <!-- Logo/Brand -->
+    <div class="mb-6 px-2 flex flex-col items-center">
+      <img src="/assets/logo.png" alt="Logo" class="h-24 mb-3" />
+      <h2 class="text-lg font-bold text-gray-900 text-center">Department Portal</h2>
+      @if (authService.currentUser()?.profile?.department) {
+        <p class="text-xs text-gray-500 text-center mt-0.5">
+          {{ authService.currentUser()?.profile?.department }}
+        </p>
+      }
+    </div>
+
+    <ul class="space-y-2 font-medium">
+      <!-- Dashboard -->
+      <li>
+        <button
+          (click)="selectTab('dashboard')"
+          [class.bg-green-50]="activeTab() === 'dashboard'"
+          [class.text-green-600]="activeTab() === 'dashboard'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-chart-pie shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Dashboard</span>
+        </button>
+      </li>
+
+      <li class="pt-2 mt-2 border-t border-gray-200"></li>
+
+      <!-- Faculty -->
+      <li>
+        <button
+          (click)="selectTab('faculty')"
+          [class.bg-green-50]="activeTab() === 'faculty'"
+          [class.text-green-600]="activeTab() === 'faculty'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-users shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Faculty</span>
+        </button>
+      </li>
+
+      <!-- My Profile -->
+      <li>
+        <button
+          (click)="selectTab('my-profile')"
+          [class.bg-green-50]="activeTab() === 'my-profile'"
+          [class.text-green-600]="activeTab() === 'my-profile'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-user shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Department Profile</span>
+        </button>
+      </li>
+
+      <!-- Portfolio -->
+      <li>
+        <button
+          (click)="selectTab('accomplishments')"
+          [class.bg-green-50]="activeTab() === 'accomplishments'"
+          [class.text-green-600]="activeTab() === 'accomplishments'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-file shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Portfolio</span>
+        </button>
+      </li>
+
+      <!-- Send Email -->
+      <li>
+        <button
+          (click)="selectTab('faculty-notifications')"
+          [class.bg-green-50]="activeTab() === 'faculty-notifications'"
+          [class.text-green-600]="activeTab() === 'faculty-notifications'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-envelope shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Send Email</span>
+        </button>
+      </li>
+
+      <li class="pt-2 mt-2 border-t border-gray-200"></li>
+
+      <!-- Section Label -->
+      <li>
+        <div class="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">Organizations</div>
+      </li>
+
+      <!-- Organizations -->
+      <li>
+        <button
+          (click)="selectTab('organization')"
+          [class.bg-green-50]="activeTab() === 'organization'"
+          [class.text-green-600]="activeTab() === 'organization'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-sitemap shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Organizations</span>
+        </button>
+      </li>
+
+      <!-- Organization Documents -->
+      <li>
+        <button
+          (click)="selectTab('org-documents')"
+          [class.bg-green-50]="activeTab() === 'org-documents'"
+          [class.text-green-600]="activeTab() === 'org-documents'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-folder shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Org Documents</span>
+        </button>
+      </li>
+
+      <li class="pt-2 mt-2 border-t border-gray-200"></li>
+    </ul>
+  </div>
+</aside>
+
+<!-- Top Bar -->
+<div
+  class="fixed top-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300"
+  [class.left-64]="isSidebarOpen()"
+  [class.left-0]="!isSidebarOpen()"
+  [class.right-0]="true"
+>
+  <div class="flex items-center gap-4">
+    <button
+      (click)="toggleSidebar()"
+      type="button"
+      class="text-gray-900 bg-transparent hover:bg-gray-200 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm p-2 focus:outline-none"
+    >
+      <i class="pi pi-bars text-lg"></i>
+    </button>
+    <h1 class="text-sm font-semibold text-gray-900">{{ getPageTitle() }}</h1>
+  </div>
+
+  <!-- Right Section: User Menu -->
+  <div class="flex items-center gap-3">
+    <div class="relative">
+      <button
+        (click)="toggleUserMenu()"
+        class="inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
+      >
+        <i class="pi pi-user text-sm"></i>
+        <div class="flex flex-col items-start">
+          <span class="text-xs font-medium leading-tight">{{ deanName() || 'Dean' }}</span>
+          @if (authService.currentUser()?.role === 'college_department') {
+            <span class="text-xs text-sky-600 leading-tight">
+              {{ authService.currentUser()?.profile?.name }}
+            </span>
+          }
+        </div>
+        <i
+          class="pi pi-chevron-down text-xs transition-transform"
+          [class.rotate-180]="isUserMenuOpen()"
+        ></i>
+      </button>
+
+      @if (isUserMenuOpen()) {
+        <div
+          class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg"
+        >
+          <button
+            (click)="themeService.toggleTheme()"
+            class="inline-flex items-center gap-2 w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-t-lg transition"
+          >
+            @if (themeService.isDarkMode()) {
+              <i class="pi pi-sun text-sm text-yellow-500"></i>
+              <span class="text-xs">Light Mode</span>
+            } @else {
+              <i class="pi pi-moon text-sm text-indigo-600"></i>
+              <span class="text-xs">Dark Mode</span>
+            }
+          </button>
+          <button
+            (click)="isChangePasswordOpen.set(true); isUserMenuOpen.set(false)"
+            class="inline-flex items-center gap-2 w-full px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 transition"
+          >
+            <i class="pi pi-lock text-sm"></i>
+            <span class="text-xs">Change Password</span>
+          </button>
+          <button
+            (click)="logout()"
+            class="inline-flex items-center gap-2 w-full px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-b-lg transition"
+          >
+            <i class="pi pi-sign-out text-sm"></i>
+            <span class="text-xs">Sign Out</span>
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300" [class.ml-64]="isSidebarOpen()">
+  @if (activeTab() === 'dashboard') {
+    <div>
+      <!-- Dashboard Sub-Tabs -->
+      <div class="mb-4 flex items-center gap-1 border-b border-gray-100">
+        <button
+          (click)="dashboardSubTab.set('overview')"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          [class.border-green-500]="dashboardSubTab() === 'overview'"
+          [class.text-green-600]="dashboardSubTab() === 'overview'"
+          [class.border-transparent]="dashboardSubTab() !== 'overview'"
+          [class.text-gray-500]="dashboardSubTab() !== 'overview'"
+        >
+          <span class="inline-flex items-center gap-1.5">
+            <i class="pi pi-file text-xs"></i> Requirements & Clearance
+          </span>
+        </button>
+        <button
+          (click)="selectDashboardSubTab('analytics')"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          [class.border-green-500]="dashboardSubTab() === 'analytics'"
+          [class.text-green-600]="dashboardSubTab() === 'analytics'"
+          [class.border-transparent]="dashboardSubTab() !== 'analytics'"
+          [class.text-gray-500]="dashboardSubTab() !== 'analytics'"
+        >
+          <span class="inline-flex items-center gap-1.5">
+            <i class="pi pi-chart-bar text-xs"></i> Faculty Analytics
+          </span>
+        </button>
+        <button
+          (click)="selectDashboardSubTab('organization-analytics')"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          [class.border-green-500]="dashboardSubTab() === 'organization-analytics'"
+          [class.text-green-600]="dashboardSubTab() === 'organization-analytics'"
+          [class.border-transparent]="dashboardSubTab() !== 'organization-analytics'"
+          [class.text-gray-500]="dashboardSubTab() !== 'organization-analytics'"
+        >
+          <span class="inline-flex items-center gap-1.5">
+            <i class="pi pi-sitemap text-xs"></i> Organization Analytics
+          </span>
+        </button>
+        <button
+          (click)="selectDashboardSubTab('member-demographics')"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          [class.border-green-500]="dashboardSubTab() === 'member-demographics'"
+          [class.text-green-600]="dashboardSubTab() === 'member-demographics'"
+          [class.border-transparent]="dashboardSubTab() !== 'member-demographics'"
+          [class.text-gray-500]="dashboardSubTab() !== 'member-demographics'"
+        >
+          <span class="inline-flex items-center gap-1.5">
+            <i class="pi pi-users text-xs"></i> Member Demographics
+          </span>
+        </button>
+      </div>
+
+      @if (dashboardSubTab() === 'overview') {
+        <!-- Filters -->
+        <div class="p-4 bg-white rounded-sm border border-gray-100 mb-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-2">Academic Year</label>
+              <select
+                [(ngModel)]="selectedAcademicYear"
+                (change)="loadDepartmentStats()"
+                class="w-full px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 bg-white"
+              >
+                @for (year of academicYearsList(); track year.academic_year_id) {
+                  <option [value]="year.academic_year_id">
+                    {{ year.year_start }}-{{ year.year_end }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-2">Semester</label>
+              <select
+                [(ngModel)]="selectedSemester"
+                (change)="loadDepartmentStats()"
+                class="w-full px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 bg-white"
+              >
+                <option value="1st Semester">1st Semester</option>
+                <option value="2nd Semester">2nd Semester</option>
+                <option value="Summer 1">Summer 1</option>
+                <option value="Summer 2">Summer 2</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        @if (loading()) {
+          <div class="text-center py-12">
+            <div
+              class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent"
+            ></div>
+            <p class="mt-4 text-gray-600">Loading dashboard...</p>
+          </div>
+        }
+
+        @if (!loading() && departmentStats()) {
+          <!-- Key Metrics Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
+            <div class="bg-linear-to-br from-blue-500 to-blue-600 rounded-sm shadow p-4 text-white">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm font-medium opacity-80 mb-1">Total Faculty</h3>
+                  <p class="text-2xl font-bold">{{ departmentStats()!.total_faculty }}</p>
+                </div>
+                <div class="text-2xl opacity-20">
+                  <i class="fas fa-users"></i>
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-linear-to-br from-green-500 to-green-600 rounded-sm shadow p-4 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm font-medium opacity-80 mb-1">Cleared Faculties</h3>
+                  <p class="text-2xl font-bold">{{ departmentStats()!.cleared_faculties }}</p>
+                  <p class="text-xs opacity-90 mt-1">
+                    {{ departmentStats()!.faculty_clearance_rate }}% of total
+                  </p>
+                </div>
+                <div class="text-2xl opacity-20">
+                  <i class="fas fa-user-check"></i>
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-linear-to-br from-purple-500 to-purple-600 rounded-sm shadow p-4 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm font-medium opacity-80 mb-1">Total Requirements</h3>
+                  <p class="text-2xl font-bold">{{ departmentStats()!.total_requirements }}</p>
+                </div>
+                <div class="text-2xl opacity-20">
+                  <i class="fas fa-clipboard-list"></i>
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-linear-to-br from-indigo-500 to-indigo-600 rounded-sm shadow p-4 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm font-medium opacity-80 mb-1">Requirements Validated</h3>
+                  <p class="text-2xl font-bold">{{ departmentStats()!.validated }}</p>
+                  <p class="text-xs opacity-90 mt-1">
+                    {{ departmentStats()!.completion_rate }}% complete
+                  </p>
+                </div>
+                <div class="text-2xl opacity-20">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts and Visualizations -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-4">
+            <!-- Status Distribution Chart -->
+            <div class="p-4 bg-white rounded-sm border border-gray-100">
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Requirements Status Distribution</h3>
+              <div class="flex items-center justify-center mb-4">
+                <div class="relative w-64 h-64">
+                  <!-- Donut Chart using conic-gradient -->
+                  <div
+                    class="absolute inset-0 rounded-full"
+                    [style.background]="
+                      'conic-gradient(' +
+                      'from 0deg, ' +
+                      'rgb(34, 197, 94) 0deg ' +
+                      (departmentStats()!.validated / departmentStats()!.total_requirements) * 360 +
+                      'deg, ' +
+                      'rgb(234, 179, 8) ' +
+                      (departmentStats()!.validated / departmentStats()!.total_requirements) * 360 +
+                      'deg ' +
+                      ((departmentStats()!.validated + departmentStats()!.pending) /
+                        departmentStats()!.total_requirements) *
+                        360 +
+                      'deg, ' +
+                      'rgb(239, 68, 68) ' +
+                      ((departmentStats()!.validated + departmentStats()!.pending) /
+                        departmentStats()!.total_requirements) *
+                        360 +
+                      'deg ' +
+                      ((departmentStats()!.validated +
+                        departmentStats()!.pending +
+                        departmentStats()!.returned) /
+                        departmentStats()!.total_requirements) *
+                        360 +
+                      'deg)'
+                    "
+                  ></div>
+                  <!-- Center white circle for donut effect -->
+                  <div
+                    class="absolute inset-8 bg-white rounded-full flex items-center justify-center flex-col"
+                  >
+                    <div class="text-sm font-bold text-gray-800">
+                      {{ departmentStats()!.total_requirements }}
+                    </div>
+                    <div class="text-xs text-gray-500">Total</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Legend -->
+              <div class="grid grid-cols-3 gap-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-4 h-4 bg-green-500 rounded"></div>
+                  <div class="text-sm">
+                    <span class="font-semibold">{{ departmentStats()!.validated }}</span>
+                    <span class="text-gray-600"> Validated</span>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <div class="w-4 h-4 bg-yellow-500 rounded"></div>
+                  <div class="text-sm">
+                    <span class="font-semibold">{{ departmentStats()!.pending }}</span>
+                    <span class="text-gray-600"> Pending</span>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <div class="w-4 h-4 bg-red-500 rounded"></div>
+                  <div class="text-sm">
+                    <span class="font-semibold">{{ departmentStats()!.returned }}</span>
+                    <span class="text-gray-600"> Returned</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Overall Completion -->
+            <div class="p-4 bg-white rounded-sm border border-gray-100">
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Overall Completion Rate</h3>
+              <div class="flex items-center justify-center mb-4">
+                <div class="relative w-64 h-64">
+                  <svg class="transform -rotate-90 w-64 h-64">
+                    <circle
+                      cx="128"
+                      cy="128"
+                      r="100"
+                      stroke="#e5e7eb"
+                      stroke-width="20"
+                      fill="none"
+                    />
+                    <circle
+                      cx="128"
+                      cy="128"
+                      r="100"
+                      stroke="#3b82f6"
+                      stroke-width="20"
+                      fill="none"
+                      [attr.stroke-dasharray]="628"
+                      [attr.stroke-dashoffset]="
+                        628 - (628 * +departmentStats()!.completion_rate) / 100
+                      "
+                      class="transition-all duration-1000"
+                    />
+                  </svg>
+                  <div class="absolute inset-0 flex items-center justify-center flex-col">
+                    <div class="text-5xl font-bold text-blue-600">
+                      {{ departmentStats()!.completion_rate }}%
+                    </div>
+                    <div class="text-xs text-gray-500 mt-2">Complete</div>
+                  </div>
+                </div>
+              </div>
+              <div class="text-center text-xs text-gray-500">
+                <p class="mb-2">
+                  <span class="font-semibold text-gray-800">{{
+                    departmentStats()!.validated
+                  }}</span>
+                  out of
+                  <span class="font-semibold text-gray-800">{{
+                    departmentStats()!.total_requirements
+                  }}</span>
+                  requirements validated
+                </p>
+                <p class="text-xs text-gray-500">
+                  Faculty Clearance:
+                  <span class="font-semibold text-green-600"
+                    >{{ departmentStats()!.faculty_clearance_rate }}%</span
+                  >
+                  ({{ departmentStats()!.cleared_faculties }}/{{
+                    departmentStats()!.total_faculty
+                  }})
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Faculty Clearance Status -->
+          <div class="p-4 bg-white rounded-sm border border-gray-100 mb-4">
+            <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Faculty Clearance Status</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Cleared Faculties -->
+              <div
+                class="flex items-center space-x-4 p-4 bg-green-50 rounded-sm border-2 border-green-200"
+              >
+                <div class="shrink-0">
+                  <div
+                    class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white"
+                  >
+                    <i class="fas fa-user-check text-2xl"></i>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-bold text-green-700">
+                    {{ departmentStats()!.cleared_faculties }}
+                  </p>
+                  <p class="text-sm text-green-600 font-medium">Cleared Faculties</p>
+                  <p class="text-xs text-gray-400 mt-0.5">All requirements approved</p>
+                </div>
+              </div>
+
+              <!-- Pending Faculties -->
+              <div
+                class="flex items-center space-x-4 p-4 bg-yellow-50 rounded-sm border-2 border-yellow-200"
+              >
+                <div class="shrink-0">
+                  <div
+                    class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center text-white"
+                  >
+                    <i class="fas fa-clock text-2xl"></i>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-bold text-yellow-700">
+                    {{ departmentStats()!.pending_faculties }}
+                  </p>
+                  <p class="text-sm text-yellow-600 font-medium">Pending Faculties</p>
+                  <p class="text-xs text-gray-400 mt-0.5">Incomplete requirements</p>
+                </div>
+              </div>
+
+              <!-- For Review Faculties -->
+              <div
+                class="flex items-center space-x-4 p-4 bg-red-50 rounded-sm border-2 border-red-200"
+              >
+                <div class="shrink-0">
+                  <div
+                    class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white"
+                  >
+                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-bold text-red-700">
+                    {{ departmentStats()!.withholding_faculties }}
+                  </p>
+                  <p class="text-sm text-red-600 font-medium">For Review</p>
+                  <p class="text-xs text-gray-400 mt-0.5">Has returned requirements</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Faculty Clearance Progress Bar -->
+            <div class="mt-6">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-medium text-gray-600">Faculty Clearance Rate</span>
+                <span class="text-sm font-semibold text-green-600">
+                  {{ departmentStats()!.cleared_faculties }} /
+                  {{ departmentStats()!.total_faculty }} ({{
+                    departmentStats()!.faculty_clearance_rate
+                  }}%)
+                </span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                <div
+                  class="bg-linear-to-r from-green-500 to-green-600 h-full rounded-full transition-all duration-500 flex items-center justify-end px-3"
+                  [style.width.%]="departmentStats()!.faculty_clearance_rate"
+                >
+                  <span class="text-xs font-semibold text-white"
+                    >{{ departmentStats()!.faculty_clearance_rate }}%</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+      @if (dashboardSubTab() === 'analytics') {
+        @if (loading()) {
+          <div class="text-center py-12">
+            <div
+              class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"
+            ></div>
+            <p class="mt-4 text-gray-600">Loading analytics...</p>
+          </div>
+        }
+
+        @if (!loading() && facultyDemographics()) {
+          <!-- Overview Section -->
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Faculty Overview</h2>
+
+            <!-- Key Metrics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div
+                class="bg-linear-to-br from-blue-500 to-blue-600 rounded-sm shadow p-4 text-white"
+              >
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-sm font-medium opacity-80 mb-1">Total Faculty</h3>
+                    <p class="text-2xl font-bold">{{ facultyDemographics()!.total_faculty }}</p>
+                  </div>
+                  <div class="text-2xl opacity-20">
+                    <i class="fas fa-users"></i>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="bg-linear-to-br from-cyan-500 to-cyan-600 rounded-sm shadow p-4 text-white"
+              >
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-sm font-medium opacity-80 mb-1">Male Faculty</h3>
+                    <p class="text-2xl font-bold">{{ facultyDemographics()!.gender.male }}</p>
+                    <p class="text-xs opacity-90 mt-1">
+                      {{
+                        (
+                          (facultyDemographics()!.gender.male /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}% of total
+                    </p>
+                  </div>
+                  <div class="text-2xl opacity-20">
+                    <i class="fas fa-male"></i>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="bg-linear-to-br from-pink-500 to-pink-600 rounded-sm shadow p-4 text-white"
+              >
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-sm font-medium opacity-80 mb-1">Female Faculty</h3>
+                    <p class="text-2xl font-bold">{{ facultyDemographics()!.gender.female }}</p>
+                    <p class="text-xs opacity-90 mt-1">
+                      {{
+                        (
+                          (facultyDemographics()!.gender.female /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}% of total
+                    </p>
+                  </div>
+                  <div class="text-2xl opacity-20">
+                    <i class="fas fa-female"></i>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="bg-linear-to-br from-indigo-500 to-indigo-600 rounded-sm shadow p-4 text-white"
+              >
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-sm font-medium opacity-80 mb-1">Doctorate Holders</h3>
+                    <p class="text-2xl font-bold">
+                      {{ facultyDemographics()!.education.doctorate }}
+                    </p>
+                    <p class="text-xs opacity-90 mt-1">
+                      {{
+                        (
+                          (facultyDemographics()!.education.doctorate /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}% of total
+                    </p>
+                  </div>
+                  <div class="text-2xl opacity-20">
+                    <i class="fas fa-graduation-cap"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Demographics Section -->
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Demographics</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <!-- Age Distribution -->
+              <div class="p-6 border border-gray-200 rounded-sm bg-white shadow-sm">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Age Distribution</h3>
+                <div class="space-y-3">
+                  <div>
+                    <div class="flex justify-between items-center mb-1">
+                      <span class="text-xs font-medium text-gray-600">20-29 years</span>
+                      <span class="text-sm font-semibold text-blue-600">
+                        {{ facultyDemographics()!.age_ranges['20-29'] }}
+                      </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        class="bg-blue-500 h-full rounded-full transition-all"
+                        [style.width.%]="
+                          (facultyDemographics()!.age_ranges['20-29'] /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        "
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between items-center mb-1">
+                      <span class="text-xs font-medium text-gray-600">30-39 years</span>
+                      <span class="text-sm font-semibold text-green-600">
+                        {{ facultyDemographics()!.age_ranges['30-39'] }}
+                      </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        class="bg-green-500 h-full rounded-full transition-all"
+                        [style.width.%]="
+                          (facultyDemographics()!.age_ranges['30-39'] /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        "
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between items-center mb-1">
+                      <span class="text-xs font-medium text-gray-600">40-49 years</span>
+                      <span class="text-sm font-semibold text-yellow-600">
+                        {{ facultyDemographics()!.age_ranges['40-49'] }}
+                      </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        class="bg-yellow-500 h-full rounded-full transition-all"
+                        [style.width.%]="
+                          (facultyDemographics()!.age_ranges['40-49'] /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        "
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between items-center mb-1">
+                      <span class="text-xs font-medium text-gray-600">50-59 years</span>
+                      <span class="text-sm font-semibold text-orange-600">
+                        {{ facultyDemographics()!.age_ranges['50-59'] }}
+                      </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        class="bg-orange-500 h-full rounded-full transition-all"
+                        [style.width.%]="
+                          (facultyDemographics()!.age_ranges['50-59'] /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        "
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between items-center mb-1">
+                      <span class="text-xs font-medium text-gray-600">60+ years</span>
+                      <span class="text-sm font-semibold text-red-600">
+                        {{ facultyDemographics()!.age_ranges['60+'] }}
+                      </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        class="bg-red-500 h-full rounded-full transition-all"
+                        [style.width.%]="
+                          (facultyDemographics()!.age_ranges['60+'] /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        "
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Civil Status -->
+              <div class="p-6 border border-gray-200 rounded-sm bg-white shadow-sm">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Civil Status</h3>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between p-3 bg-green-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Single</p>
+                      <p class="text-sm font-bold text-green-600">
+                        {{ facultyDemographics()!.civil_status.single }}
+                      </p>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-600">
+                      {{
+                        (
+                          (facultyDemographics()!.civil_status.single /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between p-3 bg-blue-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Married</p>
+                      <p class="text-sm font-bold text-blue-600">
+                        {{ facultyDemographics()!.civil_status.married }}
+                      </p>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-600">
+                      {{
+                        (
+                          (facultyDemographics()!.civil_status.married /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between p-3 bg-gray-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Widowed</p>
+                      <p class="text-2xl font-bold text-gray-600">
+                        {{ facultyDemographics()!.civil_status.widowed }}
+                      </p>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-600">
+                      {{
+                        (
+                          (facultyDemographics()!.civil_status.widowed /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Separated</p>
+                      <p class="text-sm font-bold text-yellow-600">
+                        {{ facultyDemographics()!.civil_status.separated }}
+                      </p>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-600">
+                      {{
+                        (
+                          (facultyDemographics()!.civil_status.separated /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Credential Status -->
+              <div class="p-6 border border-gray-200 rounded-sm bg-white shadow-sm">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Credential Status</h3>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between p-3 bg-green-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Validated</p>
+                      <p class="text-sm font-bold text-green-600">
+                        {{ facultyDemographics()!.credential_status.validated }}
+                      </p>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-600">
+                      {{
+                        (
+                          (facultyDemographics()!.credential_status.validated /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Pending</p>
+                      <p class="text-sm font-bold text-yellow-600">
+                        {{ facultyDemographics()!.credential_status.pending }}
+                      </p>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-600">
+                      {{
+                        (
+                          (facultyDemographics()!.credential_status.pending /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between p-3 bg-red-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Returned</p>
+                      <p class="text-sm font-bold text-red-600">
+                        {{ facultyDemographics()!.credential_status.returned }}
+                      </p>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-600">
+                      {{
+                        (
+                          (facultyDemographics()!.credential_status.returned /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between p-3 bg-gray-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Not Submitted</p>
+                      <p class="text-2xl font-bold text-gray-600">
+                        {{ facultyDemographics()!.credential_status.not_submitted }}
+                      </p>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-600">
+                      {{
+                        (
+                          (facultyDemographics()!.credential_status.not_submitted /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 3: Academic -->
+          <!-- Academic Qualifications Section -->
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Academic Qualifications</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <!-- Educational Attainment -->
+              <div class="p-6 border border-gray-200 rounded-sm bg-white shadow-sm">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Educational Attainment</h3>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between p-3 bg-indigo-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Doctorate</p>
+                      <p class="text-sm font-bold text-indigo-600">
+                        {{ facultyDemographics()!.education.doctorate }}
+                      </p>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-600">
+                      {{
+                        (
+                          (facultyDemographics()!.education.doctorate /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between p-3 bg-purple-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Masters</p>
+                      <p class="text-sm font-bold text-purple-600">
+                        {{ facultyDemographics()!.education.masters }}
+                      </p>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-600">
+                      {{
+                        (
+                          (facultyDemographics()!.education.masters /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between p-3 bg-blue-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Bachelors</p>
+                      <p class="text-sm font-bold text-blue-600">
+                        {{ facultyDemographics()!.education.bachelors }}
+                      </p>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-600">
+                      {{
+                        (
+                          (facultyDemographics()!.education.bachelors /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Currently Enrolled -->
+              <div class="p-6 border border-gray-200 rounded-sm bg-white shadow-sm">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Currently Enrolled</h3>
+                @if (educationAnalytics()) {
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-purple-50 rounded-sm">
+                      <div>
+                        <p class="text-xs text-gray-500">Masters Program</p>
+                        <p class="text-sm font-bold text-purple-600">
+                          {{ educationAnalytics()!.currently_enrolled.masters }}
+                        </p>
+                      </div>
+                      <div class="text-sm font-semibold text-gray-600">
+                        {{
+                          (
+                            (educationAnalytics()!.currently_enrolled.masters /
+                              facultyDemographics()!.total_faculty) *
+                            100
+                          ).toFixed(1)
+                        }}%
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-indigo-50 rounded-sm">
+                      <div>
+                        <p class="text-xs text-gray-500">Doctorate Program</p>
+                        <p class="text-sm font-bold text-indigo-600">
+                          {{ educationAnalytics()!.currently_enrolled.doctorate }}
+                        </p>
+                      </div>
+                      <div class="text-sm font-semibold text-gray-600">
+                        {{
+                          (
+                            (educationAnalytics()!.currently_enrolled.doctorate /
+                              facultyDemographics()!.total_faculty) *
+                            100
+                          ).toFixed(1)
+                        }}%
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Professional Development Section -->
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Professional Development</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <!-- Certifications & Eligibility -->
+              <div class="p-6 border border-gray-200 rounded-sm bg-white shadow-sm">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Certifications & Eligibility</h3>
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between p-4 bg-blue-50 rounded-sm">
+                    <div>
+                      <p class="text-xs text-gray-500">Total Certifications</p>
+                      <p class="text-sm font-bold text-blue-600">
+                        {{ facultyDemographics()!.certifications.total_certifications }}
+                      </p>
+                    </div>
+                    <div class="text-4xl text-blue-300">
+                      <i class="fas fa-certificate"></i>
+                    </div>
+                  </div>
+                  <div class="space-y-3">
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center gap-2">
+                          <i class="fas fa-id-card text-green-600"></i>
+                          <span class="text-xs font-medium text-gray-600"
+                            >Professional License</span
+                          >
+                        </div>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-green-600">
+                          {{ facultyDemographics()!.certifications.with_professional_license }}
+                        </span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          class="bg-green-500 h-full rounded-full transition-all"
+                          [style.width.%]="
+                            (facultyDemographics()!.certifications.with_professional_license /
+                              facultyDemographics()!.total_faculty) *
+                            100
+                          "
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center gap-2">
+                          <i class="fas fa-award text-purple-600"></i>
+                          <span class="text-xs font-medium text-gray-600">Civil Service</span>
+                        </div>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-purple-600">
+                          {{ facultyDemographics()!.certifications.with_civil_service }}
+                        </span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          class="bg-purple-500 h-full rounded-full transition-all"
+                          [style.width.%]="
+                            (facultyDemographics()!.certifications.with_civil_service /
+                              facultyDemographics()!.total_faculty) *
+                            100
+                          "
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center gap-2">
+                          <i class="fas fa-graduation-cap text-indigo-600"></i>
+                          <span class="text-xs font-medium text-gray-600">Board/Bar Exam</span>
+                        </div>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                          {{ facultyDemographics()!.certifications.with_board_exam }}
+                        </span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          class="bg-indigo-500 h-full rounded-full transition-all"
+                          [style.width.%]="
+                            (facultyDemographics()!.certifications.with_board_exam /
+                              facultyDemographics()!.total_faculty) *
+                            100
+                          "
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Trainings & Seminars -->
+              <div class="p-6 border border-gray-200 rounded-sm bg-white shadow-sm">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Trainings & Seminars</h3>
+                <div class="space-y-4">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center justify-between p-4 bg-orange-50 rounded-sm">
+                      <div>
+                        <p class="text-xs text-gray-600">Total Trainings</p>
+                        <p class="text-sm font-bold text-orange-600">
+                          {{ facultyDemographics()!.training.total_trainings }}
+                        </p>
+                      </div>
+                      <div class="text-3xl text-orange-300">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between p-4 bg-teal-50 rounded-sm">
+                      <div>
+                        <p class="text-xs text-gray-600">Total Hours</p>
+                        <p class="text-sm font-bold text-teal-600">
+                          {{ facultyDemographics()!.training.total_hours }}
+                        </p>
+                      </div>
+                      <div class="text-3xl text-teal-300">
+                        <i class="fas fa-clock"></i>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="p-4 bg-blue-50 rounded-sm">
+                    <div class="flex items-center justify-between mb-2">
+                      <p class="text-sm text-gray-700">Faculty with Trainings</p>
+                      <p class="text-sm font-bold text-blue-600">
+                        {{ facultyDemographics()!.training.faculty_with_trainings }}
+                      </p>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        class="bg-green-600 h-full rounded-full transition-all"
+                        [style.width.%]="
+                          (facultyDemographics()!.training.faculty_with_trainings /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        "
+                      ></div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-0.5">
+                      {{
+                        (
+                          (facultyDemographics()!.training.faculty_with_trainings /
+                            facultyDemographics()!.total_faculty) *
+                          100
+                        ).toFixed(1)
+                      }}% of faculty
+                    </p>
+                  </div>
+
+                  <!-- Training Types Bar Chart -->
+                  <div class="space-y-2">
+                    <p class="text-xs font-medium text-gray-600 mb-2">Training Types</p>
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs text-gray-600">Managerial</span>
+                        <span class="text-sm font-bold text-gray-700">
+                          {{ facultyDemographics()!.training.by_type.managerial }}
+                        </span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-blue-500 h-full rounded-full transition-all"
+                          [style.width.%]="
+                            facultyDemographics()!.training.total_trainings > 0
+                              ? (facultyDemographics()!.training.by_type.managerial /
+                                  facultyDemographics()!.training.total_trainings) *
+                                100
+                              : 0
+                          "
+                        ></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs text-gray-600">Supervisory</span>
+                        <span class="text-sm font-bold text-gray-700">
+                          {{ facultyDemographics()!.training.by_type.supervisory }}
+                        </span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-green-500 h-full rounded-full transition-all"
+                          [style.width.%]="
+                            facultyDemographics()!.training.total_trainings > 0
+                              ? (facultyDemographics()!.training.by_type.supervisory /
+                                  facultyDemographics()!.training.total_trainings) *
+                                100
+                              : 0
+                          "
+                        ></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs text-gray-600">Technical</span>
+                        <span class="text-sm font-bold text-gray-700">
+                          {{ facultyDemographics()!.training.by_type.technical }}
+                        </span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-purple-500 h-full rounded-full transition-all"
+                          [style.width.%]="
+                            facultyDemographics()!.training.total_trainings > 0
+                              ? (facultyDemographics()!.training.by_type.technical /
+                                  facultyDemographics()!.training.total_trainings) *
+                                100
+                              : 0
+                          "
+                        ></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs text-gray-600">Others</span>
+                        <span class="text-sm font-bold text-gray-700">
+                          {{ facultyDemographics()!.training.by_type.others }}
+                        </span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-orange-500 h-full rounded-full transition-all"
+                          [style.width.%]="
+                            facultyDemographics()!.training.total_trainings > 0
+                              ? (facultyDemographics()!.training.by_type.others /
+                                  facultyDemographics()!.training.total_trainings) *
+                                100
+                              : 0
+                          "
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Research & Publications Section -->
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Research & Publications</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <!-- Research & Publications -->
+              <div class="p-6 border border-gray-200 rounded-sm bg-white shadow-sm">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Research & Publications</h3>
+                @if (researchAnalytics()) {
+                  <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-blue-50 rounded-sm">
+                      <div>
+                        <p class="text-xs text-gray-500">Total Publications</p>
+                        <p class="text-sm font-bold text-blue-600">
+                          {{ researchAnalytics()!.total_publications }}
+                        </p>
+                      </div>
+                      <div class="text-4xl text-blue-300">
+                        <i class="fas fa-book"></i>
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between p-4 bg-green-50 rounded-sm">
+                      <div>
+                        <p class="text-xs text-gray-500">Faculty with Publications</p>
+                        <p class="text-sm font-bold text-green-600">
+                          {{ researchAnalytics()!.faculty_with_publications }}
+                        </p>
+                      </div>
+                      <div class="text-4xl text-green-300">
+                        <i class="fas fa-user-graduate"></i>
+                      </div>
+                    </div>
+                    <div class="p-4 bg-purple-50 rounded-sm">
+                      <p class="text-xs text-gray-500 mb-2">Percentage with Publications</p>
+                      <div class="flex items-center gap-4">
+                        <div class="flex-1">
+                          <div class="w-full bg-gray-200 rounded-full h-4">
+                            <div
+                              class="bg-purple-600 h-full rounded-full transition-all"
+                              [style.width.%]="researchAnalytics()!.percentage_with_publications"
+                            ></div>
+                          </div>
+                        </div>
+                        <span class="text-sm font-bold text-purple-600">
+                          {{ researchAnalytics()!.percentage_with_publications }}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Faculty Involvement Section -->
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Faculty Involvement Analytics</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <!-- Research Involvement Chart -->
+              <div class="p-6 border border-gray-200 rounded-sm bg-purple-50 shadow-sm">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-2 text-center">
+                  Research-related Activities
+                </h3>
+                <p class="text-xs text-gray-600 text-center mb-4">(Permanent and Temporary)</p>
+                @if (chartLoading.research) {
+                  <div class="flex items-center justify-center h-64">
+                    <div
+                      class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"
+                    ></div>
+                  </div>
+                } @else {
+                  <div class="relative h-64">
+                    <canvas #researchChart></canvas>
+                  </div>
+                }
+              </div>
+
+              <!-- Extension Involvement Chart -->
+              <div class="p-6 border border-gray-200 rounded-sm bg-green-50 shadow-sm">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-2 text-center">Extension Services</h3>
+                <p class="text-xs text-gray-600 text-center mb-4">(Permanent and Temporary)</p>
+                @if (chartLoading.extension) {
+                  <div class="flex items-center justify-center h-64">
+                    <div
+                      class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent"
+                    ></div>
+                  </div>
+                } @else {
+                  <div class="relative h-64">
+                    <canvas #extensionChart></canvas>
+                  </div>
+                }
+              </div>
+
+              <!-- Seminars Involvement Chart -->
+              <div class="p-6 border border-gray-200 rounded-sm bg-amber-50 shadow-sm">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-2 text-center">
+                  Seminars/Trainings/Conferences
+                </h3>
+                <p class="text-xs text-gray-600 text-center mb-4">(Permanent and Temporary)</p>
+                @if (chartLoading.seminars) {
+                  <div class="flex items-center justify-center h-64">
+                    <div
+                      class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-purple-600 border-r-transparent"
+                    ></div>
+                  </div>
+                } @else {
+                  <div class="relative h-64">
+                    <canvas #seminarsChart></canvas>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+      @if (dashboardSubTab() === 'organization-analytics') {
+        <app-dean-organization-dashboard />
+      }
+
+      @if (dashboardSubTab() === 'member-demographics') {
+        <app-dean-member-demographics />
+      }
+    </div>
+  }
+  @if (activeTab() === 'faculty') {
+    <app-dean-faculty-management />
+  }
+  @if (activeTab() === 'faculty-notifications') {
+    <app-faculty-notifications />
+  }
+  @if (activeTab() === 'organization') {
+    <app-dean-organization-management />
+  }
+  @if (activeTab() === 'accomplishments') {
+    <app-dean-requirements-monitoring />
+  }
+  @if (activeTab() === 'org-documents') {
+    <app-dean-organization-documents />
+  }
+  @if (activeTab() === 'my-profile') {
+    <app-dean-my-profile />
+  }
+</div>
+
+@if (isChangePasswordOpen()) {
+  <app-change-password-modal (close)="isChangePasswordOpen.set(false)" />
+}

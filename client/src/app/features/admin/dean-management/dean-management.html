@@ -1,0 +1,108 @@
+<div class="p-4">
+  <!-- Action Bar -->
+  <div class="mb-4 flex flex-col sm:flex-row justify-between gap-4">
+    <div class="flex gap-2">
+      <button
+        (click)="openCreateModal()"
+        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-4 focus:ring-green-300 transition"
+      >
+        + Add Dean
+      </button>
+    </div>
+    <div class="flex gap-2">
+      <!-- Search placeholder if needed -->
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="relative overflow-x-auto border border-gray-200 border-dashed rounded-lg">
+    <table class="w-full text-sm text-left text-gray-500">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+        <tr>
+          <th scope="col" class="px-6 py-3">Name</th>
+          <th scope="col" class="px-6 py-3">Email</th>
+          <th scope="col" class="px-6 py-3">Contact</th>
+          <th scope="col" class="px-6 py-3">Department</th>
+          <th scope="col" class="px-6 py-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="5" class="px-6 py-4 text-center text-sm">Loading...</td>
+          </tr>
+        } @else if (deans().length === 0) {
+          <tr>
+            <td colspan="5" class="px-6 py-4 text-center text-sm">No deans found</td>
+          </tr>
+        } @else {
+          @for (dean of deans(); track dean.dean_id) {
+            <tr class="bg-white border-b hover:bg-gray-50">
+              <td class="px-6 py-4 font-semibold text-gray-900 text-sm">
+                {{ dean.first_name }} {{ dean.middle_name ? dean.middle_name + ' ' : ''
+                }}{{ dean.last_name }}
+              </td>
+              <td class="px-6 py-4 text-sm">
+                {{ dean.user.email }}
+              </td>
+              <td class="px-6 py-4 text-sm">
+                {{ dean.contact_number }}
+              </td>
+              <td class="px-6 py-4 text-sm">
+                {{ dean.department || 'N/A' }}
+              </td>
+              <td class="px-6 py-4 text-sm">
+                <button (click)="openEditModal(dean)" class="text-blue-600 hover:underline mr-3">
+                  Edit
+                </button>
+                <button (click)="deleteDean(dean)" class="text-red-600 hover:underline">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  @if (totalPages() > 1) {
+    <div class="flex justify-between items-center mt-4">
+      <div class="text-sm text-gray-700">
+        Showing {{ (currentPage() - 1) * pageSize + 1 }} to
+        {{ Math.min(currentPage() * pageSize, totalItems()) }} of {{ totalItems() }} results
+      </div>
+      <div class="flex gap-2">
+        <button
+          (click)="changePage(currentPage() - 1)"
+          [disabled]="currentPage() === 1"
+          class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+        @for (page of getPageNumbers(); track page) {
+          @if (page === -1) {
+            <span class="px-3 py-1">...</span>
+          } @else {
+            <button
+              (click)="changePage(page)"
+              [class.bg-green-600]="page === currentPage()"
+              [class.text-white]="page === currentPage()"
+              class="px-3 py-1 border rounded hover:bg-gray-100"
+            >
+              {{ page }}
+            </button>
+          }
+        }
+        <button
+          (click)="changePage(currentPage() + 1)"
+          [disabled]="currentPage() === totalPages()"
+          class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  }
+</div>

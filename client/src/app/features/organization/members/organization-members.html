@@ -1,0 +1,1493 @@
+<div class="p-6">
+  <!-- Header -->
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Organization Members</h2>
+    <p class="text-gray-600 mt-1">Manage your organization's member</p>
+  </div>
+
+  <!-- Success/Error Messages -->
+  @if (successMessage()) {
+    <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
+      {{ successMessage() }}
+    </div>
+  }
+  @if (errorMessage()) {
+    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- View Mode Toggle and Actions -->
+  <div class="mb-6 flex justify-between items-center">
+    <div class="flex space-x-2">
+      <button
+        (click)="toggleViewMode('list')"
+        [class.bg-green-600]="viewMode() === 'list'"
+        [class.text-white]="viewMode() === 'list'"
+        [class.bg-gray-200]="viewMode() !== 'list'"
+        [class.text-gray-700]="viewMode() !== 'list'"
+        class="px-4 py-2 rounded-lg font-medium transition"
+      >
+        <i class="fas fa-users mr-2"></i>Organization Population
+      </button>
+      <button
+        (click)="toggleViewMode('officers')"
+        [class.bg-green-600]="viewMode() === 'officers'"
+        [class.text-white]="viewMode() === 'officers'"
+        [class.bg-gray-200]="viewMode() !== 'officers'"
+        [class.text-gray-700]="viewMode() !== 'officers'"
+        class="px-4 py-2 rounded-lg font-medium transition"
+      >
+        <i class="fas fa-id-card mr-2"></i>Officers Profile
+      </button>
+    </div>
+    <div class="flex space-x-2">
+      <button
+        (click)="openBulkUploadModal()"
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+      >
+        <i class="fas fa-upload mr-2"></i>Upload
+      </button>
+      <button
+        (click)="openAddModal()"
+        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+      >
+        <i class="fas fa-plus mr-2"></i
+        >{{ viewMode() === 'officers' ? 'Add Officer' : 'Add Officer' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="applyFilters()"
+          placeholder="SR Code or Name"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+        <select
+          [(ngModel)]="selectedAcademicYear"
+          (ngModelChange)="applyFilters()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          <option [ngValue]="undefined">All Terms</option>
+          @for (year of academicYears(); track year.academic_year_id) {
+            <option [ngValue]="year.academic_year_id">
+              {{ year.year_start }}-{{ year.year_end }}
+            </option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+        <select
+          [(ngModel)]="selectedSemester"
+          (ngModelChange)="applyFilters()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          <option [ngValue]="undefined">All Semesters</option>
+          <option value="1st Semester">1st Semester</option>
+          <option value="2nd Semester">2nd Semester</option>
+          <option value="Summer">Summer</option>
+        </select>
+      </div>
+      @if (viewMode() === 'officers') {
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Position</label>
+          <select
+            [(ngModel)]="selectedPosition"
+            (ngModelChange)="applyFilters()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option [ngValue]="undefined">All Positions</option>
+            @for (position of positions(); track position.position_id) {
+              @if (position.position_name.toLowerCase() !== 'member') {
+                <option [value]="position.position_name">{{ position.position_name }}</option>
+              }
+            }
+          </select>
+        </div>
+      }
+      <div class="flex items-end">
+        <label class="flex items-center space-x-2 cursor-pointer">
+          <input
+            type="checkbox"
+            [(ngModel)]="showActiveOnly"
+            (ngModelChange)="applyFilters()"
+            class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-green-500"
+          />
+          <span class="text-sm font-medium text-gray-700">Active Only</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- List View -->
+  @if (viewMode() === 'list') {
+    @if (loading()) {
+      <div class="text-center py-12">
+        <div
+          class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+        ></div>
+        <p class="text-gray-600 mt-2">Loading members...</p>
+      </div>
+    } @else if (members().length === 0) {
+      <div class="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
+        <i class="fas fa-users text-gray-400 text-5xl mb-4"></i>
+        <p class="text-gray-600 text-lg">No members found</p>
+      </div>
+    } @else {
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                SR Code
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Position
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Year Level
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Term</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Status
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            @for (member of members(); track member.member_id) {
+              <tr [class.bg-gray-50]="!member.is_active">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {{ member.sr_code }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ getMemberFullName(member) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  {{ member.position }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  {{ member.year_level }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  @if (member.AcademicYear) {
+                    {{ member.AcademicYear.year_start }}-{{ member.AcademicYear.year_end }}
+                  }
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  @if (member.is_active) {
+                    <span
+                      class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
+                    >
+                      Active
+                    </span>
+                  } @else {
+                    <span
+                      class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800"
+                    >
+                      Inactive
+                    </span>
+                  }
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <button
+                    (click)="openEditModal(member)"
+                    class="text-blue-600 hover:text-blue-800 mr-3"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  @if (member.position.toLowerCase() !== 'adviser' && member.position.toLowerCase() !== 'advisor') {
+                    <button (click)="openDeleteModal(member)" class="text-red-600 hover:text-red-800">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="mt-4 flex justify-between items-center">
+          <div class="text-sm text-gray-600">
+            Showing {{ (currentPage() - 1) * itemsPerPage + 1 }} to
+            {{ Math.min(currentPage() * itemsPerPage, totalItems()) }} of {{ totalItems() }} members
+          </div>
+          <div class="flex space-x-2">
+            <button
+              (click)="changePage(currentPage() - 1)"
+              [disabled]="currentPage() === 1"
+              [class.opacity-50]="currentPage() === 1"
+              [class.cursor-not-allowed]="currentPage() === 1"
+              class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Previous
+            </button>
+            @for (page of [].constructor(totalPages()); track $index) {
+              <button
+                (click)="changePage($index + 1)"
+                [class.bg-green-600]="currentPage() === $index + 1"
+                [class.text-white]="currentPage() === $index + 1"
+                [class.border-b lue-600]="currentPage() === $index + 1"
+                class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                {{ $index + 1 }}
+              </button>
+            }
+            <button
+              (click)="changePage(currentPage() + 1)"
+              [disabled]="currentPage() === totalPages()"
+              [class.opacity-50]="currentPage() === totalPages()"
+              [class.cursor-not-allowed]="currentPage() === totalPages()"
+              class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      }
+    }
+  }
+
+  <!-- Officers Profile View -->
+  @if (viewMode() === 'officers') {
+    @if (loading()) {
+      <div class="text-center py-12">
+        <div
+          class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+        ></div>
+        <p class="text-gray-600 mt-2">Loading officers...</p>
+      </div>
+    } @else {
+      <div class="space-y-8">
+        <!-- President Profile Card -->
+        @if (getPresident(); as president) {
+          <div class="bg-white rounded-lg shadow-lg border-2 border-green-600 overflow-hidden">
+            <div class="bg-green-600 text-white px-6 py-3">
+              <h3 class="text-xl font-bold">Organization President</h3>
+            </div>
+            <div class="p-6">
+              <div class="flex flex-col md:flex-row gap-6">
+                <!-- Personal Details (Left) -->
+                <div class="flex-1 space-y-3">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase"
+                        >First Name</label
+                      >
+                      <p class="text-gray-900 font-medium">{{ president.first_name }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase"
+                        >Middle Name</label
+                      >
+                      <p class="text-gray-900 font-medium">{{ president.middle_name || 'N/A' }}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase">Family Name</label>
+                    <p class="text-gray-900 font-medium">{{ president.last_name }}</p>
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase">Position</label>
+                    <p class="text-gray-900 font-medium">{{ president.position }}</p>
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase">Year Level</label>
+                    <p class="text-gray-900 font-medium">{{ president.year_level }}</p>
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase">SR Code</label>
+                    <p class="text-gray-900 font-medium">{{ president.sr_code }}</p>
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase">Email</label>
+                    <p class="text-gray-900 font-medium">{{ president.email || 'N/A' }}</p>
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase"
+                      >Contact Number</label
+                    >
+                    <p class="text-gray-900 font-medium">{{ president.contact_number || 'N/A' }}</p>
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase">Term</label>
+                    <p class="text-gray-900 font-medium">
+                      @if (president.AcademicYear) {
+                        {{ president.AcademicYear.year_start }}-{{
+                          president.AcademicYear.year_end
+                        }}
+                      } @else {
+                        N/A
+                      }
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Photo (Right) -->
+                <div class="flex flex-col items-center justify-start">
+                  @if (getPhotoUrl(president.photo_url); as photoUrl) {
+                    <img
+                      [src]="photoUrl"
+                      [alt]="getMemberFullName(president)"
+                      class="w-48 h-48 rounded-lg object-cover"
+                      (error)="onImageError($event)"
+                    />
+                    <div
+                      [class]="
+                        'w-48 h-48 rounded-lg flex items-center justify-center text-white text-6xl font-bold ' +
+                        getRandomColor(president.sr_code)
+                      "
+                      style="display: none;"
+                    >
+                      {{ getInitials(president) }}
+                    </div>
+                  } @else {
+                    <div
+                      [class]="
+                        'w-48 h-48 rounded-lg flex items-center justify-center text-white text-6xl font-bold ' +
+                        getRandomColor(president.sr_code)
+                      "
+                    >
+                      {{ getInitials(president) }}
+                    </div>
+                  }
+
+                  <!-- Action Buttons -->
+                  <div class="flex gap-2 mt-4 w-full">
+                    <button
+                      (click)="openEditModal(president)"
+                      class="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+                      title="Edit President"
+                    >
+                      <i class="fas fa-edit mr-1"></i>Edit
+                    </button>
+                    @if (president.position.toLowerCase() !== 'adviser' && president.position.toLowerCase() !== 'advisor') {
+                      <button
+                        (click)="openDeleteModal(president)"
+                        class="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition"
+                        title="Delete President"
+                      >
+                        <i class="fas fa-trash mr-1"></i>Delete
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Organization Adviser Profile Card -->
+        @if (advisers().length > 0) {
+          @for (adviser of advisers(); track adviser.adviser_id) {
+            <div class="bg-white rounded-lg shadow-lg border-2 border-blue-600 overflow-hidden">
+              <div class="bg-blue-600 text-white px-6 py-3">
+                <h3 class="text-xl font-bold">Organization Adviser</h3>
+              </div>
+              <div class="p-6">
+                <div class="flex flex-col md:flex-row gap-6">
+                  <!-- Personal Details (Left) - All 17 Fields -->
+                  <div class="flex-1 space-y-3">
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase">First Name</label>
+                        <p class="text-gray-900 font-medium">{{ adviser.Faculty?.first_name || 'N/A' }}</p>
+                      </div>
+                      <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase">Middle Name</label>
+                        <p class="text-gray-900 font-medium">{{ adviser.Faculty?.middle_name || 'N/A' }}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Family Name</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.last_name || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Position</label>
+                      <p class="text-gray-900 font-medium">Organization Adviser</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Academic Rank</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.academic_rank || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Employment Status</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.employment_status || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Length of Service as Org Adviser</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.length_of_service || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Educational Attainment Course</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.educational_attainment || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Campus</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.campus || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Mobile No.</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.contact_number || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Telephone No.</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.telephone_number || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Birth Date</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.birth_date ? (adviser.Faculty.birth_date | date: 'mediumDate') : 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Age</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.age || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Civil Status</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.civil_status || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Email Address</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.email || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Home Address</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.home_address || 'N/A' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-xs font-semibold text-gray-500 uppercase">Signature</label>
+                      <p class="text-gray-900 font-medium">{{ adviser.Faculty?.signature_url ? 'Available' : 'N/A' }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Photo (Right) -->
+                  <div class="flex flex-col items-center justify-start">
+                    @if (adviser.Faculty?.photo_url) {
+                      <img
+                        [src]="getPhotoUrl(adviser.Faculty.photo_url)"
+                        [alt]="getAdviserFullName(adviser)"
+                        class="w-48 h-48 rounded-lg object-cover"
+                        (error)="onImageError($event)"
+                      />
+                      <div
+                        [class]="'w-48 h-48 rounded-lg flex items-center justify-center text-white text-6xl font-bold ' + getRandomColor(adviser.Faculty?.employee_id || 'FA')"
+                        style="display: none;"
+                      >
+                        {{ getAdviserInitials(adviser) }}
+                      </div>
+                    } @else {
+                      <div
+                        [class]="'w-48 h-48 rounded-lg flex items-center justify-center text-white text-6xl font-bold ' + getRandomColor(adviser.Faculty?.employee_id || 'FA')"
+                      >
+                        {{ getAdviserInitials(adviser) }}
+                      </div>
+                    }
+                    
+                    <!-- Edit Button Below Picture -->
+                    <button
+                      (click)="openEditAdviserModal(adviser)"
+                      class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition w-48"
+                      title="Edit Adviser"
+                    >
+                      <i class="fas fa-edit mr-2"></i>Edit Adviser
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Other Officers Grid -->
+        @if (getOfficers().length > 0) {
+          <div>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Other Officers</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              @for (officer of getOfficers(); track officer.member_id) {
+                <div
+                  class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition"
+                >
+                  <div class="p-6 flex flex-col items-center">
+                    <!-- Photo -->
+                    @if (getPhotoUrl(officer.photo_url); as photoUrl) {
+                      <img
+                        [src]="photoUrl"
+                        [alt]="getMemberFullName(officer)"
+                        class="w-32 h-32 rounded-full object-cover mb-4"
+                        (error)="onImageError($event)"
+                      />
+                      <div
+                        [class]="
+                          'w-32 h-32 rounded-full flex items-center justify-center text-white text-4xl font-bold mb-4 ' +
+                          getRandomColor(officer.sr_code)
+                        "
+                        style="display: none;"
+                      >
+                        {{ getInitials(officer) }}
+                      </div>
+                    } @else {
+                      <div
+                        [class]="
+                          'w-32 h-32 rounded-full flex items-center justify-center text-white text-4xl font-bold mb-4 ' +
+                          getRandomColor(officer.sr_code)
+                        "
+                      >
+                        {{ getInitials(officer) }}
+                      </div>
+                    }
+
+                    <!-- Officer Details -->
+                    <h4 class="text-lg font-bold text-gray-900 text-center">
+                      {{ getMemberFullName(officer) }}
+                    </h4>
+                    <p class="text-sm text-green-600 font-semibold mt-1">{{ officer.position }}</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ officer.year_level }}</p>
+                    <p class="text-xs text-gray-500 mt-2">{{ officer.sr_code }}</p>
+
+                    @if (officer.email) {
+                      <p class="text-xs text-gray-600 mt-2 text-center break-all">
+                        {{ officer.email }}
+                      </p>
+                    }
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200 w-full justify-center">
+                      <button
+                        (click)="openEditModal(officer)"
+                        class="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+                        title="Edit Officer"
+                      >
+                        <i class="fas fa-edit mr-1"></i>Edit
+                      </button>
+                      @if (officer.position.toLowerCase() !== 'adviser' && officer.position.toLowerCase() !== 'advisor') {
+                        <button
+                          (click)="openDeleteModal(officer)"
+                          class="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition"
+                          title="Delete Officer"
+                        >
+                          <i class="fas fa-trash mr-1"></i>Delete
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
+            <i class="fas fa-users text-gray-400 text-5xl mb-4"></i>
+            <p class="text-gray-600 text-lg">No other officers found</p>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+
+<!-- Add Officer Modal -->
+@if (showAddModal()) {
+  <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+    <div
+      class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative z-10"
+    >
+      <div class="p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Add Officer</h3>
+
+        <!-- Officer Form Layout -->
+        <form (ngSubmit)="saveMember()" class="space-y-4">
+          <div class="flex gap-6">
+            <!-- Left Side - Form Fields -->
+            <div class="flex-1 space-y-4">
+              <!-- Name Fields -->
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">First Name: <span class="text-red-600">*</span></label>
+                <input
+                  type="text"
+                  [(ngModel)]="memberForm().first_name"
+                  name="first_name"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Middle Name:</label>
+                <input
+                  type="text"
+                  [(ngModel)]="memberForm().middle_name"
+                  name="middle_name"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Family Name: <span class="text-red-600">*</span></label>
+                <input
+                  type="text"
+                  [(ngModel)]="memberForm().last_name"
+                  name="last_name"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Position: <span class="text-red-600">*</span></label>
+                <select
+                  [(ngModel)]="memberForm().position"
+                  name="position"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                >
+                  <option value="">Select Position</option>
+                  @for (position of positions(); track position.position_id) {
+                    <option [value]="position.position_name">
+                      {{ position.position_name }}
+                    </option>
+                  }
+                </select>
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Academic Rank:</label>
+                <input
+                  type="text"
+                  [(ngModel)]="memberForm().year_level"
+                  name="academic_rank"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Employment Status:</label>
+                <input
+                  type="text"
+                  [(ngModel)]="memberForm().sr_code"
+                  name="employment_status"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Length of Service as Org Adviser:</label>
+                <input
+                  type="text"
+                  name="length_of_service"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Educational Attainment Course:</label>
+                <input
+                  type="text"
+                  name="educational_attainment"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Campus:</label>
+                <input
+                  type="text"
+                  name="campus"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Mobile No.:</label>
+                <input
+                  type="text"
+                  [(ngModel)]="memberForm().contact_number"
+                  name="contact_number"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Telephone No.:</label>
+                <input
+                  type="text"
+                  name="telephone_number"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Birth Date:</label>
+                <input
+                  type="date"
+                  [(ngModel)]="memberForm().term_start_date"
+                  name="birth_date"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Age:</label>
+                <input
+                  type="number"
+                  name="age"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Civil Status:</label>
+                <select
+                  name="civil_status"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                >
+                  <option value="">Select Civil Status</option>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Widowed">Widowed</option>
+                  <option value="Separated">Separated</option>
+                </select>
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Email Address:</label>
+                <input
+                  type="email"
+                  [(ngModel)]="memberForm().email"
+                  name="email"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Home Address:</label>
+                <textarea
+                  name="home_address"
+                  rows="2"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                ></textarea>
+              </div>
+
+              <div class="grid grid-cols-[180px_1fr] gap-4 items-center">
+                <label class="text-sm font-semibold text-gray-700">Signature:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-green-500"
+                />
+              </div>
+            </div>
+
+            <!-- Right Side - Photo Upload -->
+            <div class="w-64 flex flex-col items-center">
+              <div
+                (click)="triggerPhotoUpload()"
+                class="w-48 h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 mb-3 cursor-pointer hover:border-green-500 hover:bg-green-50 transition relative overflow-hidden group"
+              >
+                @if (photoPreview()) {
+                  <img
+                    [src]="photoPreview()"
+                    alt="Photo preview"
+                    class="w-full h-full object-cover"
+                  />
+                  <div
+                    class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                  >
+                    <div class="text-center text-white">
+                      <i class="fas fa-camera text-3xl mb-2"></i>
+                      <p class="text-sm">Change Photo</p>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="text-center text-gray-400 group-hover:text-green-600 transition">
+                    <i class="fas fa-camera text-6xl mb-2"></i>
+                    <p class="text-sm font-medium">Click to upload</p>
+                    <p class="text-xs mt-1">JPG, PNG (Max 5MB)</p>
+                  </div>
+                }
+              </div>
+              <input
+                type="file"
+                id="photoUpload"
+                accept="image/jpeg,image/jpg,image/png"
+                (change)="onPhotoSelected($event)"
+                class="hidden"
+              />
+              @if (selectedPhoto()) {
+                <button
+                  type="button"
+                  (click)="removePhoto()"
+                  class="text-sm text-red-600 hover:text-red-800 font-medium"
+                >
+                  <i class="fas fa-times mr-1"></i>Remove Photo
+                </button>
+              } @else {
+                <p class="text-xs text-gray-500 text-center">Optional: Upload officer photo</p>
+              }
+            </div>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+              {{ errorMessage() }}
+            </div>
+          }
+
+          <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              (click)="closeModals()"
+              class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="loading()"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              @if (loading()) {
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+              }
+              Add Officer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Member Modal -->
+@if (showEditModal()) {
+  <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+    <div
+      class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10"
+    >
+      <div class="p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Edit Member</h3>
+
+        <form (ngSubmit)="updateMember()" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">SR Code</label>
+              <input
+                type="text"
+                [value]="memberForm().sr_code"
+                disabled
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
+              <select
+                [(ngModel)]="memberForm().year_level"
+                name="year_level"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+                <option value="5th Year">5th Year</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <input
+                type="text"
+                [(ngModel)]="memberForm().first_name"
+                name="first_name"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+              <input
+                type="text"
+                [(ngModel)]="memberForm().middle_name"
+                name="middle_name"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <input
+                type="text"
+                [(ngModel)]="memberForm().last_name"
+                name="last_name"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                [(ngModel)]="memberForm().email"
+                name="email"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+              <input
+                type="text"
+                [(ngModel)]="memberForm().contact_number"
+                name="contact_number"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Position</label>
+              <select
+                [(ngModel)]="memberForm().position"
+                name="position"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                @for (position of positions(); track position.position_id) {
+                  <option [value]="position.position_name">
+                    {{ position.position_name }}
+                  </option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Reports To</label>
+              <select
+                [(ngModel)]="memberForm().parent_member_id"
+                name="parent_member_id"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option [ngValue]="undefined">None (Top Level)</option>
+                @for (member of getPotentialSupervisors(); track member.member_id) {
+                  <option [ngValue]="member.member_id">
+                    {{ getMemberFullName(member) }} - {{ member.position }}
+                  </option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Term End Date</label>
+              <input
+                type="date"
+                [(ngModel)]="memberForm().term_end_date"
+                name="term_end_date"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div class="flex items-center">
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="memberForm().is_active"
+                  name="is_active"
+                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-green-500"
+                />
+                <span class="text-sm font-medium text-gray-700">Active Member</span>
+              </label>
+            </div>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+              {{ errorMessage() }}
+            </div>
+          }
+
+          <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              (click)="closeModals()"
+              class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="loading()"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              @if (loading()) {
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+              }
+              Update Member
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteModal()) {
+  <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full relative z-10">
+      <div class="p-6">
+        <div
+          class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4"
+        >
+          <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 text-center mb-2">Delete Member</h3>
+        <p class="text-gray-600 text-center mb-6">
+          Are you sure you want to delete
+          <strong>{{ selectedMember() ? getMemberFullName(selectedMember()!) : '' }}</strong
+          >? This action cannot be undone.
+        </p>
+
+        @if (errorMessage()) {
+          <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <div class="flex justify-end space-x-3">
+          <button
+            type="button"
+            (click)="closeModals()"
+            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            (click)="deleteMember()"
+            [disabled]="loading()"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+          >
+            @if (loading()) {
+              <i class="fas fa-spinner fa-spin mr-2"></i>
+            }
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Adviser Modal -->
+@if (showEditAdviserModal()) {
+  <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+    <div (click)="closeModals()" class="absolute inset-0 bg-black bg-opacity-5"></div>
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative z-10">
+      <div class="p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Edit Adviser</h3>
+
+        <!-- Adviser Form Layout -->
+        <form (ngSubmit)="updateAdviser()" class="space-y-4">
+          <div class="flex gap-6">
+            <!-- Left Side - Form Fields -->
+            <div class="flex-1 space-y-4">
+              <!-- Faculty Information -->
+              <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase">First Name</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="memberForm().first_name"
+                      name="first_name"
+                      required
+                      class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase">Middle Name</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="memberForm().middle_name"
+                      name="middle_name"
+                      class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Family Name</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="memberForm().last_name"
+                    name="last_name"
+                    required
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Email Address</label>
+                  <input
+                    type="email"
+                    [(ngModel)]="memberForm().email"
+                    name="email"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Contact Number</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="memberForm().contact_number"
+                    name="contact_number"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Academic Rank</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="adviserForm().academic_rank"
+                    name="academic_rank"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Employment Status</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="adviserForm().employment_status"
+                    name="employment_status"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Length of Service as Org Adviser</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="adviserForm().length_of_service"
+                    name="length_of_service"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Educational Attainment</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="adviserForm().educational_attainment"
+                    name="educational_attainment"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Campus</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="adviserForm().campus"
+                    name="campus"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Telephone No.</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="adviserForm().telephone_number"
+                    name="telephone_number"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Birth Date</label>
+                  <input
+                    type="date"
+                    [(ngModel)]="adviserForm().birth_date"
+                    name="birth_date"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Age</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="adviserForm().age"
+                    name="age"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Civil Status</label>
+                  <select
+                    [(ngModel)]="adviserForm().civil_status"
+                    name="civil_status"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="">Select Civil Status</option>
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Widowed">Widowed</option>
+                    <option value="Separated">Separated</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-gray-500 uppercase">Home Address</label>
+                  <textarea
+                    [(ngModel)]="adviserForm().home_address"
+                    name="home_address"
+                    rows="2"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Side - Photo Upload -->
+            <div class="w-64 flex flex-col items-center">
+              <div
+                (click)="triggerPhotoUpload()"
+                class="w-48 h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 mb-3 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition relative overflow-hidden group"
+              >
+                @if (photoPreview()) {
+                  <img
+                    [src]="photoPreview()"
+                    alt="Photo preview"
+                    class="w-full h-full object-cover"
+                  />
+                  <div
+                    class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                  >
+                    <div class="text-center text-white">
+                      <i class="fas fa-camera text-3xl mb-2"></i>
+                      <p class="text-sm">Change Photo</p>
+                    </div>
+                  </div>
+                } @else if (selectedAdviser()?.Faculty?.photo_url) {
+                  <img
+                    [src]="getPhotoUrl(selectedAdviser().Faculty.photo_url)"
+                    alt="Current photo"
+                    class="w-full h-full object-cover"
+                  />
+                  <div
+                    class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                  >
+                    <div class="text-center text-white">
+                      <i class="fas fa-camera text-3xl mb-2"></i>
+                      <p class="text-sm">Change Photo</p>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="text-center text-gray-400 group-hover:text-blue-600 transition">
+                    <i class="fas fa-camera text-6xl mb-2"></i>
+                    <p class="text-sm font-medium">Click to upload</p>
+                    <p class="text-xs mt-1">JPG, PNG (Max 5MB)</p>
+                  </div>
+                }
+              </div>
+              <input
+                type="file"
+                id="photoUpload"
+                accept="image/jpeg,image/jpg,image/png"
+                (change)="onPhotoSelected($event)"
+                class="hidden"
+              />
+              @if (selectedPhoto()) {
+                <button
+                  type="button"
+                  (click)="removePhoto()"
+                  class="text-sm text-red-600 hover:text-red-800 font-medium"
+                >
+                  <i class="fas fa-times mr-1"></i>Remove Photo
+                </button>
+              } @else {
+                <p class="text-xs text-gray-500 text-center">Optional: Upload new adviser photo</p>
+              }
+            </div>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+              {{ errorMessage() }}
+            </div>
+          }
+
+          <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              (click)="closeModals()"
+              class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="loading()"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              @if (loading()) {
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+              }
+              Update Adviser
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Bulk Upload Modal -->
+@if (showBulkUploadModal()) {
+  <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+    <div
+      class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10"
+    >
+      <div class="p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Bulk Upload Members</h3>
+
+        <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p class="text-sm text-blue-900 mb-2">
+            <i class="fas fa-info-circle mr-2"></i>
+            Upload a CSV file with member information. Download the template to see the required
+            format.
+          </p>
+          <button
+            (click)="downloadTemplate()"
+            class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            <i class="fas fa-download mr-1"></i>Download Template
+          </button>
+        </div>
+
+        <form class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              CSV File <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="file"
+              accept=".csv,.xls,.xlsx"
+              (change)="onFileSelected($event)"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            @if (bulkUploadForm().file) {
+              <p class="text-sm text-gray-600 mt-1">Selected: {{ bulkUploadForm().file!.name }}</p>
+            }
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Section <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              [(ngModel)]="bulkUploadForm().section"
+              name="section"
+              placeholder="e.g., BSCS 3-1"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Academic Year <span class="text-red-500">*</span>
+            </label>
+            <select
+              [(ngModel)]="bulkUploadForm().academic_year_id"
+              name="academic_year_id"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option [ngValue]="undefined">Select Term</option>
+              @for (year of academicYears(); track year.academic_year_id) {
+                <option [ngValue]="year.academic_year_id">
+                  {{ year.year_start }}-{{ year.year_end }}
+                </option>
+              }
+            </select>
+          </div>
+
+          @if (uploadResults()) {
+            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <h4 class="font-semibold text-gray-900 mb-2">Upload Results:</h4>
+              <div class="space-y-1 text-sm">
+                <p><span class="font-medium">Total:</span> {{ uploadResults().total }}</p>
+                <p class="text-green-600">
+                  <span class="font-medium">Inserted:</span> {{ uploadResults().inserted }}
+                </p>
+                <p class="text-blue-600">
+                  <span class="font-medium">Updated:</span> {{ uploadResults().updated }}
+                </p>
+                <p class="text-yellow-600">
+                  <span class="font-medium">Skipped:</span> {{ uploadResults().skipped }}
+                </p>
+                @if (uploadResults().errors.length > 0) {
+                  <details class="mt-2">
+                    <summary class="cursor-pointer text-red-600 font-medium">
+                      Errors ({{ uploadResults().errors.length }})
+                    </summary>
+                    <div class="mt-2 max-h-40 overflow-y-auto">
+                      @for (error of uploadResults().errors; track $index) {
+                        <p class="text-xs text-red-600">{{ error.error }}</p>
+                      }
+                    </div>
+                  </details>
+                }
+              </div>
+            </div>
+          }
+
+          @if (errorMessage()) {
+            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+              {{ errorMessage() }}
+            </div>
+          }
+
+          <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              (click)="closeModals()"
+              class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              (click)="uploadMembers()"
+              [disabled]="loading()"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              @if (loading()) {
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+              }
+              Upload Members
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

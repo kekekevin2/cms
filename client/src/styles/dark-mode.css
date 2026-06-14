@@ -1,0 +1,196 @@
+/* Dark Mode Styles - Polished Version */
+
+/* Smooth transitions - only for specific properties */
+html.dark {
+  color-scheme: dark;
+}
+
+/* Sidebar dark mode */
+.dark aside {
+  @apply bg-gray-800 border-gray-700;
+}
+
+.dark aside h2,
+.dark aside p {
+  @apply text-white;
+}
+
+/* Main content dark mode */
+.dark body {
+  @apply bg-gray-900 text-gray-100;
+}
+
+/* Cards and containers - be more specific */
+.dark .bg-white:not(input):not(select):not(textarea):not(button) {
+  @apply bg-gray-800;
+}
+
+.dark .border-gray-200 {
+  @apply border-gray-700;
+}
+
+.dark .border-gray-300 {
+  @apply border-gray-600;
+}
+
+/* Text colors */
+.dark .text-gray-900 {
+  @apply text-gray-100;
+}
+
+.dark .text-gray-800 {
+  @apply text-gray-200;
+}
+
+.dark .text-gray-700 {
+  @apply text-gray-300;
+}
+
+.dark .text-gray-600 {
+  @apply text-gray-400;
+}
+
+/* Forms - more specific selectors */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="date"],
+.dark input[type="time"],
+.dark input[type="datetime-local"],
+.dark input[type="tel"],
+.dark input[type="url"],
+.dark input[type="search"],
+.dark select,
+.dark textarea {
+  @apply bg-gray-700 border-gray-600 text-white placeholder-gray-400;
+}
+
+.dark input[type="text"]:focus,
+.dark input[type="email"]:focus,
+.dark input[type="password"]:focus,
+.dark input[type="number"]:focus,
+.dark input[type="date"]:focus,
+.dark input[type="time"]:focus,
+.dark input[type="datetime-local"]:focus,
+.dark input[type="tel"]:focus,
+.dark input[type="url"]:focus,
+.dark input[type="search"]:focus,
+.dark select:focus,
+.dark textarea:focus {
+  @apply border-green-500 ring-green-500 bg-gray-700;
+}
+
+.dark input:disabled,
+.dark select:disabled,
+.dark textarea:disabled {
+  @apply bg-gray-800 text-gray-500;
+}
+
+/* Checkboxes and radios - keep them visible */
+.dark input[type="checkbox"],
+.dark input[type="radio"] {
+  @apply bg-gray-700 border-gray-600;
+}
+
+.dark input[type="checkbox"]:checked,
+.dark input[type="radio"]:checked {
+  @apply bg-green-600 border-green-600;
+}
+
+/* Labels */
+.dark label {
+  @apply text-gray-300;
+}
+
+/* Tables */
+.dark table {
+  @apply bg-gray-800;
+}
+
+.dark thead {
+  @apply bg-gray-700;
+}
+
+.dark th {
+  @apply bg-gray-700 text-gray-200 border-gray-600;
+}
+
+.dark td {
+  @apply border-gray-700 text-gray-300;
+}
+
+.dark tbody tr {
+  @apply bg-gray-800;
+}
+
+.dark tbody tr:hover {
+  @apply bg-gray-700;
+}
+
+.dark tbody tr:nth-child(even) {
+  @apply bg-gray-800/50;
+}
+
+/* Buttons - preserve colored buttons */
+.dark button:not([class*="bg-green"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-yellow"]):not([class*="bg-purple"]):not([class*="bg-indigo"]) {
+  @apply hover:bg-gray-700;
+}
+
+/* Dropdowns and Modals */
+.dark .absolute.bg-white,
+.dark .fixed.bg-white {
+  @apply bg-gray-700 border-gray-600;
+}
+
+/* Shadows */
+.dark .shadow-xl,
+.dark .shadow-lg,
+.dark .shadow-md,
+.dark .shadow {
+  @apply shadow-gray-900/50;
+}
+
+/* Badges and Pills */
+.dark .badge,
+.dark .pill {
+  @apply bg-gray-700 text-gray-200;
+}
+
+/* Alerts */
+.dark .alert {
+  @apply bg-gray-800 border-gray-700 text-gray-200;
+}
+
+/* Links */
+.dark a:not([class*="bg-"]) {
+  @apply text-green-400 hover:text-green-300;
+}
+
+/* Dividers */
+.dark hr {
+  @apply border-gray-700;
+}
+
+/* Code blocks */
+.dark code,
+.dark pre {
+  @apply bg-gray-900 text-gray-200 border-gray-700;
+}
+
+/* Scrollbars (Webkit browsers) */
+.dark ::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+.dark ::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-gray-600 rounded;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}

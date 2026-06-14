@@ -1,0 +1,4 @@
+sr_code,student_name,email,year_level,section,program,department,gender,position
+21-12345,Juan Dela Cruz,juan.delacruz@example.com,1st Year,A,BSIT,CCS,Male,Member
+21-12346,Maria Santos,maria.santos@example.com,2nd Year,B,BSCS,CCS,Female,Member
+21-12347,Pedro Reyes,pedro.reyes@example.com,3rd Year,A,BSIS,CCS,Male,Member

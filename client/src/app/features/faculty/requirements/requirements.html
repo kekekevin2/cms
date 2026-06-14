@@ -1,0 +1,443 @@
+<div class="p-3 space-y-5">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="flex items-center gap-2 flex-wrap">
+      <select
+        [(ngModel)]="selectedAcademicYear"
+        (ngModelChange)="filterRequirements()"
+        class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-300 bg-white"
+      >
+        <option [value]="0">All Academic Years</option>
+        @for (year of academicYearsList(); track year.academic_year_id) {
+          <option [value]="year.academic_year_id">{{ year.year_start }}-{{ year.year_end }}</option>
+        }
+      </select>
+      <select
+        [(ngModel)]="selectedSemester"
+        (ngModelChange)="filterRequirements()"
+        class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-300 bg-white"
+      >
+        <option value="1st Semester">1st Semester</option>
+        <option value="2nd Semester">2nd Semester</option>
+        <option value="Summer 1">Summer 1</option>
+        <option value="Summer 2">Summer 2</option>
+      </select>
+      <select
+        [(ngModel)]="selectedStatus"
+        (ngModelChange)="filterRequirements()"
+        class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-300 bg-white"
+      >
+        <option value="">All Status</option>
+        <option value="pending">Pending</option>
+        <option value="validated">Validated</option>
+        <option value="returned">Returned</option>
+      </select>
+    </div>
+    <button
+      (click)="openSubmitModal()"
+      class="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white text-xs font-medium rounded-sm hover:bg-red-600 transition-colors"
+    >
+      <i class="pi pi-upload text-xs"></i> Submit Portfolio
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+    <table class="w-full text-xs">
+      <thead>
+        <tr class="border-b border-gray-100 bg-gray-50">
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28"
+          >
+            Academic Year
+          </th>
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28"
+          >
+            Semester
+          </th>
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+          >
+            Requirement
+          </th>
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+          >
+            Files
+          </th>
+          <th
+            class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-24"
+          >
+            Status
+          </th>
+          <th
+            class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28"
+          >
+            Submitted
+          </th>
+          <th
+            class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-32"
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        @if (loading()) {
+          <tr>
+            <td colspan="7" class="px-5 py-12 text-center text-gray-400">
+              <div class="inline-flex flex-col items-center gap-2">
+                <i class="pi pi-spin pi-spinner text-xl"></i>
+                <span class="text-xs">Loading…</span>
+              </div>
+            </td>
+          </tr>
+        } @else if (requirements().length === 0) {
+          <tr>
+            <td colspan="7" class="px-5 py-14 text-center text-gray-400">
+              <div class="inline-flex flex-col items-center gap-2">
+                <i class="pi pi-folder-open text-5xl text-gray-200"></i>
+                <span class="text-xs">No requirements found</span>
+              </div>
+            </td>
+          </tr>
+        } @else {
+          @for (req of requirements(); track req.submission_id) {
+            <tr class="hover:bg-gray-50/60 transition-colors">
+              <td class="px-5 py-3.5 text-gray-500 text-xs">
+                {{ req.academic_year?.year_start }}-{{ req.academic_year?.year_end }}
+              </td>
+              <td class="px-5 py-3.5 text-gray-500 text-xs">
+                {{ getSemesterLabel(req.semester) }}
+              </td>
+              <td class="px-5 py-3.5 font-medium text-gray-700 text-xs">
+                {{ req.requirement_name }}
+              </td>
+              <td class="px-5 py-3.5 text-xs">
+                @if (req.files && req.files.length > 0) {
+                  <div class="space-y-1">
+                    @for (file of req.files; track file.file_id) {
+                      <div class="flex items-center gap-1.5">
+                        <i class="pi pi-file text-gray-400 text-xs shrink-0"></i>
+                        <span
+                          class="text-gray-500 truncate max-w-[120px]"
+                          [title]="file.file_name"
+                          >{{ file.file_name }}</span
+                        >
+                        <button
+                          (click)="
+                            downloadSingleFile(req.submission_id, file.file_id, file.file_name)
+                          "
+                          class="shrink-0 p-0.5 text-blue-500 hover:text-blue-700 transition"
+                          title="Download"
+                        >
+                          <i class="pi pi-download text-xs"></i>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <span class="text-gray-400">{{ req.file_name || '—' }}</span>
+                }
+              </td>
+              <td class="px-5 py-3.5 text-center">
+                <span
+                  [ngClass]="getStatusClass(req.status)"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                >
+                  {{ req.status | titlecase }}
+                </span>
+              </td>
+              <td class="px-5 py-3.5 text-gray-400 text-xs">
+                {{ req.submission_date | date: 'MMM d, y' }}
+              </td>
+              <td class="px-5 py-3.5">
+                <div class="flex items-center justify-end gap-1">
+                  @if (!req.files || req.files.length === 0) {
+                    <button
+                      (click)="downloadFile(req.submission_id)"
+                      title="Download"
+                      class="px-2 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-download text-xs"></i>
+                    </button>
+                  }
+                  @if (req.status !== 'validated') {
+                    <button
+                      (click)="openAddFilesModal(req)"
+                      title="Add Files"
+                      class="px-2 py-1.5 text-xs font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-plus text-xs"></i>
+                    </button>
+                    <button
+                      (click)="deleteSubmission(req.submission_id)"
+                      title="Delete"
+                      class="px-2 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition inline-flex items-center gap-1"
+                    >
+                      <i class="pi pi-trash text-xs"></i>
+                    </button>
+                  }
+                </div>
+                @if (req.status === 'returned' && req.dean_remarks) {
+                  <p class="text-xs text-red-500 italic mt-1 text-right">{{ req.dean_remarks }}</p>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+
+    @if (totalPages() > 1) {
+      <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+        <span class="text-xs text-gray-400">
+          {{ (currentPage() - 1) * 10 + 1 }}–{{ Math.min(currentPage() * 10, totalItems()) }} of
+          {{ totalItems() }}
+        </span>
+        <div class="flex items-center gap-1">
+          <button
+            (click)="changePage(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            <i class="pi pi-chevron-left text-xs"></i>
+          </button>
+          @for (page of getPageNumbers(); track $index) {
+            @if (page === -1) {
+              <span class="px-1 text-xs text-gray-300">…</span>
+            } @else {
+              <button
+                (click)="changePage(page)"
+                [class.bg-gray-900]="currentPage() === page"
+                [class.text-white]="currentPage() === page"
+                [class.text-gray-600]="currentPage() !== page"
+                class="min-w-7 h-7 px-1.5 text-xs font-medium rounded-md hover:bg-gray-100 transition-colors"
+              >
+                {{ page }}
+              </button>
+            }
+          }
+          <button
+            (click)="changePage(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            <i class="pi pi-chevron-right text-xs"></i>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Submit Modal -->
+@if (showSubmitModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col">
+      <div class="px-6 py-5 border-b border-gray-100">
+        <h3 class="text-xs font-semibold text-gray-900">Submit Requirement</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Upload files for your portfolio submission</p>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1 space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1.5"
+            >Academic Year <span class="text-red-500">*</span></label
+          >
+          <select
+            [(ngModel)]="submitForm.academic_year_id"
+            class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 transition"
+          >
+            <option [value]="0">Select Academic Year</option>
+            @for (year of academicYearsList(); track year.academic_year_id) {
+              <option [value]="year.academic_year_id">
+                {{ year.year_start }}-{{ year.year_end }}
+              </option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1.5"
+            >Semester <span class="text-red-500">*</span></label
+          >
+          <select
+            [(ngModel)]="submitForm.semester"
+            class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 transition"
+          >
+            <option value="">Select Semester</option>
+            <option value="1st Semester">1st Semester</option>
+            <option value="2nd Semester">2nd Semester</option>
+            <option value="Summer 1">Summer 1</option>
+            <option value="Summer 2">Summer 2</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1.5"
+            >Requirement Type <span class="text-red-500">*</span></label
+          >
+          <select
+            [(ngModel)]="submitForm.requirement_name"
+            class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 transition"
+          >
+            <option value="">Select Requirement Type</option>
+            @for (reqName of standardRequirements; track $index) {
+              <option [value]="reqName">{{ reqName }}</option>
+            }
+          </select>
+        </div>
+        @if (submitForm.requirement_name === 'Other Documents') {
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1.5"
+              >Document Name <span class="text-red-500">*</span></label
+            >
+            <input
+              type="text"
+              [(ngModel)]="submitForm.custom_requirement_name"
+              placeholder="Enter document name"
+              class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 transition"
+            />
+          </div>
+        }
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1.5"
+            >Files <span class="text-red-500">*</span></label
+          >
+          <p class="text-xs text-gray-400 mb-2">
+            Hold Ctrl / Cmd to select multiple files (max 10)
+          </p>
+          <input
+            type="file"
+            (change)="onFileSelected($event)"
+            multiple
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+            class="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200"
+          />
+          @if (selectedFiles.length > 0) {
+            <div class="mt-2 space-y-1">
+              @for (file of selectedFiles; track $index) {
+                <div
+                  class="flex items-center justify-between text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-sm"
+                >
+                  <span>{{ file.name }} ({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</span>
+                  <button
+                    type="button"
+                    (click)="removeFile($index)"
+                    class="text-red-400 hover:text-red-600"
+                  >
+                    <i class="pi pi-times text-xs"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-xs text-gray-400 mt-1">No files selected</p>
+          }
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+        <button
+          (click)="closeSubmitModal()"
+          [disabled]="uploading()"
+          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="submitRequirement()"
+          [disabled]="uploading()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+        >
+          @if (uploading()) {
+            <i class="pi pi-spin pi-spinner text-xs"></i> Submitting…
+          } @else {
+            Submit
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Add Files Modal -->
+@if (showAddFilesModal() && addFilesSubmission()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-md mx-4 flex flex-col">
+      <div class="px-6 py-5 border-b border-gray-100">
+        <h3 class="text-xs font-semibold text-gray-900">Add More Files</h3>
+        <p class="text-xs text-gray-400 mt-0.5">{{ addFilesSubmission()!.requirement_name }}</p>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <p class="text-gray-400">Academic Year</p>
+            <p class="font-medium text-gray-700">
+              {{ addFilesSubmission()!.academic_year?.year_start }}-{{
+                addFilesSubmission()!.academic_year?.year_end
+              }}
+            </p>
+          </div>
+          <div>
+            <p class="text-gray-400">Semester</p>
+            <p class="font-medium text-gray-700">{{ addFilesSubmission()!.semester }}</p>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1.5"
+            >Select Files to Add <span class="text-red-500">*</span></label
+          >
+          <p class="text-xs text-gray-400 mb-2">
+            Hold Ctrl / Cmd to select multiple files (max 10)
+          </p>
+          <input
+            type="file"
+            (change)="onAddFilesSelected($event)"
+            multiple
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+            class="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-600 hover:file:bg-gray-200"
+          />
+          @if (addFiles.length > 0) {
+            <div class="mt-2 space-y-1">
+              @for (file of addFiles; track $index) {
+                <div
+                  class="flex items-center justify-between text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-sm"
+                >
+                  <span>{{ file.name }} ({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</span>
+                  <button
+                    type="button"
+                    (click)="removeAddFile($index)"
+                    class="text-red-400 hover:text-red-600"
+                  >
+                    <i class="pi pi-times text-xs"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-xs text-gray-400 mt-1">No files selected</p>
+          }
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+        <button
+          (click)="closeAddFilesModal()"
+          [disabled]="uploading()"
+          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="submitAddFiles()"
+          [disabled]="uploading()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+        >
+          @if (uploading()) {
+            <i class="pi pi-spin pi-spinner text-xs"></i> Adding…
+          } @else {
+            Add Files
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

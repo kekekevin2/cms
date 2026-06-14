@@ -1,0 +1,543 @@
+<div class="p-3">
+  @if (loading()) {
+    <div class="flex justify-center py-16 text-gray-300">
+      <i class="pi pi-spin pi-spinner text-3xl"></i>
+    </div>
+  } @else {
+    <!-- Top Header Bar -->
+    <div class="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
+      <div class="flex items-center gap-3">
+        <!-- Profile Picture -->
+        <div class="relative shrink-0">
+          @if (profile().profile_picture) {
+            <img
+              [src]="baseUrl + profile().profile_picture"
+              alt="Profile"
+              class="w-14 h-14 rounded-sm object-cover border-2 border-gray-100"
+            />
+          } @else {
+            <div
+              class="w-14 h-14 rounded-sm bg-green-600 flex items-center justify-center border-2 border-gray-100"
+            >
+              <i class="pi pi-building text-white text-lg"></i>
+            </div>
+          }
+          <label
+            class="absolute -bottom-1 -right-1 w-5 h-5 bg-white border border-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-50 shadow-sm"
+            title="Change picture"
+          >
+            @if (uploadingPicture()) {
+              <i class="pi pi-spin pi-spinner text-xs text-gray-400"></i>
+            } @else {
+              <i class="pi pi-camera text-xs text-gray-500"></i>
+            }
+            <input
+              type="file"
+              accept="image/*"
+              class="hidden"
+              (change)="onProfilePictureSelected($event)"
+              [disabled]="uploadingPicture()"
+            />
+          </label>
+        </div>
+        <div>
+          <h2 class="text-sm font-semibold text-gray-900">
+            {{ profile().name || 'College Department' }}
+          </h2>
+          <p class="text-xs text-gray-400">
+            {{ profile().department?.department_name }}
+            @if (profile().department?.acronym) {
+              ({{ profile().department?.acronym }})
+            }
+            @if (profile().campus?.campus_name) {
+              · {{ profile().campus?.campus_name }}
+            }
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        @if (!isEditing()) {
+          <button
+            (click)="startEdit()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
+          >
+            <i class="pi pi-pencil text-xs"></i> Edit Profile
+          </button>
+        } @else {
+          <button
+            (click)="cancelEdit()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button
+            (click)="save()"
+            [disabled]="saving()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+          >
+            @if (saving()) {
+              <i class="pi pi-spin pi-spinner text-xs"></i> Saving…
+            } @else {
+              <i class="pi pi-check text-xs"></i> Save Changes
+            }
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="flex gap-5 items-start">
+      <!-- Left Nav -->
+      <div class="w-44 shrink-0 space-y-0.5 sticky top-20">
+        <button
+          (click)="scrollTo('section-contact')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-phone text-xs text-gray-400 w-4 text-center"></i> Contact
+        </button>
+        <button
+          (click)="scrollTo('section-about')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-info-circle text-xs text-gray-400 w-4 text-center"></i> About & Goal
+        </button>
+        <button
+          (click)="scrollTo('section-peo')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-star text-xs text-gray-400 w-4 text-center"></i> Objectives
+        </button>
+        <button
+          (click)="scrollTo('section-programs')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-book text-xs text-gray-400 w-4 text-center"></i> Programs
+        </button>
+        <button
+          (click)="scrollTo('section-careers')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-briefcase text-xs text-gray-400 w-4 text-center"></i> Careers
+        </button>
+        <button
+          (click)="scrollTo('section-outcomes')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+        >
+          <i class="pi pi-check-circle text-xs text-gray-400 w-4 text-center"></i> Outcomes
+        </button>
+      </div>
+
+      <!-- Right Content -->
+      <div class="flex-1 space-y-4 min-w-0">
+        <!-- Contact -->
+        <div
+          id="section-contact"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
+            <i class="pi pi-phone text-xs text-gray-400"></i>
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              Contact Information
+            </p>
+          </div>
+          <div class="p-4">
+            @if (!isEditing()) {
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p class="text-xs text-gray-400 mb-0.5">Email</p>
+                  <p class="text-xs text-gray-700 font-medium">{{ profile().email || '—' }}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-400 mb-0.5">Contact Number</p>
+                  <p class="text-xs text-gray-700 font-medium">
+                    {{ profile().contact_number || '—' }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-400 mb-0.5">Department Head</p>
+                  <p class="text-xs text-gray-700 font-medium">{{ profile().dean_name || '—' }}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-400 mb-0.5">Acronym</p>
+                  <p class="text-xs text-gray-700 font-medium">
+                    {{ profile().department?.acronym || '—' }}
+                  </p>
+                </div>
+              </div>
+            } @else {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Contact Number</label>
+                  <input
+                    type="text"
+                    [ngModel]="form().contact_number"
+                    (ngModelChange)="updateFormField('contact_number', $event)"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1"
+                    >Department Head / Dean</label
+                  >
+                  <input
+                    type="text"
+                    [ngModel]="form().dean_name"
+                    (ngModelChange)="updateFormField('dean_name', $event)"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- About & Goal -->
+        <div id="section-about" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
+            <i class="pi pi-info-circle text-xs text-gray-400"></i>
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">About & Goal</p>
+          </div>
+          <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs font-medium text-gray-500 mb-2">About the Department</p>
+              @if (!isEditing()) {
+                <p class="text-xs text-gray-600 leading-relaxed">{{ profile().about || '—' }}</p>
+              } @else {
+                <textarea
+                  rows="5"
+                  [ngModel]="form().about"
+                  (ngModelChange)="updateFormField('about', $event)"
+                  placeholder="Describe the department..."
+                  class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                ></textarea>
+              }
+            </div>
+            <div class="space-y-4">
+              <div>
+                <p class="text-xs font-medium text-gray-500 mb-2">Our Goal</p>
+                @if (!isEditing()) {
+                  <p class="text-xs text-gray-600 leading-relaxed">{{ profile().goal || '—' }}</p>
+                } @else {
+                  <textarea
+                    rows="3"
+                    [ngModel]="form().goal"
+                    (ngModelChange)="updateFormField('goal', $event)"
+                    placeholder="Department goal..."
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                  ></textarea>
+                }
+              </div>
+              <div>
+                <p class="text-xs font-medium text-gray-500 mb-2">Why BatStateU?</p>
+                @if (!isEditing()) {
+                  @if (profile().why_batstateu) {
+                    <ul class="space-y-1">
+                      @for (line of profile().why_batstateu!.split('\n'); track $index) {
+                        @if (line.trim()) {
+                          <li class="text-xs text-gray-600 flex items-start gap-1.5">
+                            <i class="pi pi-check text-green-500 text-xs shrink-0 mt-0.5"></i
+                            >{{ line }}
+                          </li>
+                        }
+                      }
+                    </ul>
+                  } @else {
+                    <p class="text-xs text-gray-400">—</p>
+                  }
+                } @else {
+                  <textarea
+                    rows="4"
+                    [ngModel]="form().why_batstateu"
+                    (ngModelChange)="updateFormField('why_batstateu', $event)"
+                    placeholder="One reason per line..."
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                  ></textarea>
+                  <p class="text-xs text-gray-400 mt-1">Enter one item per line</p>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PEOs -->
+        <div id="section-peo" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-star text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                Program Educational Objectives
+              </p>
+            </div>
+            @if (isEditing()) {
+              <button
+                (click)="addPEO()"
+                class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+              >
+                <i class="pi pi-plus text-xs"></i> Add
+              </button>
+            }
+          </div>
+          <div class="p-4">
+            @if (!isEditing()) {
+              @if (peos().length === 0) {
+                <p class="text-xs text-gray-400">No objectives added yet.</p>
+              } @else {
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  @for (peo of peos(); track $index; let n = $index) {
+                    <div class="p-3 bg-green-50 rounded-sm border border-green-100">
+                      <p class="text-xs font-semibold text-green-800 mb-1">
+                        PEO {{ n + 1 }}. {{ peo.title }}
+                      </p>
+                      <p class="text-xs text-gray-600 leading-relaxed">{{ peo.description }}</p>
+                    </div>
+                  }
+                </div>
+              }
+            } @else {
+              <div class="space-y-2">
+                @for (peo of peos(); track trackByIndex($index); let i = $index) {
+                  <div class="flex gap-2 items-start p-2 bg-gray-50 rounded-sm">
+                    <span class="text-xs text-gray-400 font-mono mt-2.5 w-6 shrink-0"
+                      >{{ i + 1 }}.</span
+                    >
+                    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        [ngModel]="peo.title"
+                        (ngModelChange)="updatePEO(i, 'title', $event)"
+                        placeholder="Title (e.g. Successful Professional Practice)"
+                        class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                      <input
+                        type="text"
+                        [ngModel]="peo.description"
+                        (ngModelChange)="updatePEO(i, 'description', $event)"
+                        placeholder="Description"
+                        class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                    </div>
+                    <button
+                      (click)="removePEO(i)"
+                      class="p-1.5 text-red-400 hover:text-red-600 mt-1"
+                    >
+                      <i class="pi pi-times text-xs"></i>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Programs -->
+        <div
+          id="section-programs"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-book text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                Program Offerings
+              </p>
+            </div>
+            @if (isEditing()) {
+              <button
+                (click)="addProgram()"
+                class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+              >
+                <i class="pi pi-plus text-xs"></i> Add
+              </button>
+            }
+          </div>
+          <div class="p-4">
+            @if (!isEditing()) {
+              @if (programs().length === 0) {
+                <p class="text-xs text-gray-400">No programs added yet.</p>
+              } @else {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  @for (prog of programs(); track $index) {
+                    <div
+                      class="flex gap-3 items-start p-3 border border-gray-100 rounded-sm hover:bg-gray-50 transition"
+                    >
+                      <span
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-blue-50 text-blue-600 shrink-0"
+                      >
+                        <i class="pi pi-graduation-cap text-xs"></i>
+                      </span>
+                      <div>
+                        <p class="text-xs font-semibold text-gray-800 leading-tight">
+                          {{ prog.name }}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-0.5">{{ prog.description }}</p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            } @else {
+              <div class="space-y-2">
+                @for (prog of programs(); track trackByIndex($index); let i = $index) {
+                  <div class="flex gap-2 items-start p-2 bg-gray-50 rounded-sm">
+                    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        [ngModel]="prog.name"
+                        (ngModelChange)="updateProgram(i, 'name', $event)"
+                        placeholder="Program Name"
+                        class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                      <input
+                        type="text"
+                        [ngModel]="prog.description"
+                        (ngModelChange)="updateProgram(i, 'description', $event)"
+                        placeholder="Brief description"
+                        class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                    </div>
+                    <button
+                      (click)="removeProgram(i)"
+                      class="p-1.5 text-red-400 hover:text-red-600 mt-1"
+                    >
+                      <i class="pi pi-times text-xs"></i>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Career Opportunities -->
+        <div
+          id="section-careers"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-briefcase text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                Career Opportunities
+              </p>
+            </div>
+            @if (isEditing()) {
+              <button
+                (click)="addCareer()"
+                class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+              >
+                <i class="pi pi-plus text-xs"></i> Add
+              </button>
+            }
+          </div>
+          <div class="p-4">
+            @if (!isEditing()) {
+              @if (careerOpportunities().length === 0) {
+                <p class="text-xs text-gray-400">No career opportunities added yet.</p>
+              } @else {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  @for (career of careerOpportunities(); track $index) {
+                    <div class="p-3 border border-gray-100 rounded-sm">
+                      <p class="text-xs font-semibold text-gray-800 mb-1.5">{{ career.program }}</p>
+                      <p class="text-xs text-gray-500 leading-relaxed">{{ career.careers }}</p>
+                    </div>
+                  }
+                </div>
+              }
+            } @else {
+              <div class="space-y-2">
+                @for (career of careerOpportunities(); track trackByIndex($index); let i = $index) {
+                  <div class="flex gap-2 items-start p-2 bg-gray-50 rounded-sm">
+                    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        [ngModel]="career.program"
+                        (ngModelChange)="updateCareer(i, 'program', $event)"
+                        placeholder="Program name"
+                        class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                      <input
+                        type="text"
+                        [ngModel]="career.careers"
+                        (ngModelChange)="updateCareer(i, 'careers', $event)"
+                        placeholder="Career paths"
+                        class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                    </div>
+                    <button
+                      (click)="removeCareer(i)"
+                      class="p-1.5 text-red-400 hover:text-red-600 mt-1"
+                    >
+                      <i class="pi pi-times text-xs"></i>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Program Outcomes -->
+        <div
+          id="section-outcomes"
+          class="bg-white rounded-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-check-circle text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                Program Outcomes
+              </p>
+              @if (!isEditing() && programOutcomes().length > 0) {
+                <span class="text-xs text-gray-400">({{ programOutcomes().length }})</span>
+              }
+            </div>
+            @if (isEditing()) {
+              <button
+                (click)="addOutcome()"
+                class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+              >
+                <i class="pi pi-plus text-xs"></i> Add
+              </button>
+            }
+          </div>
+          <div class="p-4">
+            @if (!isEditing()) {
+              @if (programOutcomes().length === 0) {
+                <p class="text-xs text-gray-400">No outcomes added yet.</p>
+              } @else {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+                  @for (outcome of programOutcomes(); track $index) {
+                    <p class="text-xs text-gray-600 flex items-start gap-1.5">
+                      <i class="pi pi-check text-green-500 text-xs shrink-0 mt-0.5"></i
+                      >{{ outcome }}
+                    </p>
+                  }
+                </div>
+              }
+            } @else {
+              <div class="space-y-2">
+                @for (outcome of programOutcomes(); track trackByIndex($index); let i = $index) {
+                  <div class="flex gap-2 items-center">
+                    <span class="text-xs text-gray-400 font-mono w-6 shrink-0">{{ i + 1 }}.</span>
+                    <input
+                      type="text"
+                      [ngModel]="outcome"
+                      (ngModelChange)="updateOutcome(i, $event)"
+                      placeholder="Outcome statement"
+                      class="flex-1 px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                    />
+                    <button
+                      (click)="removeOutcome(i)"
+                      class="p-1.5 text-red-400 hover:text-red-600"
+                    >
+                      <i class="pi pi-times text-xs"></i>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

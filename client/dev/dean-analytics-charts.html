@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dean Faculty Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Georgia', 'Times New Roman', serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 40px;
+        font-size: 2.5em;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+
+      .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+
+      .chart-container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+      }
+
+      .chart-title {
+        text-align: center;
+        font-size: 1.2em;
+        font-style: italic;
+        color: #34495e;
+        margin-bottom: 10px;
+        line-height: 1.4;
+      }
+
+      .chart-subtitle {
+        text-align: center;
+        font-size: 0.9em;
+        color: #7f8c8d;
+        margin-bottom: 20px;
+      }
+
+      .chart-wrapper {
+        position: relative;
+        height: 400px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 50px;
+        color: #7f8c8d;
+      }
+
+      .error {
+        text-align: center;
+        padding: 50px;
+        color: #e74c3c;
+      }
+
+      /* Legend customization */
+      .chart-container canvas {
+        max-height: 350px;
+      }
+
+      @media (max-width: 768px) {
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 1.8em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Faculty Analytics Dashboard</h1>
+
+      <div class="charts-grid">
+        <!-- Research Involvement Chart -->
+        <div class="chart-container">
+          <div class="chart-title">
+            Faculty Involvement in Research-related Seminars/Workshops/Trainings/Conferences
+          </div>
+          <div class="chart-subtitle">(Permanent and Temporary) FY 2022-2025</div>
+          <div class="chart-wrapper">
+            <canvas id="researchChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Extension Services Chart -->
+        <div class="chart-container">
+          <div class="chart-title">Faculty Involvement in Extension Services</div>
+          <div class="chart-subtitle">(Permanent and Temporary) FY 2022-2025</div>
+          <div class="chart-wrapper">
+            <canvas id="extensionChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Seminars/Trainings Chart -->
+        <div class="chart-container">
+          <div class="chart-title">
+            Faculty Involvement in Seminars/Workshops/Trainings/Conferences
+          </div>
+          <div class="chart-subtitle">(Permanent and Temporary) FY 2022-2025</div>
+          <div class="chart-wrapper">
+            <canvas id="seminarsChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // API Configuration
+      const API_BASE_URL = 'http://localhost:3000/api/dean/faculty-analytics';
+      const TOKEN = localStorage.getItem('token'); // Get token from localStorage
+
+      // Color palette matching the images
+      const COLORS = {
+        Austria: '#E67E22', // Orange
+        Cabael: '#3498DB', // Blue
+        Geneta: '#27AE60', // Green
+        Folienta: '#8B4513', // Brown
+        Hernandez: '#16697A', // Dark Teal
+        Lacbay: '#2C5F2D', // Dark Green
+      };
+
+      // Chart configuration
+      const chartConfig = {
+        type: 'pie',
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                font: {
+                  size: 14,
+                  family: "'Georgia', 'Times New Roman', serif",
+                },
+                padding: 15,
+                generateLabels: function (chart) {
+                  const data = chart.data;
+                  if (data.labels.length && data.datasets.length) {
+                    return data.labels.map((label, i) => {
+                      const value = data.datasets[0].data[i];
+                      return {
+                        text: `${label} ${value}%`,
+                        fillStyle: data.datasets[0].backgroundColor[i],
+                        hidden: false,
+                        index: i,
+                      };
+                    });
+                  }
+                  return [];
+                },
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  return `${label}: ${value}%`;
+                },
+              },
+            },
+          },
+        },
+      };
+
+      // Fetch data and create chart
+      async function createChart(canvasId, endpoint, title) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+
+        try {
+          const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            headers: {
+              Authorization: `Bearer ${TOKEN}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch data');
+          }
+
+          const result = await response.json();
+
+          // Prepare chart data
+          const labels = result.data.map((item) => item.faculty_name);
+          const data = result.data.map((item) => parseInt(item.percentage));
+          const colors = labels.map((name) => COLORS[name] || '#95A5A6');
+
+          // Create chart
+          new Chart(ctx, {
+            type: 'pie',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  data: data,
+                  backgroundColor: colors,
+                  borderColor: '#ffffff',
+                  borderWidth: 3,
+                },
+              ],
+            },
+            options: chartConfig.options,
+          });
+        } catch (error) {
+          console.error(`Error creating ${title} chart:`, error);
+          canvas.parentElement.innerHTML = `
+                    <div class="error">
+                        <p>Failed to load chart data</p>
+                        <p style="font-size: 0.9em; margin-top: 10px;">${error.message}</p>
+                    </div>
+                `;
+        }
+      }
+
+      // Initialize all charts when page loads
+      window.addEventListener('DOMContentLoaded', () => {
+        // Check if token exists
+        if (!TOKEN) {
+          alert('Please login first');
+          window.location.href = '/login';
+          return;
+        }
+
+        // Create all three charts
+        createChart('researchChart', '/research-involvement', 'Research Involvement');
+        createChart('extensionChart', '/extension-involvement', 'Extension Services');
+        createChart('seminarsChart', '/seminars-involvement', 'Seminars/Trainings');
+      });
+    </script>
+  </body>
+</html>

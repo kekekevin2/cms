@@ -1,0 +1,191 @@
+/* dean-analytics.component.css */
+
+.analytics-container {
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+}
+
+.page-title {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 40px;
+  font-size: 2.5em;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.chart-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+}
+
+.chart-header {
+  padding: 25px 30px 15px;
+  border-bottom: 2px solid #ecf0f1;
+}
+
+.chart-title {
+  font-size: 1.2em;
+  font-style: italic;
+  color: #34495e;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  text-align: center;
+}
+
+.chart-subtitle {
+  text-align: center;
+  font-size: 0.9em;
+  color: #7f8c8d;
+  margin: 0;
+}
+
+.chart-body {
+  padding: 30px;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-wrapper {
+  width: 100%;
+  height: 400px;
+  position: relative;
+}
+
+.chart-wrapper canvas {
+  max-height: 100%;
+}
+
+/* Loading State */
+.loading {
+  text-align: center;
+  color: #7f8c8d;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error State */
+.error {
+  text-align: center;
+  color: #e74c3c;
+  padding: 20px;
+}
+
+.error p {
+  margin: 10px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .charts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .analytics-container {
+    padding: 15px;
+  }
+
+  .page-title {
+    font-size: 1.8em;
+    margin-bottom: 25px;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .chart-title {
+    font-size: 1em;
+  }
+
+  .chart-subtitle {
+    font-size: 0.85em;
+  }
+
+  .chart-body {
+    padding: 20px;
+    min-height: 350px;
+  }
+
+  .chart-wrapper {
+    height: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.5em;
+  }
+
+  .chart-header {
+    padding: 20px 15px 10px;
+  }
+
+  .chart-body {
+    padding: 15px;
+    min-height: 300px;
+  }
+
+  .chart-wrapper {
+    height: 300px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .analytics-container {
+    background: white;
+  }
+
+  .chart-card {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+
+  .chart-card:hover {
+    transform: none;
+  }
+}

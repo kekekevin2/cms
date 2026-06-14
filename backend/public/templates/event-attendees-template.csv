@@ -1,0 +1,6 @@
+sr_code,student_name,email,year_level,section,program,department
+21-12345,Juan Dela Cruz,juan.delacruz@student.example.edu,3rd Year,BSIT-3A,BS Information Technology,CICS
+21-12346,Maria Santos,maria.santos@student.example.edu,2nd Year,BSCS-2B,BS Computer Science,CICS
+21-12347,Pedro Reyes,pedro.reyes@student.example.edu,4th Year,BSIT-4A,BS Information Technology,CICS
+21-12348,Ana Garcia,ana.garcia@student.example.edu,1st Year,BSCS-1A,BS Computer Science,CICS
+21-12349,Jose Ramos,jose.ramos@student.example.edu,3rd Year,BSIT-3B,BS Information Technology,CICS

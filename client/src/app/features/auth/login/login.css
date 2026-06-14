@@ -1,0 +1,6 @@
+.login-section {
+  background-image: url('/assets/cover.jpg');
+  background-size: cover;
+  background-position: center;
+  object-fit: contain;
+}
