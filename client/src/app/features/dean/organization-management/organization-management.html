@@ -195,7 +195,7 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5"
-                >Adviser 1 <span class="text-red-500">*</span></label
+                >Adviser <span class="text-red-500">*</span></label
               >
               <select
                 [(ngModel)]="createForm.adviser_id_1"
@@ -203,25 +203,7 @@
                 class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
                 required
               >
-                <option value="0">Select Adviser 1</option>
-                @for (faculty of facultyList(); track faculty.faculty_id) {
-                  <option [value]="faculty.faculty_id">
-                    {{ faculty.first_name }} {{ faculty.last_name }} ({{ faculty.employee_id }})
-                  </option>
-                }
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5"
-                >Adviser 2 <span class="text-red-500">*</span></label
-              >
-              <select
-                [(ngModel)]="createForm.adviser_id_2"
-                name="adviser_id_2"
-                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 transition"
-                required
-              >
-                <option value="0">Select Adviser 2</option>
+                <option value="0">Select Adviser</option>
                 @for (faculty of facultyList(); track faculty.faculty_id) {
                   <option [value]="faculty.faculty_id">
                     {{ faculty.first_name }} {{ faculty.last_name }} ({{ faculty.employee_id }})

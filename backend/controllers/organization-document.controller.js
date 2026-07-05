@@ -233,9 +233,34 @@ exports.updateDocument = async (req, res) => {
 			updateData.review_comments = null;
 		}
 
-		// Update title if provided
+		// Update all editable fields if provided
 		if (req.body.document_title) {
 			updateData.document_title = req.body.document_title;
+		}
+		if (req.body.activity_date) {
+			updateData.activity_date = req.body.activity_date;
+		}
+		if (req.body.venue) {
+			updateData.venue = req.body.venue;
+		}
+		if (req.body.participants) {
+			updateData.participants = parseInt(req.body.participants);
+		}
+		if (req.body.academic_year_id) {
+			updateData.academic_year_id = parseInt(req.body.academic_year_id);
+		}
+		if (req.body.semester) {
+			updateData.semester = req.body.semester;
+		}
+		if (req.body.sdgs) {
+			// Parse SDGs if it's a string
+			try {
+				updateData.sdgs = typeof req.body.sdgs === 'string' 
+					? JSON.parse(req.body.sdgs) 
+					: req.body.sdgs;
+			} catch (error) {
+				console.error("Error parsing SDGs:", error);
+			}
 		}
 
 		await document.update(updateData);
@@ -657,7 +682,7 @@ exports.deanGetReportsBySDGPerYear = async (req, res) => {
 		const userId = req.user.user_id;
 
 		// Get dean profile
-		const deanInfo = await getDepartmentForUser(deanUserId);
+		const deanInfo = await getDepartmentForUser(userId);
 		if (!deanInfo) {
 		  return res.status(404).json({ message: 'Department profile not found' });
 		}

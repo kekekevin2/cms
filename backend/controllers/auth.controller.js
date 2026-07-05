@@ -5,7 +5,7 @@ const { sendAdminCredentials } = require("../utils/email");
 
 const User = db.User;
 const Admin = db.Admin;
-const Dean = db.Dean;
+const Dean = db.Dean; 
 const Faculty = db.Faculty;
 const Organization = db.Organization;
 
@@ -47,27 +47,45 @@ const generateToken = (user, profileData = {}) => {
 // Login
 exports.login = async (req, res) => {
   try {
+    console.log("🔵 Login request received for:", req.body.email);
     const { email, password } = req.body;
 
     if (!email || !password) {
+      console.log("❌ Missing credentials");
       return res
         .status(400)
         .json({ message: "Email and password are required" });
     }
 
     // Find user by email
+    console.log("🔍 Finding user by email...");
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
+      console.log("❌ User not found for email:", email);
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    console.log("✓ User found:", {
+      user_id: user.user_id,
+      email: user.email,
+      role: user.role,
+      is_active: user.is_active,
+      has_password: !!user.password
+    });
+
     // Verify password
+    console.log("🔑 Verifying password...");
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+      console.log("❌ Password verification failed for:", email);
+      console.log("   Provided password length:", password.length);
+      console.log("   Hash starts with:", user.password.substring(0, 10));
       return res.status(401).json({ message: "Invalid email or password" });
     }
+
+    console.log("✓ Password verified successfully");
 
     // Check if account is active
     if (user.is_active === false) {
@@ -97,9 +115,11 @@ exports.login = async (req, res) => {
         break;
 
       case "dean":
+        console.log("🔍 Looking up dean profile for user_id:", user.user_id);
         profile = await Dean.findOne({
           where: { user_id: user.user_id },
         });
+        console.log("👤 Dean profile found:", profile ? `Yes (dean_id: ${profile.dean_id})` : "NO PROFILE FOUND!");
         if (profile) {
           profileData = {
             dean_id: profile.dean_id,
@@ -110,6 +130,9 @@ exports.login = async (req, res) => {
             contact_number: profile.contact_number,
             department: profile.department,
           };
+          console.log("📦 Dean profile data prepared:", profileData);
+        } else {
+          console.log("⚠️  WARNING: Dean user exists but no dean profile record!");
         }
         break;
 
@@ -175,7 +198,13 @@ exports.login = async (req, res) => {
     };
     const redirectPath = rolePathMap[user.role] || `/${user.role}/dashboard`;
 
-    res.json({
+    console.log("✅ Login successful, sending response for:", user.email);
+    console.log("   Role:", user.role);
+    console.log("   Profile data:", JSON.stringify(profileData, null, 2));
+    console.log("   Token generated:", token ? "YES" : "NO");
+    console.log("   Redirect path:", redirectPath);
+    
+    const responseData = {
       message: "Login successful",
       token,
       user: {
@@ -185,9 +214,14 @@ exports.login = async (req, res) => {
         profile: profileData,
       },
       redirectPath,
-    });
+    };
+    
+    console.log("📤 Sending response:", JSON.stringify(responseData, null, 2));
+    
+    return res.json(responseData);
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("❌ Login error:", error);
+    console.error("   Stack:", error.stack);
     res.status(500).json({ message: "Internal server error" });
   }
 };

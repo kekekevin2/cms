@@ -936,48 +936,63 @@
 
         <!-- ──────────────────── SECTION 5: WORK EXPERIENCE ──────────────────── -->
         <div id="section-work" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-          <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
-            <i class="pi pi-briefcase text-xs text-gray-400"></i>
-            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-              V. Work Experience
-            </p>
-          </div>
-          <div class="p-4">
-            <div
-              class="flex items-start gap-2 mb-3 p-2 bg-blue-50 rounded-sm border border-blue-100"
-            >
-              <i class="pi pi-info-circle text-xs text-blue-400 mt-0.5 shrink-0"></i>
-              <p class="text-xs text-blue-600">
-                Work experience is automatically imported from your Employment Profile in My
-                Profile. To add or edit, go to My Profile → Employment section.
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-briefcase text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                V. Work Experience
               </p>
             </div>
+            @if (!isFormReadonly()) {
+              <button
+                type="button"
+                (click)="showAddWorkExperienceModal = true"
+                class="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-700"
+              >
+                <i class="pi pi-plus text-xs"></i> Add
+              </button>
+            }
+          </div>
+          <div class="p-4">
             @if (pds().work_experiences && pds().work_experiences!.length > 0) {
               <div class="space-y-2">
                 @for (work of pds().work_experiences; track work; let i = $index) {
                   <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
-                    <p class="text-xs font-semibold text-gray-700">{{ work.position_title }}</p>
-                    <p class="text-xs text-gray-500">{{ work.department_agency }}</p>
-                    <div class="flex flex-wrap gap-3 mt-1">
-                      <span class="text-xs text-gray-400"
-                        >{{ work.date_from }} – {{ work.date_to || 'Present' }}</span
-                      >
-                      @if (work.monthly_salary) {
-                        <span class="text-xs text-gray-400">₱{{ work.monthly_salary }}</span>
-                      }
-                      @if (work.salary_grade) {
-                        <span class="text-xs text-gray-400">SG {{ work.salary_grade }}</span>
-                      }
-                      @if (work.status_of_appointment) {
-                        <span class="text-xs text-gray-400">{{ work.status_of_appointment }}</span>
-                      }
-                      @if (
-                        work.is_government_service !== null &&
-                        work.is_government_service !== undefined
-                      ) {
-                        <span class="text-xs text-gray-400"
-                          >Gov't: {{ work.is_government_service ? 'Yes' : 'No' }}</span
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <p class="text-xs font-semibold text-gray-700">{{ work.position_title }}</p>
+                        <p class="text-xs text-gray-500">{{ work.department_agency }}</p>
+                        <div class="flex flex-wrap gap-3 mt-1">
+                          <span class="text-xs text-gray-400"
+                            >{{ work.date_from }} – {{ work.date_to || 'Present' }}</span
+                          >
+                          @if (work.monthly_salary) {
+                            <span class="text-xs text-gray-400">₱{{ work.monthly_salary }}</span>
+                          }
+                          @if (work.salary_grade) {
+                            <span class="text-xs text-gray-400">SG {{ work.salary_grade }}</span>
+                          }
+                          @if (work.status_of_appointment) {
+                            <span class="text-xs text-gray-400">{{ work.status_of_appointment }}</span>
+                          }
+                          @if (
+                            work.is_government_service !== null &&
+                            work.is_government_service !== undefined
+                          ) {
+                            <span class="text-xs text-gray-400"
+                              >Gov't: {{ work.is_government_service ? 'Yes' : 'No' }}</span
+                            >
+                          }
+                        </div>
+                      </div>
+                      @if (!isFormReadonly()) {
+                        <button
+                          (click)="removeWorkExperience(i)"
+                          class="ml-2 text-red-400 hover:text-red-600 shrink-0"
+                          title="Remove"
                         >
+                          <i class="pi pi-trash text-xs"></i>
+                        </button>
                       }
                     </div>
                   </div>
@@ -2222,6 +2237,123 @@
           class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Eligibility
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Add Work Experience Modal -->
+@if (showAddWorkExperienceModal) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <p class="text-xs font-semibold text-gray-700">Add Work Experience</p>
+        <button (click)="showAddWorkExperienceModal = false" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <div class="p-4 grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Position Title <span class="text-red-500">*</span></label>
+          <input
+            type="text"
+            [(ngModel)]="newWorkExperience.position_title"
+            placeholder="e.g., Assistant Professor"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div class="col-span-2">
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Department / Agency / Office / Company <span class="text-red-500">*</span></label>
+          <input
+            type="text"
+            [(ngModel)]="newWorkExperience.department_agency"
+            placeholder="e.g., University of Example"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Date From <span class="text-red-500">*</span></label>
+          <input
+            type="date"
+            [(ngModel)]="newWorkExperience.date_from"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Date To</label>
+          <input
+            type="date"
+            [(ngModel)]="newWorkExperience.date_to"
+            placeholder="Leave blank if current"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Monthly Salary</label>
+          <input
+            type="number"
+            [(ngModel)]="newWorkExperience.monthly_salary"
+            placeholder="e.g., 50000"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Salary Grade (SG)</label>
+          <input
+            type="text"
+            [(ngModel)]="newWorkExperience.salary_grade"
+            placeholder="e.g., 18"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div class="col-span-2">
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Status of Appointment</label>
+          <input
+            type="text"
+            [(ngModel)]="newWorkExperience.status_of_appointment"
+            placeholder="e.g., Permanent, Temporary, Casual"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div class="col-span-2">
+          <label class="text-xs font-medium text-gray-500 mb-2 block">Is this Government Service?</label>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="radio"
+                name="govService"
+                [checked]="newWorkExperience.is_government_service === true"
+                (change)="newWorkExperience.is_government_service = true"
+                class="w-3.5 h-3.5"
+              />
+              <span class="text-xs text-gray-700">Yes</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="radio"
+                name="govService"
+                [checked]="newWorkExperience.is_government_service === false"
+                (change)="newWorkExperience.is_government_service = false"
+                class="w-3.5 h-3.5"
+              />
+              <span class="text-xs text-gray-700">No</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+        <button
+          (click)="showAddWorkExperienceModal = false"
+          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="addWorkExperience(); showAddWorkExperienceModal = false"
+          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+        >
+          Add Work Experience
         </button>
       </div>
     </div>

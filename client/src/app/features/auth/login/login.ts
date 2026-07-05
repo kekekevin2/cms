@@ -93,9 +93,25 @@ export class Login implements OnInit, AfterViewInit {
           throw 'reCAPTCHA not loaded. Please refresh the page.';
         }
 
+        console.log('📤 Login component: Calling auth service...');
+
+        // Set a timeout to detect hanging requests
+        const timeoutId = setTimeout(() => {
+          console.error('⏱️ Login request timeout after 30 seconds');
+          this.isLoading.set(false);
+          Swal.fire({
+            icon: 'error',
+            title: 'Request Timeout',
+            text: 'The login request is taking too long. Please check your connection and try again.',
+            confirmButtonColor: '#16a34a',
+          });
+        }, 30000);
+
         // Attempt login with reCAPTCHA token
         this.authService.login({ email, password, recaptchaToken }).subscribe({
           next: (response) => {
+            clearTimeout(timeoutId);
+            console.log('✅ Login component: Login successful');
             this.isLoading.set(false);
             Swal.fire({
               icon: 'success',
@@ -107,6 +123,8 @@ export class Login implements OnInit, AfterViewInit {
             // Navigation is handled in the auth service
           },
           error: (error) => {
+            clearTimeout(timeoutId);
+            console.error('❌ Login component: Login failed', error);
             this.isLoading.set(false);
             this.resetRecaptcha();
 

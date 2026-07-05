@@ -119,13 +119,10 @@ exports.getOrganizations = async (req, res) => {
   }
 };
 
-// Get all academic years for dropdown (only active year)
+// Get all academic years for dropdown
 exports.getAcademicYears = async (req, res) => {
   try {
     const academicYears = await db.AcademicYear.findAll({
-      where: {
-        is_active: true, // Only show the active academic year
-      },
       attributes: ["academic_year_id", "year_start", "year_end", "is_active"],
       order: [["year_start", "DESC"]],
     });

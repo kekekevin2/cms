@@ -162,6 +162,9 @@ const DeanExtensionActivities = require("./dean-extension-activities.model")(
   Sequelize,
 );
 
+// CVL Attachments Model
+const CVLAttachment = require("./cvl-attachment.model")(sequelize, Sequelize);
+
 /* User → Admin (1:1) */
 User.hasOne(Admin, {
   foreignKey: "user_id",
@@ -602,6 +605,15 @@ DeanExtensionActivities.belongsTo(Dean, {
   foreignKey: "dean_id",
 });
 
+/* CVL Attachment Relationships */
+Organization.hasMany(CVLAttachment, {
+  foreignKey: "organization_id",
+  as: "cvl_attachments",
+});
+CVLAttachment.belongsTo(Organization, {
+  foreignKey: "organization_id",
+});
+
 db.Dean = Dean;
 db.Faculty = Faculty;
 db.Organization = Organization;
@@ -673,5 +685,8 @@ db.DeanAwards = DeanAwards;
 db.DeanSeminarsTrainings = DeanSeminarsTrainings;
 db.DeanResearchActivities = DeanResearchActivities;
 db.DeanExtensionActivities = DeanExtensionActivities;
+
+// CVL Attachments
+db.CVLAttachment = CVLAttachment;
 
 module.exports = db;

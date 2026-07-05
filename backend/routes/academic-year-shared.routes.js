@@ -4,13 +4,9 @@ const db = require("../models");
 const verifyToken = require("../middleware/auth.middleware");
 
 // All authenticated users can get academic years (used in dropdowns)
-// Only returns the active academic year
 router.get("/", verifyToken, async (req, res) => {
 	try {
 		const academicYears = await db.AcademicYear.findAll({
-			where: {
-				is_active: true, // Only show the active academic year
-			},
 			order: [["year_start", "DESC"]],
 		});
 		res.json({ academicYears });

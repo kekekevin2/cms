@@ -15,6 +15,9 @@ async function getDepartmentForUser(userId) {
 const { Op } = require("sequelize");
 
 // Get advisers for organization
+// AUTOMATIC RETRIEVAL: Returns active adviser(s) assigned by Dean during org creation or via assignAdviser
+// Organization users cannot manually select advisers - only Dean can assign/update advisers
+// This ensures data consistency across the system
 exports.getAdvisers = async (req, res) => {
   try {
     const userId = req.user.user_id;
@@ -29,6 +32,8 @@ exports.getAdvisers = async (req, res) => {
         .json({ message: "Organization profile not found" });
     }
 
+    // Fetch only active advisers (is_active = true)
+    // When Dean updates adviser, old records are set to is_active = false
     const advisers = await db.OrganizationAdviser.findAll({
       where: {
         organization_id: organization.organization_id,
@@ -47,6 +52,8 @@ exports.getAdvisers = async (req, res) => {
             "last_name",
             "email",
             "contact_number",
+            "department",
+            "position_level",
             "academic_rank",
             "employment_status",
             "educational_attainment",
@@ -67,6 +74,7 @@ exports.getAdvisers = async (req, res) => {
     res.json({ advisers });
   } catch (error) {
     console.error("Get advisers error:", error);
+    console.error("Error details:", error.message);
     res.status(500).json({ message: "Error fetching advisers" });
   }
 };
@@ -272,15 +280,32 @@ exports.updateAdviser = async (req, res) => {
       contact_number,
       academic_rank,
       employment_status,
-      length_of_service,
       educational_attainment,
       campus,
       telephone_number,
       birth_date,
       age,
       civil_status,
-      home_address
+      home_address,
+      length_of_service
     } = req.body;
+
+    console.log("=== Update adviser request ===");
+    console.log("Adviser ID:", id);
+    console.log("User ID:", userId);
+    console.log("📥 Received fields:");
+    console.log("  academic_rank:", academic_rank);
+    console.log("  employment_status:", employment_status);
+    console.log("  educational_attainment:", educational_attainment);
+    console.log("  campus:", campus);
+    console.log("  contact_number:", contact_number);
+    console.log("  telephone_number:", telephone_number);
+    console.log("  email:", email);
+    console.log("  birth_date:", birth_date);
+    console.log("  age:", age);
+    console.log("  civil_status:", civil_status);
+    console.log("  home_address:", home_address);
+    console.log("  length_of_service:", length_of_service);
 
     // Get organization
     const organization = await db.Organization.findOne({
@@ -302,26 +327,6 @@ exports.updateAdviser = async (req, res) => {
         {
           model: db.Faculty,
           as: "Faculty",
-          attributes: [
-            "faculty_id",
-            "employee_id",
-            "first_name",
-            "middle_name",
-            "last_name",
-            "email",
-            "contact_number",
-            "academic_rank",
-            "employment_status",
-            "educational_attainment",
-            "campus",
-            "telephone_number",
-            "birth_date",
-            "age",
-            "civil_status",
-            "home_address",
-            "photo_url",
-            "signature_url"
-          ],
         },
       ],
     });
@@ -330,32 +335,74 @@ exports.updateAdviser = async (req, res) => {
       return res.status(404).json({ message: "Adviser not found" });
     }
 
-    // Update faculty information
+    // Update faculty information - ALL fields
     const faculty = adviserAssignment.Faculty;
     
-    // Prepare update data
     const updateData = {};
-    if (first_name !== undefined) updateData.first_name = first_name || faculty.first_name;
+    
+    // Basic fields
+    if (first_name !== undefined && first_name !== '') updateData.first_name = first_name;
     if (middle_name !== undefined) updateData.middle_name = middle_name || null;
-    if (last_name !== undefined) updateData.last_name = last_name || faculty.last_name;
-    if (email !== undefined) updateData.email = email && email.trim() ? email : null;
+    if (last_name !== undefined && last_name !== '') updateData.last_name = last_name;
+    if (email !== undefined) updateData.email = email || null;
     if (contact_number !== undefined) updateData.contact_number = contact_number || null;
-    if (academic_rank !== undefined) updateData.academic_rank = academic_rank || null;
-    if (employment_status !== undefined) updateData.employment_status = employment_status || null;
-    if (educational_attainment !== undefined) updateData.educational_attainment = educational_attainment || null;
-    if (campus !== undefined) updateData.campus = campus || null;
-    if (telephone_number !== undefined) updateData.telephone_number = telephone_number || null;
-    if (birth_date !== undefined) updateData.birth_date = birth_date || null;
-    if (age !== undefined) updateData.age = age || null;
-    if (civil_status !== undefined) updateData.civil_status = civil_status || null;
-    if (home_address !== undefined) updateData.home_address = home_address || null;
-
-    await faculty.update(updateData);
+    
+    // Profile fields - accept any value including empty strings, but convert empty to null
+    if (academic_rank !== undefined) {
+      updateData.academic_rank = academic_rank !== '' ? academic_rank : null;
+      console.log("  ✅ Setting academic_rank to:", updateData.academic_rank);
+    }
+    if (employment_status !== undefined) {
+      updateData.employment_status = employment_status !== '' ? employment_status : null;
+      console.log("  ✅ Setting employment_status to:", updateData.employment_status);
+    }
+    if (educational_attainment !== undefined) {
+      updateData.educational_attainment = educational_attainment !== '' ? educational_attainment : null;
+      console.log("  ✅ Setting educational_attainment to:", updateData.educational_attainment);
+    }
+    if (campus !== undefined) {
+      updateData.campus = campus !== '' ? campus : null;
+      console.log("  ✅ Setting campus to:", updateData.campus);
+    }
+    if (telephone_number !== undefined) {
+      updateData.telephone_number = telephone_number !== '' ? telephone_number : null;
+      console.log("  ✅ Setting telephone_number to:", updateData.telephone_number);
+    }
+    if (birth_date !== undefined) {
+      updateData.birth_date = birth_date !== '' ? birth_date : null;
+      console.log("  ✅ Setting birth_date to:", updateData.birth_date);
+    }
+    if (age !== undefined) {
+      updateData.age = age !== '' ? age : null;
+      console.log("  ✅ Setting age to:", updateData.age);
+    }
+    if (civil_status !== undefined) {
+      updateData.civil_status = civil_status !== '' ? civil_status : null;
+      console.log("  ✅ Setting civil_status to:", updateData.civil_status);
+    }
+    if (home_address !== undefined) {
+      updateData.home_address = home_address !== '' ? home_address : null;
+      console.log("  ✅ Setting home_address to:", updateData.home_address);
+    }
+    
+    if (Object.keys(updateData).length > 0) {
+      console.log("💾 Updating faculty with data:", updateData);
+      await faculty.update(updateData);
+      console.log("✅ Faculty update completed");
+    } else {
+      console.log("⚠️ No fields to update");
+    }
 
     // Handle photo upload if provided
     if (req.files && req.files.photo) {
-      const photoUrl = `/uploads/advisers/${req.files.photo[0].filename}`;
+      const photoUrl = req.files.photo[0].path.replace(/\\/g, '/').replace('uploads/', '/uploads/');
       await faculty.update({ photo_url: photoUrl });
+    }
+
+    // Handle signature upload if provided
+    if (req.files && req.files.signature) {
+      const signatureUrl = req.files.signature[0].path.replace(/\\/g, '/').replace('uploads/', '/uploads/');
+      await faculty.update({ signature_url: signatureUrl });
     }
 
     // Update length of service in the adviser assignment if provided
@@ -363,7 +410,9 @@ exports.updateAdviser = async (req, res) => {
       await adviserAssignment.update({ length_of_service: length_of_service || null });
     }
 
-    // Reload with updated data
+    console.log("✅ All updates completed successfully");
+
+    // Reload with updated data - INCLUDING ALL PROFILE FIELDS
     await adviserAssignment.reload({
       include: [
         {
@@ -377,6 +426,8 @@ exports.updateAdviser = async (req, res) => {
             "last_name",
             "email",
             "contact_number",
+            "department",
+            "position_level",
             "academic_rank",
             "employment_status",
             "educational_attainment",
@@ -392,6 +443,11 @@ exports.updateAdviser = async (req, res) => {
         },
       ],
     });
+
+    console.log("📤 Sending response with updated adviser data:");
+    console.log("  academic_rank:", adviserAssignment.Faculty.academic_rank);
+    console.log("  employment_status:", adviserAssignment.Faculty.employment_status);
+    console.log("  campus:", adviserAssignment.Faculty.campus);
 
     res.json({
       message: "Adviser updated successfully",

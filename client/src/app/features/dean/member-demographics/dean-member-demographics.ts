@@ -108,7 +108,7 @@ export class DeanMemberDemographicsComponent implements OnInit {
     params = params.set('activeOnly', this.activeOnly().toString());
 
     this.http
-      .get<any>(`${environment.apiUrl}/dean/organizations/member-demographics`, { params })
+      .get<any>(`${environment.apiUrl}/dean/dashboard/organizations/member-demographics`, { params })
       .subscribe({
         next: (response) => {
           this.demographics.set(response.demographics);

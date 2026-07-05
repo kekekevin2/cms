@@ -22,24 +22,53 @@ export class Auth {
   ) {}
 
   login(credentials: LoginCredentials): Observable<LoginResponse | any> {
+    console.log('🚀 Frontend: Sending login request...');
     return this.http
       .post<LoginResponse | any>(`${environment.apiUrl}/auth/login`, credentials)
       .pipe(
         tap((response) => {
+          console.log('📥 Frontend: Received response:', response);
+          
           // If multiple accounts detected, don't set token/user yet
           if (response.multipleAccounts) {
+            console.log('👥 Multiple accounts detected');
             return;
           }
+
+          // Validate response structure
+          if (!response.token) {
+            console.error('❌ Response missing token!', response);
+            throw new Error('Invalid response: missing token');
+          }
+          
+          if (!response.user) {
+            console.error('❌ Response missing user!', response);
+            throw new Error('Invalid response: missing user');
+          }
+          
+          if (!response.redirectPath) {
+            console.error('❌ Response missing redirectPath!', response);
+            throw new Error('Invalid response: missing redirectPath');
+          }
+
+          console.log('✅ Response validation passed');
+          console.log('👤 User role:', response.user.role);
+          console.log('📍 Redirect path:', response.redirectPath);
 
           // Normal login flow
           this.setToken(response.token);
           this.setUser(response.user);
           this.currentUser.set(response.user);
           this.isAuthenticated.set(true);
+          
+          console.log('🔄 Navigating to:', response.redirectPath);
           this.router.navigate([response.redirectPath]);
         }),
         catchError((error) => {
-          console.error('Login error:', error);
+          console.error('❌ Frontend: Login error:', error);
+          console.error('Error status:', error.status);
+          console.error('Error message:', error.message);
+          console.error('Error body:', error.error);
           return throwError(() => error);
         }),
       );

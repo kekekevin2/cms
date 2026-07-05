@@ -136,13 +136,12 @@ exports.createOrganization = async (req, res) => {
       description,
       email,
       adviser_id_1,
-      adviser_id_2,
     } = req.body;
 
-    if (!organization_name || !email || !adviser_id_1 || !adviser_id_2) {
+    if (!organization_name || !email || !adviser_id_1) {
       await transaction.rollback();
       return res.status(400).json({
-        message: "Organization name, email, and both advisers are required",
+        message: "Organization name, email, and adviser are required",
       });
     }
 
@@ -150,7 +149,7 @@ exports.createOrganization = async (req, res) => {
     if (!adviser_id_1 || adviser_id_1 === 0) {
       await transaction.rollback();
       return res.status(400).json({
-        message: "Adviser 1 is required",
+        message: "Adviser is required",
       });
     }
 
@@ -164,37 +163,7 @@ exports.createOrganization = async (req, res) => {
     if (!adviser1) {
       await transaction.rollback();
       return res.status(404).json({
-        message: "Adviser 1 not found in your department",
-      });
-    }
-
-    // Validate adviser_id_2
-    if (!adviser_id_2 || adviser_id_2 === 0) {
-      await transaction.rollback();
-      return res.status(400).json({
-        message: "Adviser 2 is required",
-      });
-    }
-
-    const adviser2 = await db.Faculty.findOne({
-      where: {
-        faculty_id: adviser_id_2,
-        department: dean.department,
-      },
-    });
-
-    if (!adviser2) {
-      await transaction.rollback();
-      return res.status(404).json({
-        message: "Adviser 2 not found in your department",
-      });
-    }
-
-    // Check if both advisers are the same
-    if (adviser_id_1 === adviser_id_2) {
-      await transaction.rollback();
-      return res.status(400).json({
-        message: "Cannot assign the same faculty as both advisers",
+        message: "Adviser not found in your department",
       });
     }
 
@@ -236,22 +205,11 @@ exports.createOrganization = async (req, res) => {
       { transaction },
     );
 
-    // Create first adviser assignment
+    // Create adviser assignment
     await db.OrganizationAdviser.create(
       {
         organization_id: organization.organization_id,
         faculty_id: adviser_id_1,
-        assigned_date: new Date(),
-        is_active: true,
-      },
-      { transaction },
-    );
-
-    // Create second adviser assignment
-    await db.OrganizationAdviser.create(
-      {
-        organization_id: organization.organization_id,
-        faculty_id: adviser_id_2,
         assigned_date: new Date(),
         is_active: true,
       },

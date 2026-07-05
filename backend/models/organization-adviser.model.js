@@ -33,6 +33,11 @@ module.exports = (sequelize, Sequelize) => {
 			type: Sequelize.BOOLEAN,
 			defaultValue: true,
 		},
+		length_of_service: {
+			type: Sequelize.STRING(50),
+			allowNull: true,
+			comment: "Length of service as organization adviser (e.g., '2025-2026')",
+		},
 	});
 
 	return OrganizationAdviser;

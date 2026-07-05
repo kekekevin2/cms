@@ -69,6 +69,7 @@ export class PersonalDataSheetComponent implements OnInit {
   showAddChildModal = false;
   showAddEducationModal = false;
   showAddEligibilityModal = false;
+  showAddWorkExperienceModal = false;
   showAddVoluntaryModal = false;
   showAddTrainingModal = false;
   showAddReferenceModal = false;
@@ -137,9 +138,8 @@ export class PersonalDataSheetComponent implements OnInit {
         }
         this.loading.set(false);
 
-        // Auto-sync with My Profile on every load to ensure data is always current
-        console.log('PDS loaded, syncing with My Profile...');
-        this.syncWithProfile();
+        // Auto-sync disabled to prevent infinite loading
+        // Use the "Import from My Profile" button to sync manually
       },
       error: (error) => {
         if (error.status === 404) {

@@ -123,9 +123,8 @@ export class DeanPersonalDataSheetComponent implements OnInit {
         }
         this.loading.set(false);
 
-        // Auto-sync with My Profile on every load to ensure data is always current
-        console.log('PDS loaded, syncing with My Profile...');
-        this.syncWithProfile();
+        // Auto-sync disabled to prevent infinite loading
+        // Use the "Import from My Profile" button to sync manually
       },
       error: (error) => {
         if (error.status === 404) {

@@ -121,15 +121,21 @@ export class DeanOrganizationDashboard implements OnInit {
   }
 
   getMemberCount(org: any): number {
-    return org.organization_members?.length || 0;
+    // Exclude advisers from member count
+    if (!org.members) return 0;
+    return org.members.filter((m: any) => 
+      m.position && 
+      m.position.toLowerCase() !== 'adviser' && 
+      m.position.toLowerCase() !== 'advisor'
+    ).length;
   }
 
   getDocumentCount(org: any): number {
-    return org.organization_documents?.length || 0;
+    return org.documents?.length || 0;
   }
 
   getPendingCount(org: any): number {
-    return org.organization_documents?.filter((doc: any) => doc.status === 'pending').length || 0;
+    return org.documents?.filter((doc: any) => doc.status === 'pending').length || 0;
   }
 
   getFacultyName(org: any): string {

@@ -36,10 +36,10 @@ exports.upsertPersonalProfile = async (req, res) => {
     // Handle file uploads
     if (req.files) {
       if (req.files.profile_picture && req.files.profile_picture[0]) {
-        profileData.profile_picture = `/uploads/profiles/${req.files.profile_picture[0].filename}`;
+        profileData.profile_picture = `/uploads/profile-pictures/${req.files.profile_picture[0].filename}`;
       }
       if (req.files.passport_photo && req.files.passport_photo[0]) {
-        profileData.passport_photo = `/uploads/profiles/${req.files.passport_photo[0].filename}`;
+        profileData.passport_photo = `/uploads/profile-pictures/${req.files.passport_photo[0].filename}`;
       }
     }
 

@@ -7,7 +7,29 @@ const app = express();
 
 const db = require("./models");
 
-app.use(cors());
+// Enhanced CORS configuration
+app.use(cors({
+  origin: true, // Allow all origins in development
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
+
+// Log all incoming requests
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.path}`);
+  next();
+});
+
+// Log all outgoing responses
+app.use((req, res, next) => {
+  const originalJson = res.json;
+  res.json = function(data) {
+    console.log(`📤 Response for ${req.method} ${req.path}:`, res.statusCode);
+    return originalJson.call(this, data);
+  };
+  next();
+});
 
 app.use(express.json());
 
@@ -132,8 +154,9 @@ db.sequelize
   .then(() => {
     console.log("Database connection successful!");
     // Sync models with database (creates tables if they don't exist)
-    // Using force: false to avoid altering existing tables
-    return db.sequelize.sync({ alter: true });
+    // Using alter: false to prevent Sequelize from adding duplicate indexes
+    // on every restart. Run migrations manually when schema changes are needed.
+    return db.sequelize.sync({ alter: false });
   })
   .then(() => {
     console.log("Database tables synced!");

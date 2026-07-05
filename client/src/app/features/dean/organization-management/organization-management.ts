@@ -35,7 +35,6 @@ export class DeanOrganizationManagement implements OnInit {
     description: '',
     email: '',
     adviser_id_1: 0,
-    adviser_id_2: 0,
   };
   editForm = {
     organization_id: 0,
@@ -139,7 +138,6 @@ export class DeanOrganizationManagement implements OnInit {
       description: '',
       email: '',
       adviser_id_1: 0,
-      adviser_id_2: 0,
     };
     this.showCreateModal.set(true);
   }
@@ -162,25 +160,7 @@ export class DeanOrganizationManagement implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Validation Error',
-        text: 'Please select Adviser 1',
-        confirmButtonColor: '#2563eb',
-      });
-      return;
-    }
-    if (!this.createForm.adviser_id_2 || this.createForm.adviser_id_2 === 0) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Validation Error',
-        text: 'Please select Adviser 2',
-        confirmButtonColor: '#2563eb',
-      });
-      return;
-    }
-    if (this.createForm.adviser_id_1 === this.createForm.adviser_id_2) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Validation Error',
-        text: 'Adviser 1 and Adviser 2 must be different faculty members',
+        text: 'Please select adviser',
         confirmButtonColor: '#2563eb',
       });
       return;

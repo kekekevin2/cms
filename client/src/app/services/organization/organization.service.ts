@@ -25,6 +25,15 @@ export interface OrganizationMember {
   term_start_date: string;
   term_end_date?: string;
   photo_url?: string;
+  course?: string;
+  gwa?: string;
+  campus?: string;
+  telephone_number?: string;
+  birth_date?: string;
+  age?: string;
+  civil_status?: 'SINGLE' | 'MARRIED' | 'WIDOWED' | 'SEPARATED';
+  home_address?: string;
+  signature_url?: string;
   created_at?: string;
   updated_at?: string;
   supervisor?: OrganizationMember;
@@ -150,6 +159,7 @@ export interface OrganizationAdviser {
   faculty_id: number;
   assigned_date: string;
   is_active: boolean;
+  length_of_service?: string;
   Faculty?: {
     faculty_id: number;
     employee_id: string;
@@ -158,6 +168,8 @@ export interface OrganizationAdviser {
     last_name: string;
     email: string;
     contact_number?: string;
+    department?: string;
+    position_level?: string;
   };
 }
 
@@ -348,6 +360,27 @@ export class OrganizationService {
   // Demographics
   getDemographics(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/demographics`);
+  }
+
+  // Bulk Upload History
+  getBulkUploadHistory(page: number = 1, limit: number = 20): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/members/bulk-upload/history`, {
+      params: { page: page.toString(), limit: limit.toString() },
+    });
+  }
+
+  deleteBulkUpload(uploadId: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/members/bulk-upload/${uploadId}`);
+  }
+
+  downloadBulkUpload(uploadId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/members/bulk-upload/${uploadId}/download`, {
+      responseType: 'blob',
+    });
+  }
+
+  previewBulkUpload(uploadId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/members/bulk-upload/${uploadId}/preview`);
   }
 }
 
