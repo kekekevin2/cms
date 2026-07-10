@@ -19,7 +19,7 @@
         @if (pds().remarks) {
           <span class="text-xs text-red-500">Reason: {{ pds().remarks }}</span>
         }
-        @if (!isFormReadonly()) {
+        @if (!isFormReadonly() && !isEditMode()) {
           <button
             (click)="autoFillFromProfile()"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
@@ -39,6 +39,36 @@
             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50"
           >
             <i class="pi pi-send text-xs"></i> Submit
+          </button>
+        }
+        @if (isFormReadonly() && !isEditMode()) {
+          <button
+            (click)="enableEditMode()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-sm hover:bg-blue-700 transition"
+          >
+            <i class="pi pi-pencil text-xs"></i> Edit
+          </button>
+        }
+        @if (isEditMode()) {
+          <button
+            (click)="cancelEditMode()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            <i class="pi pi-times text-xs"></i> Cancel
+          </button>
+          <button
+            (click)="savePDS()"
+            [disabled]="loading()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50"
+          >
+            <i class="pi pi-save text-xs"></i> Save Changes
+          </button>
+          <button
+            (click)="submitPDS()"
+            [disabled]="loading()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+          >
+            <i class="pi pi-send text-xs"></i> Resubmit
           </button>
         }
         <button

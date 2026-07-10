@@ -250,6 +250,7 @@ CredentialCertificate.belongsTo(FacultyCredential, {
 /* PersonalDataSheet Relationships */
 Faculty.hasOne(PersonalDataSheet, {
   foreignKey: "faculty_id",
+  as: "PersonalDataSheet", // Add explicit alias
 });
 PersonalDataSheet.belongsTo(Faculty, {
   foreignKey: "faculty_id",
@@ -257,6 +258,7 @@ PersonalDataSheet.belongsTo(Faculty, {
 
 Dean.hasOne(PersonalDataSheet, {
   foreignKey: "dean_id",
+  as: "PersonalDataSheet", // Add explicit alias
 });
 PersonalDataSheet.belongsTo(Dean, {
   foreignKey: "dean_id",

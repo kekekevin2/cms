@@ -595,11 +595,8 @@ exports.submitPDS = async (req, res) => {
       return res.status(404).json({ message: "Personal Data Sheet not found" });
     }
 
-    if (pds.status === "submitted" || pds.status === "approved") {
-      return res.status(400).json({
-        message: "Personal Data Sheet has already been submitted",
-      });
-    }
+    // Removed restriction - allow resubmission even if already submitted/approved
+    // Faculty can now edit and resubmit their PDS anytime
 
     // Validate required fields
     if (!pds.photo_path) {
@@ -608,7 +605,7 @@ exports.submitPDS = async (req, res) => {
         .json({ message: "Please upload a photo before submitting" });
     }
 
-    // Update status to submitted
+    // Update status to submitted (or resubmit)
     await pds.update({
       status: "submitted",
       submitted_at: new Date(),

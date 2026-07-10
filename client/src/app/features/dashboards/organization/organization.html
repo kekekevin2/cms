@@ -146,7 +146,38 @@
     <div class="space-y-5">
       <!-- Header & Actions -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div></div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="relative max-w-xs">
+            <i
+              class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"
+            ></i>
+            <input
+              type="text"
+              [(ngModel)]="cvlSearchQuery"
+              placeholder="Search by title or filename…"
+              class="w-full pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-200"
+            />
+          </div>
+          <select
+            [(ngModel)]="cvlSelectedAttachment"
+            class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-300 bg-white"
+          >
+            <option [ngValue]="undefined">All Attachments</option>
+            @for (option of cvlAttachmentOptions; track option) {
+              <option [ngValue]="option">{{ option }}</option>
+            }
+          </select>
+          <select
+            [(ngModel)]="cvlSelectedSemester"
+            class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-300 bg-white"
+          >
+            <option [ngValue]="undefined">All Semesters</option>
+            <option value="1st Semester">1st Semester</option>
+            <option value="2nd Semester">2nd Semester</option>
+            <option value="Summer 1">Summer 1</option>
+            <option value="Summer 2">Summer 2</option>
+          </select>
+        </div>
         <button
           (click)="openCVLAttachmentModal()"
           class="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white text-xs font-medium rounded-sm hover:bg-red-600 transition-colors"
@@ -157,25 +188,25 @@
 
       <!-- CVL Attachments List -->
     <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-      <table class="w-full text-xs">
+      <table class="w-full text-xs table-fixed">
         <thead>
           <tr class="border-b border-gray-100 bg-gray-50">
-            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[12%]">
               Attachment
             </th>
-            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[22%]">
               Title
             </th>
-            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[26%]">
               Filename
             </th>
-            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[12%]">
               Date Created
             </th>
-            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[13%]">
               Semester
             </th>
-            <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">
+            <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-[15%]">
               Actions
             </th>
           </tr>
@@ -189,24 +220,35 @@
                 <p class="text-xs text-gray-400 mt-1">Click "Add Attachment" to create your first entry</p>
               </td>
             </tr>
+          } @else if (filteredCVLAttachments().length === 0) {
+            <tr>
+              <td colspan="6" class="px-5 py-12 text-center">
+                <i class="pi pi-search text-4xl text-gray-300 mb-2"></i>
+                <p class="text-xs text-gray-400">No attachments match your search or filters</p>
+              </td>
+            </tr>
           } @else {
-            @for (attachment of cvlAttachments(); track attachment.id) {
+            @for (attachment of filteredCVLAttachments(); track attachment.id) {
               <tr class="hover:bg-gray-50/60 transition-colors">
                 <td class="px-5 py-3.5 text-gray-700 text-xs font-medium">
-                  {{ attachment.attachment }}
-                </td>
-                <td class="px-5 py-3.5 text-gray-500 text-xs">
-                  {{ attachment.title }}
-                </td>
-                <td class="px-5 py-3.5 text-gray-700 text-xs">
-                  <div class="truncate max-w-xs" [title]="attachment.filename">
-                    {{ attachment.filename }}
+                  <div class="truncate" [title]="attachment.attachment">
+                    {{ attachment.attachment }}
                   </div>
                 </td>
                 <td class="px-5 py-3.5 text-gray-500 text-xs">
-                  {{ attachment.date_created ? formatDate(attachment.date_created) : 'N/A' }}
+                  <div class="truncate" [title]="attachment.title">
+                    {{ attachment.title }}
+                  </div>
                 </td>
                 <td class="px-5 py-3.5 text-gray-500 text-xs">
+                  <div class="truncate" [title]="attachment.filename">
+                    {{ attachment.filename }}
+                  </div>
+                </td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs whitespace-nowrap">
+                  {{ attachment.date_created ? formatDate(attachment.date_created) : 'N/A' }}
+                </td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs whitespace-nowrap">
                   {{ attachment.semester || 'N/A' }}
                 </td>
                 <td class="px-5 py-3.5 text-right">
@@ -288,7 +330,7 @@
               <i class="pi pi-users text-white/60 text-sm"></i>
             </div>
             <p class="text-2xl font-bold">{{ stats().totalMembers }}</p>
-            <p class="text-xs opacity-70 mt-1">{{ stats().activeMembers || 0 }} active</p>
+            <p class="text-xs opacity-70 mt-1">{{ stats().activeMembers || 0 }} Active</p>
           </div>
 
           <div
@@ -299,7 +341,7 @@
               <i class="pi pi-check-circle text-white/60 text-sm"></i>
             </div>
             <p class="text-2xl font-bold">{{ stats().documentsApproved }}</p>
-            <p class="text-xs opacity-70 mt-1">{{ stats().documentsRejected }} rejected</p>
+            <p class="text-xs opacity-70 mt-1">{{ stats().documentsRejected }} Rejected</p>
           </div>
 
           <div
@@ -309,7 +351,7 @@
               <p class="text-xs font-medium opacity-80">Total Events</p>
               <i class="pi pi-calendar text-white/60 text-sm"></i>
             </div>
-            <p class="text-2xl font-bold">{{ stats().approvedEvents }}</p>
+            <p class="text-2xl font-bold">{{ stats().totalEvents }}</p>
             <p class="text-xs opacity-70 mt-1">All organization events</p>
           </div>
         </div>
@@ -322,7 +364,7 @@
               <p class="text-xs text-gray-500">Approved</p>
             </div>
             <p class="text-xl font-bold text-gray-700">{{ stats().documentsApproved }}</p>
-            <p class="text-xs text-gray-400">documents cleared</p>
+            <p class="text-xs text-gray-400">Documents cleared</p>
           </div>
           <div class="bg-white border border-gray-100 rounded-sm p-3">
             <div class="flex items-center gap-2 mb-1">
@@ -330,7 +372,7 @@
               <p class="text-xs text-gray-500">Pending</p>
             </div>
             <p class="text-xl font-bold text-gray-700">{{ stats().documentsPending }}</p>
-            <p class="text-xs text-gray-400">awaiting review</p>
+            <p class="text-xs text-gray-400">Awaiting review</p>
           </div>
           <div class="bg-white border border-gray-100 rounded-sm p-3">
             <div class="flex items-center gap-2 mb-1">
@@ -338,7 +380,7 @@
               <p class="text-xs text-gray-500">Rejected</p>
             </div>
             <p class="text-xl font-bold text-gray-700">{{ stats().documentsRejected }}</p>
-            <p class="text-xs text-gray-400">needs revision</p>
+            <p class="text-xs text-gray-400">Needs revision</p>
           </div>
           <div class="bg-white border border-gray-100 rounded-sm p-3">
             <div class="flex items-center gap-2 mb-1">
@@ -346,7 +388,7 @@
               <p class="text-xs text-gray-500">Total Submitted</p>
             </div>
             <p class="text-xl font-bold text-gray-700">{{ stats().documentsSubmitted }}</p>
-            <p class="text-xs text-gray-400">all documents</p>
+            <p class="text-xs text-gray-400">All documents</p>
           </div>
         </div>
 
@@ -363,7 +405,7 @@
           <!-- Members by Position Chart -->
           <div class="bg-white rounded-sm border border-gray-100 p-4">
             <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-4">
-              Members by Position
+              Position
             </p>
             @if (stats().membersByPosition.length === 0) {
               <div class="text-center py-8 text-gray-500">
@@ -400,7 +442,7 @@
           <!-- Members by Year Level Chart -->
           <div class="bg-white rounded-sm border border-gray-100 p-4">
             <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-4">
-              Members by Year Level
+              Year Level
             </p>
             @if (stats().membersByYearLevel.length === 0) {
               <div class="text-center py-8 text-gray-500">
@@ -587,7 +629,7 @@
               <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
                 <i class="pi pi-book text-xs text-gray-400"></i>
                 <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                  Members by Program
+                  Program
                 </p>
               </div>
               <div class="p-4">
@@ -656,7 +698,7 @@
             <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
               <i class="pi pi-graduation-cap text-xs text-gray-400"></i>
               <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                Members by Year Level
+                Year Level
               </p>
             </div>
             <div class="p-4">

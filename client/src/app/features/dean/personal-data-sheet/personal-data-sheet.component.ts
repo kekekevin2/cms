@@ -325,6 +325,10 @@ export class DeanPersonalDataSheetComponent implements OnInit {
         this.photoPreview.set(e.target.result);
       };
       reader.readAsDataURL(file);
+      // Persist immediately so the saved photo_path stays in sync with the
+      // preview. Without this, the preview looks uploaded but the server
+      // still has no photo, and Submit fails with "Please upload a photo".
+      this.uploadPhoto();
     }
   }
 

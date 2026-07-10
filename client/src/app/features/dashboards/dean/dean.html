@@ -9,9 +9,9 @@
     <div class="mb-6 px-2 flex flex-col items-center">
       <img src="/assets/logo.png" alt="Logo" class="h-24 mb-3" />
       <h2 class="text-lg font-bold text-gray-900 text-center">Department Portal</h2>
-      @if (authService.currentUser()?.profile?.department) {
+      @if (departmentAcronym()) {
         <p class="text-xs text-gray-500 text-center mt-0.5">
-          {{ authService.currentUser()?.profile?.department }}
+          {{ departmentAcronym() }}
         </p>
       }
     </div>
@@ -148,14 +148,13 @@
         class="inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
       >
         <i class="pi pi-user text-sm"></i>
-        <div class="flex flex-col items-start">
-          <span class="text-xs font-medium leading-tight">{{ deanName() || 'Dean' }}</span>
-          @if (authService.currentUser()?.role === 'college_department') {
-            <span class="text-xs text-sky-600 leading-tight">
-              {{ authService.currentUser()?.profile?.name }}
-            </span>
-          }
-        </div>
+        <span class="text-xs font-medium leading-tight">
+          {{
+            authService.currentUser()?.profile?.department ||
+              authService.currentUser()?.profile?.name ||
+              'Department'
+          }}
+        </span>
         <i
           class="pi pi-chevron-down text-xs transition-transform"
           [class.rotate-180]="isUserMenuOpen()"
@@ -1403,11 +1402,11 @@
       }
 
       @if (dashboardSubTab() === 'organization-analytics') {
-        <app-dean-organization-dashboard />
+        <app-dean-organization-dashboard [organizationId]="scopedOrganizationId()" />
       }
 
       @if (dashboardSubTab() === 'member-demographics') {
-        <app-dean-member-demographics />
+        <app-dean-member-demographics [organizationId]="scopedOrganizationId()" />
       }
     </div>
   }

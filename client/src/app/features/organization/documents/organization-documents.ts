@@ -495,21 +495,27 @@ export class OrganizationDocumentsComponent implements OnInit {
   }
 
   parseSDGs(sdgs: any): number[] {
-    // If it's already an array, return it
+    let raw: any[] = [];
+
+    // If it's already an array, use it as-is
     if (Array.isArray(sdgs)) {
-      return sdgs;
-    }
-    // If it's a string, try to parse it
-    if (typeof sdgs === 'string') {
+      raw = sdgs;
+    } else if (typeof sdgs === 'string') {
+      // If it's a string, try to parse it as JSON
       try {
         const parsed = JSON.parse(sdgs);
-        return Array.isArray(parsed) ? parsed : [];
+        raw = Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         console.error('Error parsing SDGs:', e);
-        return [];
+        raw = [];
       }
     }
-    return [];
+
+    // Coerce to numbers, drop invalid entries, dedupe, sort ascending (SDG 1 -> 17)
+    const nums = raw
+      .map((v) => Number(v))
+      .filter((n) => Number.isFinite(n));
+    return Array.from(new Set(nums)).sort((a, b) => a - b);
   }
   
   // Helper methods for checklist progress

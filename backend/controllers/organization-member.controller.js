@@ -346,6 +346,7 @@ exports.updateMember = async (req, res) => {
     console.log("  Name:", member.first_name, member.last_name);
 
     const {
+      sr_code,
       first_name,
       middle_name,
       last_name,
@@ -405,39 +406,74 @@ exports.updateMember = async (req, res) => {
     const cleanedBirthDate = birth_date && birth_date !== '' ? birth_date : null;
 
     const updateData = {
-      first_name,
-      middle_name,
-      last_name,
-      email,
-      contact_number,
-      year_level,
-      position,
-      parent_member_id,
-      term_end_date,
-      is_active,
+      sr_code: sr_code && sr_code !== '' ? sr_code : null,
+      first_name: first_name || null,
+      middle_name: middle_name || null,
+      last_name: last_name || null,
+      email: email || null,
+      contact_number: contact_number || null,
+      year_level: year_level && year_level !== '' ? year_level : null,
+      position: position || null,
+      parent_member_id: parent_member_id && parent_member_id !== '' ? parent_member_id : null,
+      term_end_date: term_end_date && term_end_date !== '' && term_end_date !== 'Invalid date' ? term_end_date : null,
+      is_active: is_active === 'true' || is_active === true ? true : false,
       photo_url,
       signature_url,
-      course: course || null,
-      gwa: gwa || null,
-      campus: campus || null,
-      telephone_number: telephone_number || null,
+      course: course && course !== '' ? course : null,
+      gwa: gwa && gwa !== '' ? gwa : null,
+      campus: campus && campus !== '' ? campus : null,
+      telephone_number: telephone_number && telephone_number !== '' ? telephone_number : null,
       birth_date: cleanedBirthDate,
-      age: age || null,
-      civil_status: civil_status || null,
-      home_address: home_address || null,
+      age: age && age !== '' ? age : null,
+      civil_status: civil_status && civil_status !== '' ? civil_status : null,
+      home_address: home_address && home_address !== '' ? home_address : null,
     };
 
     console.log("💾 Updating member with:", updateData);
+    console.log("📊 Member ID being updated:", id);
+    console.log("📊 Organization ID:", organization.organization_id);
 
-    await member.update(updateData);
+    // Log what Sequelize thinks has changed BEFORE the update
+    member.set(updateData);
+    const changedFields = member.changed();
+    console.log("🔍 Sequelize detected changed fields:", changedFields);
+    
+    if (!changedFields || changedFields.length === 0) {
+      console.log("⚠️ WARNING: Sequelize detected NO changes! The update will be a no-op.");
+      console.log("⚠️ This means the new values are identical to the current DB values.");
+      console.log("⚠️ Current DB values for key fields:");
+      console.log("   campus:", member.previous('campus'));
+      console.log("   course:", member.previous('course'));
+      console.log("   telephone_number:", member.previous('telephone_number'));
+      console.log("   first_name:", member.previous('first_name'));
+    }
 
+    // Perform the save (which generates the actual SQL)
+    await member.save();
+    
     console.log("✅ Officer updated successfully!");
     console.log("  New position:", member.position);
     console.log("  New name:", member.first_name, member.last_name);
+    console.log("  New campus:", member.campus);
+    console.log("  New course:", member.course);
+
+    // CRITICAL: Verify by re-reading from DB
+    const verification = await db.OrganizationMember.findByPk(id);
+    console.log("🔍 VERIFICATION - Re-read from DB:");
+    console.log("  campus in DB:", verification.campus);
+    console.log("  course in DB:", verification.course);
+    console.log("  telephone_number in DB:", verification.telephone_number);
+    console.log("  first_name in DB:", verification.first_name);
+    
+    if (verification.campus !== updateData.campus) {
+      console.log("❌ MISMATCH DETECTED! DB value doesn't match what we tried to save!");
+      console.log("   Tried to save campus:", updateData.campus);
+      console.log("   DB has campus:", verification.campus);
+    }
 
     res.json({
       message: "Member updated successfully",
-      member,
+      member: verification, // Return the fresh DB read to ensure accuracy
     });
   } catch (error) {
     console.error("❌ Update member error:", error);
@@ -880,6 +916,81 @@ exports.getBulkUploadHistory = async (req, res) => {
   } catch (error) {
     console.error("Get bulk upload history error:", error);
     res.status(500).json({ message: "Error fetching bulk upload history" });
+  }
+};
+
+// Update bulk upload record metadata (and optionally replace the file).
+// Only updates the record itself; existing members previously inserted from
+// this upload are left untouched (same behaviour as CVL attachment update).
+exports.updateBulkUpload = async (req, res) => {
+  const fs = require("fs");
+  try {
+    const userId = req.user.user_id;
+    const { upload_id } = req.params;
+
+    const organization = await db.Organization.findOne({
+      where: { user_id: userId },
+    });
+
+    if (!organization) {
+      return res
+        .status(404)
+        .json({ message: "Organization profile not found" });
+    }
+
+    const upload = await db.OrganizationBulkUpload.findOne({
+      where: {
+        upload_id: upload_id,
+        organization_id: organization.organization_id,
+      },
+    });
+
+    if (!upload) {
+      return res.status(404).json({ message: "Upload record not found" });
+    }
+
+    const {
+      department,
+      section,
+      year_level,
+      semester,
+      academic_year_id,
+    } = req.body;
+
+    // Metadata updates
+    if (department !== undefined) upload.department = department;
+    if (section !== undefined) upload.section = section;
+    if (year_level !== undefined) upload.year_level = year_level;
+    if (semester !== undefined) upload.semester = semester;
+    if (academic_year_id !== undefined && academic_year_id !== "") {
+      upload.academic_year_id = parseInt(academic_year_id, 10);
+    }
+
+    // Optional file replacement
+    if (req.file) {
+      // Remove old file from disk if present
+      if (upload.file_path && fs.existsSync(upload.file_path)) {
+        try {
+          fs.unlinkSync(upload.file_path);
+        } catch (e) {
+          console.error("Error deleting old upload file:", e);
+        }
+      }
+      upload.file_name = req.file.originalname;
+      upload.file_path = req.file.path;
+    }
+
+    await upload.save();
+
+    res.json({
+      message: "Upload record updated successfully",
+      upload,
+    });
+  } catch (error) {
+    console.error("Update bulk upload error:", error);
+    res
+      .status(500)
+      .json({ message: "Error updating upload record", error: error.message });
   }
 };
 

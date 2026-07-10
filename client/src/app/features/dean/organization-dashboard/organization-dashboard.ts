@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChanges, Input, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DeanService } from '../../../services/dean/dean.service';
 import { EventAnalyticsService, SDGEventData } from '../../../services/organization/event-analytics.service';
@@ -10,9 +10,17 @@ import { SDGEventsChartComponent } from '../../../shared/components/sdg-events-c
   templateUrl: './organization-dashboard.html',
   styleUrl: './organization-dashboard.css',
 })
-export class DeanOrganizationDashboard implements OnInit {
+export class DeanOrganizationDashboard implements OnInit, OnChanges {
   private deanService = inject(DeanService);
   private eventAnalyticsService = inject(EventAnalyticsService);
+
+  /**
+   * Optional organization scope. When provided, the dashboard is filtered to
+   * show statistics, recent documents, and overview cards for a single
+   * organization (used when the dean drills into an org from the
+   * Organization Management action icons).
+   */
+  @Input() organizationId?: number | null;
 
   loading = signal(false);
   sdgEventData = signal<SDGEventData[]>([]);
@@ -29,9 +37,35 @@ export class DeanOrganizationDashboard implements OnInit {
   recentDocuments = signal<any[]>([]);
   organizationStats = signal<any[]>([]);
 
+  /**
+   * Aggregated member breakdown used by the Position and Year Level
+   * charts. Mirrors the shape produced by the Organization Portal:
+   *   totalMembers   -> regular members only (officers excluded)
+   *   activeMembers  -> regular members that are still active
+   *   membersByPosition -> [{ position, count }, ...]
+   *   membersByYearLevel -> [{ year, count }, ...]
+   */
+  memberStats = signal<{
+    totalMembers: number;
+    activeMembers: number;
+    membersByPosition: { position: string; count: number }[];
+    membersByYearLevel: { year: string; count: number }[];
+  }>({
+    totalMembers: 0,
+    activeMembers: 0,
+    membersByPosition: [],
+    membersByYearLevel: [],
+  });
+
   ngOnInit() {
     this.loadDashboard();
     this.loadSDGEventData();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['organizationId'] && !changes['organizationId'].firstChange) {
+      this.loadDashboard();
+    }
   }
 
   loadSDGEventData() {
@@ -48,11 +82,15 @@ export class DeanOrganizationDashboard implements OnInit {
 
   loadDashboard() {
     this.loading.set(true);
-    this.deanService.getOrganizationDashboard().subscribe({
+    const orgId = this.organizationId ?? undefined;
+    this.deanService.getOrganizationDashboard(orgId).subscribe({
       next: (response) => {
         this.statistics.set(response.statistics);
         this.recentDocuments.set(response.recentDocuments);
         this.organizationStats.set(response.organizationStats);
+        if (response.memberStats) {
+          this.memberStats.set(response.memberStats);
+        }
         this.loading.set(false);
       },
       error: (error) => {

@@ -375,12 +375,26 @@ export class DeanOrganizationManagement implements OnInit {
   }
 
   viewAnalytics(organization: Organization) {
-    // Navigate to organization analytics view
-    this.router.navigate(['/dean/organization-analytics', organization.organization_id]);
+    // Open the Dean Dashboard's Organization Analytics sub-tab scoped to
+    // the selected organization.
+    this.router.navigate(['/department/dashboard'], {
+      queryParams: {
+        tab: 'dashboard',
+        subTab: 'organization-analytics',
+        organizationId: organization.organization_id,
+      },
+    });
   }
 
   viewDemographics(organization: Organization) {
-    // Navigate to organization demographics view
-    this.router.navigate(['/dean/organization-demographics', organization.organization_id]);
+    // Open the Dean Dashboard's Member Demographics sub-tab scoped to
+    // the selected organization.
+    this.router.navigate(['/department/dashboard'], {
+      queryParams: {
+        tab: 'dashboard',
+        subTab: 'member-demographics',
+        organizationId: organization.organization_id,
+      },
+    });
   }
 }

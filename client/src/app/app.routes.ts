@@ -1,25 +1,12 @@
 import { Routes } from '@angular/router';
-import { Login } from './features/auth/login/login';
-import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
-import { ResetPassword } from './features/auth/reset-password/reset-password';
 import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
 import { loginGuard } from './guards/login.guard';
-import { SuperadminDashboard } from './features/dashboards/superadmin/superadmin';
-import { DeanDashboard } from './features/dashboards/dean/dean';
-import { FacultyDashboard } from './features/dashboards/faculty/faculty';
-import { OrganizationDashboard } from './features/dashboards/organization/organization';
-import { CollegeDepartmentDashboard } from './features/dashboards/college-department/college-department';
-import { AdminDashboard } from './features/dashboards/admin/admin';
-import { FacultyRequirements } from './features/faculty/requirements/requirements';
-import { PersonalDataSheetComponent } from './features/faculty/personal-data-sheet/personal-data-sheet.component';
-import { DeanPersonalDataSheetComponent } from './features/dean/personal-data-sheet/personal-data-sheet.component';
-import { DeanRequirementsMonitoring } from './features/dean/requirements-monitoring/requirements-monitoring';
-import { DeanAnnouncementsComponent } from './features/dean/announcements/announcements';
-import { FacultyAnnouncementsComponent } from './features/faculty/announcements/announcements';
-import { DeanOrganizationAdvisersComponent } from './features/dean/organization-advisers/dean-organization-advisers';
-import { DeanOrganizationDocumentsComponent } from './features/dean/organization-documents/dean-organization-documents';
-import { DeanOrganizationDashboard } from './features/dean/organization-dashboard/organization-dashboard';
+
+// NOTE:
+// All route components are lazy-loaded via `loadComponent`. This keeps the
+// initial JS bundle small so the login page renders quickly and each
+// dashboard only downloads when the user actually navigates to it.
 
 export const routes: Routes = [
   {
@@ -29,25 +16,36 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    component: Login,
-    canActivate: [loginGuard], // Prevents logged-in users from accessing login page
+    loadComponent: () =>
+      import('./features/auth/login/login').then((m) => m.Login),
+    canActivate: [loginGuard],
   },
   {
     path: 'forgot-password',
-    component: ForgotPassword,
+    loadComponent: () =>
+      import('./features/auth/forgot-password/forgot-password').then(
+        (m) => m.ForgotPassword,
+      ),
   },
   {
     path: 'reset-password',
-    component: ResetPassword,
+    loadComponent: () =>
+      import('./features/auth/reset-password/reset-password').then(
+        (m) => m.ResetPassword,
+      ),
   },
   {
     path: 'superadmin/dashboard',
-    component: SuperadminDashboard,
+    loadComponent: () =>
+      import('./features/dashboards/superadmin/superadmin').then(
+        (m) => m.SuperadminDashboard,
+      ),
     canActivate: [authGuard, roleGuard(['superadmin'])],
   },
   {
     path: 'department/dashboard',
-    component: DeanDashboard,
+    loadComponent: () =>
+      import('./features/dashboards/dean/dean').then((m) => m.DeanDashboard),
     canActivate: [authGuard, roleGuard(['college_department'])],
   },
   {
@@ -57,67 +55,104 @@ export const routes: Routes = [
   },
   {
     path: 'dean/requirements-monitoring',
-    component: DeanRequirementsMonitoring,
+    loadComponent: () =>
+      import(
+        './features/dean/requirements-monitoring/requirements-monitoring'
+      ).then((m) => m.DeanRequirementsMonitoring),
     canActivate: [authGuard, roleGuard(['college_department'])],
   },
   {
     path: 'dean/announcements',
-    component: DeanAnnouncementsComponent,
+    loadComponent: () =>
+      import('./features/dean/announcements/announcements').then(
+        (m) => m.DeanAnnouncementsComponent,
+      ),
     canActivate: [authGuard, roleGuard(['college_department'])],
   },
   {
     path: 'dean/organization-advisers',
-    component: DeanOrganizationAdvisersComponent,
+    loadComponent: () =>
+      import(
+        './features/dean/organization-advisers/dean-organization-advisers'
+      ).then((m) => m.DeanOrganizationAdvisersComponent),
     canActivate: [authGuard, roleGuard(['college_department'])],
   },
   {
     path: 'dean/organization-documents',
-    component: DeanOrganizationDocumentsComponent,
+    loadComponent: () =>
+      import(
+        './features/dean/organization-documents/dean-organization-documents'
+      ).then((m) => m.DeanOrganizationDocumentsComponent),
     canActivate: [authGuard, roleGuard(['college_department'])],
   },
   {
     path: 'dean/organization-dashboard',
-    component: DeanOrganizationDashboard,
+    loadComponent: () =>
+      import(
+        './features/dean/organization-dashboard/organization-dashboard'
+      ).then((m) => m.DeanOrganizationDashboard),
     canActivate: [authGuard, roleGuard(['college_department'])],
   },
   {
     path: 'dean/personal-data-sheet',
-    component: DeanPersonalDataSheetComponent,
+    loadComponent: () =>
+      import(
+        './features/dean/personal-data-sheet/personal-data-sheet.component'
+      ).then((m) => m.DeanPersonalDataSheetComponent),
     canActivate: [authGuard, roleGuard(['college_department'])],
   },
   {
     path: 'faculty/dashboard',
-    component: FacultyDashboard,
+    loadComponent: () =>
+      import('./features/dashboards/faculty/faculty').then(
+        (m) => m.FacultyDashboard,
+      ),
     canActivate: [authGuard, roleGuard(['faculty'])],
   },
   {
     path: 'faculty/requirements',
-    component: FacultyRequirements,
+    loadComponent: () =>
+      import('./features/faculty/requirements/requirements').then(
+        (m) => m.FacultyRequirements,
+      ),
     canActivate: [authGuard, roleGuard(['faculty'])],
   },
   {
     path: 'faculty/personal-data-sheet',
-    component: PersonalDataSheetComponent,
+    loadComponent: () =>
+      import(
+        './features/faculty/personal-data-sheet/personal-data-sheet.component'
+      ).then((m) => m.PersonalDataSheetComponent),
     canActivate: [authGuard, roleGuard(['faculty'])],
   },
   {
     path: 'faculty/announcements',
-    component: FacultyAnnouncementsComponent,
+    loadComponent: () =>
+      import('./features/faculty/announcements/announcements').then(
+        (m) => m.FacultyAnnouncementsComponent,
+      ),
     canActivate: [authGuard, roleGuard(['faculty'])],
   },
   {
     path: 'organization/dashboard',
-    component: OrganizationDashboard,
+    loadComponent: () =>
+      import('./features/dashboards/organization/organization').then(
+        (m) => m.OrganizationDashboard,
+      ),
     canActivate: [authGuard, roleGuard(['organization'])],
   },
   {
     path: 'college-department/dashboard',
-    component: CollegeDepartmentDashboard,
+    loadComponent: () =>
+      import(
+        './features/dashboards/college-department/college-department'
+      ).then((m) => m.CollegeDepartmentDashboard),
     canActivate: [authGuard, roleGuard(['college_department'])],
   },
   {
     path: 'admin/dashboard',
-    component: AdminDashboard,
+    loadComponent: () =>
+      import('./features/dashboards/admin/admin').then((m) => m.AdminDashboard),
     canActivate: [authGuard, roleGuard(['admin'])],
   },
   {

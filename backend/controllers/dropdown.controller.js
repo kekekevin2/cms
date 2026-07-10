@@ -3,20 +3,12 @@ const db = require("../models");
 // Get static departments for dropdown
 exports.getDepartments = async (req, res) => {
   try {
-    const departments = [
-      { department_id: 1, department_name: "College of Engineering" },
-      { department_id: 2, department_name: "College of Education" },
-      { department_id: 3, department_name: "College of Arts and Sciences" },
-      {
-        department_id: 4,
-        department_name: "College of Business Administration",
-      },
-      {
-        department_id: 5,
-        department_name: "College of Information Technology",
-      },
-      { department_id: 6, department_name: "College of Nursing" },
-    ];
+    // Fetch active departments from database
+    const departments = await db.Department.findAll({
+      where: { is_active: true },
+      attributes: ['department_id', 'department_name'],
+      order: [['department_name', 'ASC']]
+    });
 
     res.json(departments);
   } catch (error) {

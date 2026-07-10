@@ -19,7 +19,6 @@
           <i class="pi pi-check-circle text-white/60 text-sm"></i>
         </div>
         <p class="text-2xl font-bold">{{ statistics().approvedEvents }}</p>
-        <p class="text-xs opacity-70 mt-1">{{ statistics().pendingEvents }} pending</p>
       </div>
       <div class="bg-linear-to-br from-purple-500 to-purple-600 text-white rounded-sm shadow p-4">
         <div class="flex items-center justify-between mb-2">
@@ -35,10 +34,6 @@
         </div>
         <p class="text-2xl font-bold">
           {{ (statistics().pendingDocuments || 0) + (statistics().pendingEvents || 0) }}
-        </p>
-        <p class="text-xs opacity-70 mt-1">
-          {{ statistics().pendingDocuments || 0 }} docs ·
-          {{ statistics().pendingEvents || 0 }} events
         </p>
       </div>
     </div>
@@ -112,6 +107,90 @@
           Reports per SDG per Year
         </p>
         <app-sdg-events-chart [data]="sdgEventData()" />
+      </div>
+    </div>
+
+    <!--
+      Position + Year Level breakdown.
+      Mirrors the Organization Portal analytics tab exactly
+      (dashboards/organization/organization.html). Percentages are based
+      on `memberStats().totalMembers` which excludes officer roles so
+      the bar widths line up with the Organization Portal.
+    -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Members by Position Chart -->
+      <div class="bg-white rounded-sm border border-gray-100 p-4">
+        <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-4">
+          Position
+        </p>
+        @if (memberStats().membersByPosition.length === 0) {
+          <div class="text-center py-8 text-gray-500">
+            <p class="text-xs">No member data available</p>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (item of memberStats().membersByPosition.slice(0, 8); track item.position) {
+              <div class="flex items-center">
+                <div class="w-28 text-xs font-medium text-gray-700 truncate">
+                  {{ item.position }}
+                </div>
+                <div class="flex-1 mx-2">
+                  <div class="w-full bg-gray-100 rounded-full h-5 overflow-hidden">
+                    <div
+                      class="bg-gradient-to-r from-purple-500 to-purple-600 h-full rounded-full flex items-center justify-end pr-2 text-xs font-semibold text-white transition-all duration-500"
+                      [style.width.%]="(item.count / memberStats().totalMembers) * 100"
+                    >
+                      @if ((item.count / memberStats().totalMembers) * 100 > 15) {
+                        {{ item.count }}
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="w-10 text-right text-xs font-semibold text-gray-900">
+                  {{ item.count }}
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Members by Year Level Chart -->
+      <div class="bg-white rounded-sm border border-gray-100 p-4">
+        <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-4">
+          Year Level
+        </p>
+        @if (memberStats().membersByYearLevel.length === 0) {
+          <div class="text-center py-8 text-gray-500">
+            <p class="text-xs">No member data available</p>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (item of memberStats().membersByYearLevel; track item.year) {
+              <div class="flex items-center">
+                <div class="w-24 text-xs font-medium text-gray-700">{{ item.year }}</div>
+                <div class="flex-1 mx-2">
+                  <div class="w-full bg-gray-100 rounded-full h-5 overflow-hidden">
+                    <div
+                      class="bg-gradient-to-r from-indigo-500 to-indigo-600 h-full rounded-full flex items-center justify-end pr-2 text-xs font-semibold text-white transition-all duration-500"
+                      [style.width.%]="(item.count / memberStats().totalMembers) * 100"
+                    >
+                      @if ((item.count / memberStats().totalMembers) * 100 > 15) {
+                        {{ item.count }}
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="w-10 text-right text-xs font-semibold text-gray-900">
+                  {{ item.count }}
+                </div>
+                <div class="w-12 text-right text-xs text-gray-500">
+                  {{ ((item.count / memberStats().totalMembers) * 100).toFixed(0) }}%
+                </div>
+              </div>
+            }
+          </div>
+        }
       </div>
     </div>
 

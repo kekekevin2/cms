@@ -280,6 +280,16 @@ export class OrganizationService {
     );
   }
 
+  updateBulkUpload(
+    uploadId: number,
+    formData: FormData,
+  ): Observable<{ message: string; upload: any }> {
+    return this.http.put<{ message: string; upload: any }>(
+      `${this.apiUrl}/members/bulk-upload/${uploadId}`,
+      formData,
+    );
+  }
+
   // Document Management
   getDocuments(
     page: number = 1,

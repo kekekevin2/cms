@@ -141,21 +141,21 @@
                   @for (doc of getPaginatedDocuments(); track doc.document_id) {
                     <tr class="hover:bg-gray-50/60 transition-colors">
                       <td class="px-5 py-3.5">
-                        <p class="text-xs font-medium text-gray-700">{{ doc.title }}</p>
+                        <p class="text-xs font-medium text-gray-700">{{ doc.document_title }}</p>
                         <p class="text-xs text-gray-400 mt-0.5">
-                          <i class="pi pi-file text-xs mr-1"></i>{{ doc.file_name }}
+                          <i class="pi pi-file text-xs mr-1"></i>{{ doc.original_filename }}
                         </p>
                         @if (doc.review_comments) {
                           <p class="text-xs text-blue-600 mt-1 italic">{{ doc.review_comments }}</p>
                         }
                       </td>
                       <td class="px-5 py-3.5 text-xs text-gray-500">
-                        {{ doc.DocumentType?.type_name || '—' }}
+                        {{ doc.document_type?.type_name || '—' }}
                       </td>
                       <td class="px-5 py-3.5 text-xs text-gray-500">
                         {{ doc.semester }}<br />
                         <span class="text-gray-400"
-                          >{{ doc.AcademicYear?.year_start }}-{{ doc.AcademicYear?.year_end }}</span
+                          >{{ doc.academic_year?.year_start }}-{{ doc.academic_year?.year_end }}</span
                         >
                       </td>
                       <td class="px-5 py-3.5 text-center">
@@ -171,7 +171,7 @@
                       <td class="px-5 py-3.5">
                         <div class="flex items-center justify-end gap-1">
                           <button
-                            (click)="downloadDocument(doc.document_id, doc.file_name)"
+                            (click)="downloadDocument(doc.document_id, doc.original_filename)"
                             title="Download"
                             class="px-2 py-1.5 text-xs text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition inline-flex items-center gap-1"
                           >
@@ -230,7 +230,7 @@
     <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
       <div class="px-6 py-5 border-b border-gray-100">
         <h3 class="text-xs font-semibold text-gray-900">Review Document</h3>
-        <p class="text-xs text-gray-400 mt-0.5">{{ selectedDocument().title }}</p>
+        <p class="text-xs text-gray-400 mt-0.5">{{ selectedDocument().document_title }}</p>
       </div>
       <div class="p-6 overflow-y-auto flex-1 space-y-4">
         <!-- Document Info -->
@@ -238,7 +238,7 @@
           <div>
             <p class="text-gray-400 mb-0.5">Type</p>
             <p class="text-gray-700 font-medium">
-              {{ selectedDocument().DocumentType?.type_name || '—' }}
+              {{ selectedDocument().document_type?.type_name || '—' }}
             </p>
           </div>
           <div>
@@ -247,11 +247,13 @@
           </div>
           <div>
             <p class="text-gray-400 mb-0.5">File</p>
-            <p class="text-gray-700 font-medium truncate">{{ selectedDocument().file_name }}</p>
+            <p class="text-gray-700 font-medium truncate">
+              {{ selectedDocument().original_filename }}
+            </p>
           </div>
           <div>
             <p class="text-gray-400 mb-0.5">Submitted</p>
-            <p class="text-gray-700 font-medium">{{ selectedDocument().submitted_at }}</p>
+            <p class="text-gray-700 font-medium">{{ selectedDocument().submitted_date }}</p>
           </div>
         </div>
 

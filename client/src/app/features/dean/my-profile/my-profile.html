@@ -13,11 +13,11 @@
             <img
               [src]="baseUrl + profile().profile_picture"
               alt="Profile"
-              class="w-14 h-14 rounded-sm object-cover border-2 border-gray-100"
+              class="w-14 h-14 rounded-full object-cover border-2 border-gray-100"
             />
           } @else {
             <div
-              class="w-14 h-14 rounded-sm bg-green-600 flex items-center justify-center border-2 border-gray-100"
+              class="w-14 h-14 rounded-full bg-green-600 flex items-center justify-center border-2 border-gray-100"
             >
               <i class="pi pi-building text-white text-lg"></i>
             </div>
@@ -155,12 +155,6 @@
                 <div>
                   <p class="text-xs text-gray-400 mb-0.5">Department Head</p>
                   <p class="text-xs text-gray-700 font-medium">{{ profile().dean_name || '—' }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400 mb-0.5">Acronym</p>
-                  <p class="text-xs text-gray-700 font-medium">
-                    {{ profile().department?.acronym || '—' }}
-                  </p>
                 </div>
               </div>
             } @else {

@@ -1,6 +1,7 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   OrganizationService,
@@ -49,6 +50,45 @@ export class OrganizationMembersComponent implements OnInit {
 
   // View mode
   viewMode = signal<'list' | 'officers'>('list');
+
+  // Client-side filtered bulk uploads for the Organization Population table.
+  // Applies the search query and Term/Semester filters over the currently loaded
+  // uploads. Search matches Department, Section, File Name, Year Level, Semester.
+  filteredBulkUploads = computed<any[]>(() => {
+    const list = this.bulkUploads();
+    const query = this.searchQuery().trim().toLowerCase();
+    const yearFilter = this.selectedAcademicYear();
+    const semesterFilter = this.selectedSemester();
+
+    return list.filter((u: any) => {
+      // Term (academic year) filter
+      if (yearFilter !== undefined && u.academic_year_id !== yearFilter) {
+        return false;
+      }
+      // Semester filter
+      if (semesterFilter && u.semester !== semesterFilter) {
+        return false;
+      }
+      // Search across relevant text columns
+      if (query) {
+        const dept = (u.department || '').toString().toLowerCase();
+        const section = (u.section || '').toString().toLowerCase();
+        const fileName = (u.file_name || '').toString().toLowerCase();
+        const yearLevel = (u.year_level || '').toString().toLowerCase();
+        const semester = (u.semester || '').toString().toLowerCase();
+        if (
+          !dept.includes(query) &&
+          !section.includes(query) &&
+          !fileName.includes(query) &&
+          !yearLevel.includes(query) &&
+          !semester.includes(query)
+        ) {
+          return false;
+        }
+      }
+      return true;
+    });
+  });
 
   // Modals
   showAddModal = signal(false);
@@ -134,6 +174,7 @@ export class OrganizationMembersComponent implements OnInit {
   selectedPhoto = signal<File | null>(null);
   photoPreview = signal<string | null>(null);
   selectedSignature = signal<File | null>(null);
+  signaturePreview = signal<string | null>(null);
 
   // Bulk upload
   bulkUploadForm = signal({
@@ -145,6 +186,10 @@ export class OrganizationMembersComponent implements OnInit {
     semester: '' as '' | '1st Semester' | '2nd Semester' | 'Summer 1' | 'Summer 2',
   });
   uploadResults = signal<any>({ total: 0, inserted: 0, updated: 0, skipped: 0, errors: [] });
+
+  // Bulk upload edit mode
+  bulkUploadEditMode = signal(false);
+  editingUploadId = signal<number | null>(null);
   departments = signal<any[]>([]);
 
   loading = signal(false);
@@ -372,7 +417,7 @@ export class OrganizationMembersComponent implements OnInit {
     
     this.selectedMember.set(member);
     this.memberForm.set({
-      sr_code: member.sr_code,
+      sr_code: member.sr_code || '',
       first_name: member.first_name,
       middle_name: member.middle_name || '',
       last_name: member.last_name,
@@ -418,11 +463,25 @@ export class OrganizationMembersComponent implements OnInit {
     console.log('✅ memberForm populated:', this.memberForm());
     console.log('✅ adviserForm populated:', this.adviserForm());
     
-    // Set photo preview if exists
+    // Set photo preview if exists, explicitly clear if not
     if (member.photo_url) {
       this.photoPreview.set(this.getPhotoUrl(member.photo_url));
+    } else {
+      this.photoPreview.set(null);
     }
-    
+
+    // Set signature preview if exists, explicitly clear if not
+    if (member.signature_url) {
+      this.signaturePreview.set(this.getPhotoUrl(member.signature_url));
+    } else {
+      this.signaturePreview.set(null);
+    }
+
+    // Clear any previously selected files
+    this.selectedPhoto.set(null);
+    this.selectedSignature.set(null);
+    this.errorMessage.set('');
+
     this.showEditModal.set(true);
   }
 
@@ -546,6 +605,9 @@ export class OrganizationMembersComponent implements OnInit {
     this.selectedAdviser.set(null);
     this.resetForm();
     this.uploadResults.set(null);
+    // Reset bulk-upload edit state so a stale mode doesn't leak into a fresh open
+    this.bulkUploadEditMode.set(false);
+    this.editingUploadId.set(null);
   }
 
   resetForm() {
@@ -592,6 +654,7 @@ export class OrganizationMembersComponent implements OnInit {
     this.selectedPhoto.set(null);
     this.photoPreview.set(null);
     this.selectedSignature.set(null);
+    this.signaturePreview.set(null);
     this.errorMessage.set('');
     this.successMessage.set('');
   }
@@ -643,8 +706,20 @@ export class OrganizationMembersComponent implements OnInit {
       }
 
       this.selectedSignature.set(file);
+
+      // Create preview so the uploaded signature is visible in the modal
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.signaturePreview.set(e.target.result);
+      };
+      reader.readAsDataURL(file);
       this.errorMessage.set('');
     }
+  }
+
+  removeSignature() {
+    this.selectedSignature.set(null);
+    this.signaturePreview.set(null);
   }
 
   removePhoto() {
@@ -703,10 +778,10 @@ export class OrganizationMembersComponent implements OnInit {
     formData.append('last_name', form.last_name);
     formData.append('email', form.email || '');
     formData.append('contact_number', form.contact_number || '');
-    formData.append('year_level', form.year_level);
-    formData.append('position', form.position);
+    formData.append('year_level', form.year_level || '');
+    formData.append('position', form.position || '');
     formData.append('academic_year_id', form.academic_year_id?.toString() || '');
-    formData.append('term_start_date', form.term_start_date);
+    formData.append('term_start_date', form.term_start_date || '');
     formData.append('term_end_date', form.term_end_date || '');
     formData.append('is_active', form.is_active.toString());
     
@@ -811,8 +886,8 @@ export class OrganizationMembersComponent implements OnInit {
     formData.append('last_name', form.last_name);
     formData.append('email', form.email || '');
     formData.append('contact_number', form.contact_number || '');
-    formData.append('year_level', form.year_level);
-    formData.append('position', form.position);
+    formData.append('year_level', form.year_level || '');
+    formData.append('position', form.position || '');
     formData.append('term_end_date', form.term_end_date || '');
     formData.append('is_active', form.is_active.toString());
     
@@ -1018,9 +1093,17 @@ export class OrganizationMembersComponent implements OnInit {
   }
 
   applyFilters() {
+    const wasOnFirstPage = this.currentPage() === 1;
     this.currentPage.set(1);
     if (this.viewMode() === 'list') {
-      this.loadBulkUploads();
+      // Search/Term/Semester in the Organization Population view are applied
+      // client-side via the `filteredBulkUploads` computed signal, so no
+      // server round-trip is needed while the user is already on page 1.
+      // If they had paginated further, reload page 1 so the client-side
+      // filter operates on the correct set of rows.
+      if (!wasOnFirstPage) {
+        this.loadBulkUploads();
+      }
     } else {
       this.loadMembers();
     }
@@ -1141,6 +1224,12 @@ export class OrganizationMembersComponent implements OnInit {
   }
 
   getPresident(): OrganizationMember | undefined {
+    // Respect the position filter — if a specific non-president position is
+    // selected, the president card should not appear.
+    const selected = this.selectedPosition();
+    if (selected && selected.trim().toLowerCase() !== 'president') {
+      return undefined;
+    }
     return this.members().find((m) => m.position.toLowerCase() === 'president' && m.is_active);
   }
 
@@ -1151,6 +1240,140 @@ export class OrganizationMembersComponent implements OnInit {
         m.position.toLowerCase() !== 'member' &&
         m.position.toLowerCase() !== 'president',
     );
+  }
+
+  /**
+   * Static list of officer positions that can appear in the Officers Profile
+   * view. Kept in the same order/spelling as the Add Officer modal so the
+   * filter values and the saved `member.position` values line up.
+   *
+   * "Adviser" is first because the adviser card is pinned at the top of the
+   * profile view.
+   */
+  readonly officerPositionOptions: string[] = [
+    'Adviser',
+    'PRESIDENT',
+    'VICE PRESIDENT',
+    'SECRETARY',
+    'ASSISTANT SECRETARY',
+    'TREASURER',
+    'ASSISTANT TREASURER',
+    'AUDITOR',
+    'P.R.O.',
+    'BUSINESS MANAGER',
+    'MEDIA AND PUBLICITY HEAD',
+    'MEDIA AND PUBLICITY COMMITTEE',
+    'MEDIA AND PUBLICITY',
+    'COMMDRRM HEAD',
+    'COMMDRRM COMMITTEE',
+    '1ST YEAR REPRESENTATIVE',
+    'SECOND YEAR REPRESENTATIVE',
+    'THIRD YEAR REPRESENTATIVE',
+    'FOURTH YEAR REPRESENTATIVE',
+  ];
+
+  /**
+   * Options shown in the "All Positions" dropdown. Starts with the static list
+   * and appends any distinct position observed on currently loaded members
+   * that isn't already covered (case-insensitive), so legacy or imported
+   * positions still show up as filterable options.
+   */
+  availablePositionOptions = computed<string[]>(() => {
+    const known = new Set(
+      this.officerPositionOptions.map((p) => p.trim().toLowerCase()),
+    );
+    const extras: string[] = [];
+    for (const m of this.members()) {
+      const raw = (m.position || '').trim();
+      if (!raw) continue;
+      const key = raw.toLowerCase();
+      if (key === 'member') continue; // Members are not officers
+      if (!known.has(key)) {
+        known.add(key);
+        extras.push(raw);
+      }
+    }
+    return [...this.officerPositionOptions, ...extras];
+  });
+
+  /**
+   * Look up a position's hierarchy level from the loaded position templates.
+   * Lower numbers rank higher (e.g., President = 1). Unknown positions get a
+   * large fallback so they sort to the bottom.
+   */
+  getPositionHierarchy(positionName: string | undefined | null): number {
+    if (!positionName) return 9999;
+    const target = positionName.trim().toLowerCase();
+    const match = this.positions().find(
+      (p) => p.position_name && p.position_name.trim().toLowerCase() === target,
+    );
+    return match?.hierarchy_level ?? 9999;
+  }
+
+  /**
+   * All active officers (excluding regular Members), sorted by their position's
+   * hierarchy level and then by last name. Advisers are handled separately —
+   * they are pinned above this list in the template.
+   */
+  getSortedOfficers(): OrganizationMember[] {
+    return this.members()
+      .filter(
+        (m) =>
+          m.is_active &&
+          m.position &&
+          m.position.trim() !== '' &&
+          m.position.toLowerCase() !== 'member' &&
+          m.position.toLowerCase() !== 'adviser' &&
+          m.position.toLowerCase() !== 'advisor',
+      )
+      .slice()
+      .sort((a, b) => {
+        const ha = this.getPositionHierarchy(a.position);
+        const hb = this.getPositionHierarchy(b.position);
+        if (ha !== hb) return ha - hb;
+        return (a.last_name || '').localeCompare(b.last_name || '');
+      });
+  }
+
+  /**
+   * Non-president officers (Vice President through 4th Year Representative,
+   * and any other position defined by the org), sorted by hierarchy.
+   * The President is displayed as its own detailed card above this list.
+   *
+   * Also honours the "All Positions" filter — when a specific position is
+   * selected, only officers matching that position are returned. Selecting
+   * "Adviser" or "President" clears this list (they are rendered elsewhere).
+   */
+  getOtherOfficersSorted(): OrganizationMember[] {
+    const selected = this.selectedPosition();
+    const selectedKey = selected ? selected.trim().toLowerCase() : '';
+
+    // Adviser and President are rendered in their own cards, not in this grid.
+    if (selectedKey === 'adviser' || selectedKey === 'advisor' || selectedKey === 'president') {
+      return [];
+    }
+
+    const base = this.getSortedOfficers().filter(
+      (m) => m.position.toLowerCase() !== 'president',
+    );
+
+    if (!selectedKey) {
+      return base;
+    }
+
+    return base.filter((m) => m.position.trim().toLowerCase() === selectedKey);
+  }
+
+  /**
+   * Whether the pinned Adviser card should be displayed given the current
+   * position filter. Returns true when no filter is set or when "Adviser"
+   * is explicitly selected.
+   */
+  shouldShowAdviserCard(): boolean {
+    const selected = this.selectedPosition();
+    if (!selected) return true;
+    const key = selected.trim().toLowerCase();
+    return key === 'adviser' || key === 'advisor';
   }
 
   getInitials(member: OrganizationMember): string {
@@ -1216,6 +1439,25 @@ export class OrganizationMembersComponent implements OnInit {
       semester: '',
     });
     this.uploadResults.set(null);
+    this.bulkUploadEditMode.set(false);
+    this.editingUploadId.set(null);
+    this.errorMessage.set('');
+    this.showBulkUploadModal.set(true);
+  }
+
+  openEditBulkUploadModal(upload: any) {
+    this.bulkUploadForm.set({
+      file: null, // File is optional in edit mode
+      academic_year_id: upload.academic_year_id ?? undefined,
+      section: upload.section || '',
+      year_level: (upload.year_level as any) || '',
+      department: upload.department || '',
+      semester: (upload.semester as any) || '',
+    });
+    this.uploadResults.set(null);
+    this.bulkUploadEditMode.set(true);
+    this.editingUploadId.set(upload.upload_id);
+    this.errorMessage.set('');
     this.showBulkUploadModal.set(true);
   }
 
@@ -1248,9 +1490,22 @@ export class OrganizationMembersComponent implements OnInit {
 
   uploadMembers() {
     const form = this.bulkUploadForm();
+    const isEdit = this.bulkUploadEditMode();
 
-    if (!form.file || !form.academic_year_id || !form.section || !form.year_level || !form.department || !form.semester) {
-      this.errorMessage.set('Please fill all required fields and select a file');
+    // Metadata fields are always required. File is required only when creating.
+    const metadataMissing =
+      !form.academic_year_id ||
+      !form.section ||
+      !form.year_level ||
+      !form.department ||
+      !form.semester;
+
+    if (metadataMissing || (!isEdit && !form.file)) {
+      this.errorMessage.set(
+        isEdit
+          ? 'Please fill in all required fields'
+          : 'Please fill all required fields and select a file',
+      );
       return;
     }
 
@@ -1258,21 +1513,33 @@ export class OrganizationMembersComponent implements OnInit {
     this.errorMessage.set('');
 
     const formData = new FormData();
-    formData.append('file', form.file);
-    formData.append('academic_year_id', form.academic_year_id.toString());
+    if (form.file) {
+      formData.append('file', form.file);
+    }
+    formData.append('academic_year_id', form.academic_year_id!.toString());
     formData.append('section', form.section);
     formData.append('year_level', form.year_level);
     formData.append('department', form.department);
     formData.append('semester', form.semester);
 
-    this.organizationService.bulkUploadMembers(formData).subscribe({
-      next: (response) => {
-        this.uploadResults.set(response.results);
+    // The two service calls return different response shapes, so widen the
+    // observable to `any` before subscribing to keep TS happy about the union.
+    const request$: Observable<any> = isEdit
+      ? this.organizationService.updateBulkUpload(
+          this.editingUploadId()!,
+          formData,
+        )
+      : this.organizationService.bulkUploadMembers(formData);
+
+    request$.subscribe({
+      next: (response: any) => {
+        if (response?.results) {
+          this.uploadResults.set(response.results);
+        }
         this.successMessage.set(response.message);
         this.loading.set(false);
         this.loadBulkUploads(); // Reload upload records
 
-        // Show success message
         Swal.fire({
           icon: 'success',
           title: 'Success!',
@@ -1281,11 +1548,16 @@ export class OrganizationMembersComponent implements OnInit {
           confirmButtonText: 'OK',
         });
 
-        // Close modal after successful upload
+        // Close modal after success and reset edit state
         this.showBulkUploadModal.set(false);
+        this.bulkUploadEditMode.set(false);
+        this.editingUploadId.set(null);
       },
-      error: (error) => {
-        this.errorMessage.set(error.error?.message || 'Failed to upload members');
+      error: (error: any) => {
+        this.errorMessage.set(
+          error?.error?.message ||
+            (isEdit ? 'Failed to update upload' : 'Failed to upload members'),
+        );
         this.loading.set(false);
       },
     });

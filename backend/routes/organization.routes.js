@@ -202,6 +202,14 @@ router.get(
   memberController.getBulkUploadHistory,
 );
 
+router.put(
+  "/members/bulk-upload/:upload_id",
+  verifyToken,
+  checkRole("organization"),
+  csvUpload.single("file"),
+  memberController.updateBulkUpload,
+);
+
 router.delete(
   "/members/bulk-upload/:upload_id",
   verifyToken,

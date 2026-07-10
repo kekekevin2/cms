@@ -75,10 +75,8 @@
           class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-300 bg-white"
         >
           <option [ngValue]="undefined">All Positions</option>
-          @for (position of positions(); track position.position_id) {
-            @if (position.position_name.toLowerCase() !== 'member') {
-              <option [value]="position.position_name">{{ position.position_name }}</option>
-            }
+          @for (position of availablePositionOptions(); track position) {
+            <option [ngValue]="position">{{ position }}</option>
           }
         </select>
       }
@@ -130,7 +128,7 @@
           <table class="w-full text-xs">
             <tbody>
               <tr>
-                <td colspan="5" class="px-5 py-14 text-center text-gray-400">
+                <td colspan="6" class="px-5 py-14 text-center text-gray-400">
                   <div class="inline-flex flex-col items-center gap-2">
                     <i class="pi pi-users text-5xl text-gray-200"></i>
                     <span class="text-xs">No uploads found</span>
@@ -141,6 +139,21 @@
           </table>
         </div>
       }
+    } @else if (filteredBulkUploads().length === 0) {
+      <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+        <table class="w-full text-xs">
+          <tbody>
+            <tr>
+              <td colspan="6" class="px-5 py-14 text-center text-gray-400">
+                <div class="inline-flex flex-col items-center gap-2">
+                  <i class="pi pi-search text-5xl text-gray-200"></i>
+                  <span class="text-xs">No matching results found</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     } @else {
       <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-xs">
@@ -179,7 +192,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-50">
-            @for (upload of bulkUploads(); track upload.upload_id) {
+            @for (upload of filteredBulkUploads(); track upload.upload_id) {
               <tr class="hover:bg-gray-50/60 transition-colors">
                 <td class="px-5 py-3.5 text-gray-700 text-xs font-medium">
                   {{ upload.department }}
@@ -214,6 +227,13 @@
                       title="Download"
                     >
                       <i class="pi pi-download text-xs"></i>
+                    </button>
+                    <button
+                      (click)="openEditBulkUploadModal(upload)"
+                      class="px-2 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition inline-flex items-center gap-1"
+                      title="Edit"
+                    >
+                      <i class="pi pi-pencil text-xs"></i>
                     </button>
                     <button
                       (click)="deleteUpload(upload)"
@@ -293,135 +313,12 @@
       </div>
     } @else {
       <div class="space-y-8">
-        <!-- President Profile Card -->
-        @if (getPresident(); as president) {
-          <div class="bg-white rounded-lg shadow-lg border-2 border-green-600 overflow-hidden">
-            <div class="bg-green-600 text-white px-6 py-3">
-              <h3 class="text-xl font-bold">Organization President</h3>
-            </div>
-            <div class="p-6">
-              <div class="flex flex-col md:flex-row gap-6">
-                <!-- Personal Details (Left) -->
-                <div class="flex-1 space-y-3">
-                  <div class="grid grid-cols-2 gap-4">
-                    <div>
-                      <label class="text-xs font-semibold text-gray-500 uppercase"
-                        >First Name</label
-                      >
-                      <p class="text-gray-900 font-medium">{{ president.first_name }}</p>
-                    </div>
-                    <div>
-                      <label class="text-xs font-semibold text-gray-500 uppercase"
-                        >Middle Name</label
-                      >
-                      <p class="text-gray-900 font-medium">{{ president.middle_name || 'N/A' }}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label class="text-xs font-semibold text-gray-500 uppercase">Family Name</label>
-                    <p class="text-gray-900 font-medium">{{ president.last_name }}</p>
-                  </div>
-                  <div>
-                    <label class="text-xs font-semibold text-gray-500 uppercase">Position</label>
-                    <p class="text-gray-900 font-medium">{{ president.position }}</p>
-                  </div>
-                  <div>
-                    <label class="text-xs font-semibold text-gray-500 uppercase">Year Level</label>
-                    <p class="text-gray-900 font-medium">{{ president.year_level }}</p>
-                  </div>
-                  <div>
-                    <label class="text-xs font-semibold text-gray-500 uppercase">SR Code</label>
-                    <p class="text-gray-900 font-medium">{{ president.sr_code }}</p>
-                  </div>
-                  <div>
-                    <label class="text-xs font-semibold text-gray-500 uppercase">Email</label>
-                    <p class="text-gray-900 font-medium">{{ president.email || 'N/A' }}</p>
-                  </div>
-                  <div>
-                    <label class="text-xs font-semibold text-gray-500 uppercase"
-                      >Contact Number</label
-                    >
-                    <p class="text-gray-900 font-medium">{{ president.contact_number || 'N/A' }}</p>
-                  </div>
-                  <div>
-                    <label class="text-xs font-semibold text-gray-500 uppercase">Term</label>
-                    <p class="text-gray-900 font-medium">
-                      @if (president.AcademicYear) {
-                        {{ president.AcademicYear.year_start }}-{{
-                          president.AcademicYear.year_end
-                        }}
-                      } @else {
-                        N/A
-                      }
-                    </p>
-                  </div>
-                </div>
-
-                <!-- Photo (Right) -->
-                <div class="flex flex-col items-center justify-start">
-                  @if (getPhotoUrl(president.photo_url); as photoUrl) {
-                    <img
-                      [src]="photoUrl"
-                      [alt]="getMemberFullName(president)"
-                      class="w-48 h-48 rounded-lg object-cover"
-                      (error)="onImageError($event)"
-                    />
-                    <div
-                      [class]="
-                        'w-48 h-48 rounded-lg flex items-center justify-center text-white text-6xl font-bold ' +
-                        getRandomColor(president.sr_code)
-                      "
-                      style="display: none;"
-                    >
-                      {{ getInitials(president) }}
-                    </div>
-                  } @else {
-                    <div
-                      [class]="
-                        'w-48 h-48 rounded-lg flex items-center justify-center text-white text-6xl font-bold ' +
-                        getRandomColor(president.sr_code)
-                      "
-                    >
-                      {{ getInitials(president) }}
-                    </div>
-                  }
-
-                  <!-- Action Buttons -->
-                  <div class="flex gap-1.5 mt-4 w-full justify-center">
-                    @if (president.position.toLowerCase() !== 'adviser' && president.position.toLowerCase() !== 'advisor') {
-                      <button
-                        (click)="openViewMemberModal(president)"
-                        class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition"
-                        title="View President"
-                      >
-                        <i class="pi pi-eye text-sm text-gray-600"></i>
-                      </button>
-                      <button
-                        (click)="openEditModal(president)"
-                        class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg hover:bg-blue-200 transition"
-                        title="Edit President"
-                      >
-                        <i class="pi pi-pencil text-sm text-blue-600"></i>
-                      </button>
-                      <button
-                        (click)="openDeleteModal(president)"
-                        class="w-8 h-8 flex items-center justify-center bg-red-100 rounded-lg hover:bg-red-200 transition"
-                        title="Delete President"
-                      >
-                        <i class="pi pi-trash text-sm text-red-600"></i>
-                      </button>
-                    }
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        }
-
         <!-- Organization Adviser Profile Card -->
         <!-- AUTOMATIC DISPLAY: Shows the adviser(s) assigned by the Dean -->
         <!-- No manual selection needed - data is retrieved from organization_advisers table -->
         <!-- Updates automatically when Dean changes the adviser assignment -->
+        <!-- Hidden when the "All Positions" filter is set to a non-adviser role -->
+        @if (shouldShowAdviserCard()) {
         @if (advisers().length > 0) {
           @for (adviser of advisers(); track adviser.adviser_id) {
             <div class="bg-white rounded-sm border border-gray-200 overflow-hidden">
@@ -573,11 +470,10 @@
                   <!-- Edit Button -->
                   <button
                     (click)="openEditAdviserModal(adviser)"
-                    class="mt-4 w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-sm hover:bg-blue-700 transition inline-flex items-center justify-center gap-2"
+                    class="mt-4 w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg hover:bg-blue-200 transition"
                     title="Edit Adviser"
                   >
-                    <i class="pi pi-pencil text-xs"></i>
-                    <span>Edit Adviser</span>
+                    <i class="pi pi-pencil text-sm text-blue-600"></i>
                   </button>
                 </div>
               </div>
@@ -612,13 +508,201 @@
             </div>
           </div>
         }
+        } <!-- end @if (shouldShowAdviserCard()) -->
+
+        <!-- Organization President Detailed Card -->
+        <!-- Mirrors the Add Officer modal's field set / order / style, same as
+             the Adviser card above. Only rendered when a President exists. -->
+        @if (getPresident(); as president) {
+          <div class="bg-white rounded-sm border border-gray-200 overflow-hidden">
+            <!-- Green Header -->
+            <div class="bg-green-600 text-white px-6 py-4">
+              <h3 class="text-xl font-bold">Organization President</h3>
+              <div class="flex items-center gap-1.5 mt-1">
+                <i class="pi pi-star text-xs"></i>
+                <span class="text-xs">Highest-ranked officer</span>
+              </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex">
+              <!-- Left Section - Field Labels and Values (mirrors Add Officer modal order) -->
+              <div class="flex-1 p-6 space-y-4">
+                <!-- First Name -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">First Name</label>
+                  <p class="text-sm text-gray-900">{{ president.first_name || 'N/A' }}</p>
+                </div>
+
+                <!-- Middle Name -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Middle Name</label>
+                  <p class="text-sm text-gray-900">{{ president.middle_name || 'N/A' }}</p>
+                </div>
+
+                <!-- Family Name -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Family Name</label>
+                  <p class="text-sm text-gray-900">{{ president.last_name || 'N/A' }}</p>
+                </div>
+
+                <!-- Position -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Position</label>
+                  <p class="text-sm text-gray-900">{{ president.position || 'N/A' }}</p>
+                </div>
+
+                <!-- SR Code -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">SR Code</label>
+                  <p class="text-sm text-gray-900">{{ president.sr_code || 'N/A' }}</p>
+                </div>
+
+                <!-- Course -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Course</label>
+                  <p class="text-sm text-gray-900">{{ president.course || 'N/A' }}</p>
+                </div>
+
+                <!-- Year -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Year</label>
+                  <p class="text-sm text-gray-900">{{ president.year_level || 'N/A' }}</p>
+                </div>
+
+                <!-- GWA (Previous sem) -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">GWA (Previous sem)</label>
+                  <p class="text-sm text-gray-900">{{ president.gwa || 'N/A' }}</p>
+                </div>
+
+                <!-- Campus -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Campus</label>
+                  <p class="text-sm text-gray-900">{{ president.campus || 'N/A' }}</p>
+                </div>
+
+                <!-- Mobile No. -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Mobile No.</label>
+                  <p class="text-sm text-gray-900">{{ president.contact_number || 'N/A' }}</p>
+                </div>
+
+                <!-- Telephone No. -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Telephone No.</label>
+                  <p class="text-sm text-gray-900">{{ president.telephone_number || 'N/A' }}</p>
+                </div>
+
+                <!-- Birth Date -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Birth Date</label>
+                  <p class="text-sm text-gray-900">{{ president.birth_date ? (president.birth_date | date: 'mediumDate') : 'N/A' }}</p>
+                </div>
+
+                <!-- Age -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Age</label>
+                  <p class="text-sm text-gray-900">{{ president.age || 'N/A' }}</p>
+                </div>
+
+                <!-- Civil Status -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Civil Status</label>
+                  <p class="text-sm text-gray-900">{{ president.civil_status || 'N/A' }}</p>
+                </div>
+
+                <!-- Email Address -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Email Address</label>
+                  <p class="text-sm text-gray-900">{{ president.email || 'N/A' }}</p>
+                </div>
+
+                <!-- Home Address -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Home Address</label>
+                  <p class="text-sm text-gray-900">{{ president.home_address || 'N/A' }}</p>
+                </div>
+
+                <!-- Signature -->
+                <div>
+                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Signature</label>
+                  @if (president.signature_url) {
+                    <div class="mt-2">
+                      <img
+                        [src]="getPhotoUrl(president.signature_url)"
+                        alt="Signature"
+                        class="max-w-xs h-16 object-contain border border-gray-200 rounded p-1 bg-white"
+                        (error)="onImageError($event)"
+                      />
+                    </div>
+                  } @else {
+                    <p class="text-sm text-gray-900">N/A</p>
+                  }
+                </div>
+              </div>
+
+              <!-- Right Section - Photo and Action Buttons -->
+              <div class="w-64 bg-white border-l border-gray-200 p-6 flex flex-col items-center">
+                @if (getPhotoUrl(president.photo_url); as photoUrl) {
+                  <img
+                    [src]="photoUrl"
+                    [alt]="getMemberFullName(president)"
+                    class="w-40 h-40 rounded-sm object-cover"
+                    (error)="onImageError($event)"
+                  />
+                  <div
+                    [class]="'w-40 h-40 rounded-sm flex items-center justify-center text-white text-5xl font-bold ' + getRandomColor(president.sr_code)"
+                    style="display: none;"
+                  >
+                    {{ getInitials(president) }}
+                  </div>
+                } @else {
+                  <div
+                    [class]="'w-40 h-40 rounded-sm flex items-center justify-center text-white text-5xl font-bold ' + getRandomColor(president.sr_code)"
+                  >
+                    {{ getInitials(president) }}
+                  </div>
+                }
+
+                <!-- Action Buttons -->
+                <div class="flex gap-1.5 mt-4 w-full justify-center">
+                  <button
+                    (click)="openViewMemberModal(president)"
+                    class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                    title="View President"
+                  >
+                    <i class="pi pi-eye text-sm text-gray-600"></i>
+                  </button>
+                  <button
+                    (click)="openEditModal(president)"
+                    class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg hover:bg-blue-200 transition"
+                    title="Edit President"
+                  >
+                    <i class="pi pi-pencil text-sm text-blue-600"></i>
+                  </button>
+                  <button
+                    (click)="openDeleteModal(president)"
+                    class="w-8 h-8 flex items-center justify-center bg-red-100 rounded-lg hover:bg-red-200 transition"
+                    title="Delete President"
+                  >
+                    <i class="pi pi-trash text-sm text-red-600"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
 
         <!-- Other Officers Grid -->
-        @if (getOfficers().length > 0) {
+        <!-- Vice President through 4th Year Representative (and any other
+             non-president officers) rendered as compact grid cards, ordered
+             by their position's hierarchy_level. -->
+        @if (getOtherOfficersSorted().length > 0) {
           <div>
             <h3 class="text-xl font-bold text-gray-800 mb-4">Other Officers</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              @for (officer of getOfficers(); track officer.member_id) {
+              @for (officer of getOtherOfficersSorted(); track officer.member_id) {
                 <div
                   class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition"
                 >
@@ -628,12 +712,12 @@
                       <img
                         [src]="photoUrl"
                         [alt]="getMemberFullName(officer)"
-                        class="w-32 h-32 rounded-full object-cover mb-4"
+                        class="w-40 h-40 rounded-sm object-cover mb-4"
                         (error)="onImageError($event)"
                       />
                       <div
                         [class]="
-                          'w-32 h-32 rounded-full flex items-center justify-center text-white text-4xl font-bold mb-4 ' +
+                          'w-40 h-40 rounded-sm flex items-center justify-center text-white text-5xl font-bold mb-4 ' +
                           getRandomColor(officer.sr_code)
                         "
                         style="display: none;"
@@ -643,7 +727,7 @@
                     } @else {
                       <div
                         [class]="
-                          'w-32 h-32 rounded-full flex items-center justify-center text-white text-4xl font-bold mb-4 ' +
+                          'w-40 h-40 rounded-sm flex items-center justify-center text-white text-5xl font-bold mb-4 ' +
                           getRandomColor(officer.sr_code)
                         "
                       >
@@ -667,39 +751,44 @@
 
                     <!-- Action Buttons -->
                     <div class="flex gap-1.5 mt-4 pt-4 border-t border-gray-200 w-full justify-center">
-                      @if (officer.position.toLowerCase() !== 'adviser' && officer.position.toLowerCase() !== 'advisor') {
-                        <button
-                          (click)="openViewMemberModal(officer)"
-                          class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition"
-                          title="View Officer"
-                        >
-                          <i class="pi pi-eye text-sm text-gray-600"></i>
-                        </button>
-                        <button
-                          (click)="openEditModal(officer)"
-                          class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg hover:bg-blue-200 transition"
-                          title="Edit Officer"
-                        >
-                          <i class="pi pi-pencil text-sm text-blue-600"></i>
-                        </button>
-                        <button
-                          (click)="openDeleteModal(officer)"
-                          class="w-8 h-8 flex items-center justify-center bg-red-100 rounded-lg hover:bg-red-200 transition"
-                          title="Delete Officer"
-                        >
-                          <i class="pi pi-trash text-sm text-red-600"></i>
-                        </button>
-                      }
+                      <button
+                        (click)="openViewMemberModal(officer)"
+                        class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                        title="View Officer"
+                      >
+                        <i class="pi pi-eye text-sm text-gray-600"></i>
+                      </button>
+                      <button
+                        (click)="openEditModal(officer)"
+                        class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg hover:bg-blue-200 transition"
+                        title="Edit Officer"
+                      >
+                        <i class="pi pi-pencil text-sm text-blue-600"></i>
+                      </button>
+                      <button
+                        (click)="openDeleteModal(officer)"
+                        class="w-8 h-8 flex items-center justify-center bg-red-100 rounded-lg hover:bg-red-200 transition"
+                        title="Delete Officer"
+                      >
+                        <i class="pi pi-trash text-sm text-red-600"></i>
+                      </button>
                     </div>
                   </div>
                 </div>
               }
             </div>
           </div>
-        } @else {
+        } @else if (!getPresident() && !shouldShowAdviserCard()) {
+          <!-- Filter selected a role with no matching officer -->
+          <div class="text-center py-12 bg-white rounded-sm shadow-sm border border-gray-100">
+            <i class="pi pi-search text-gray-200 text-5xl mb-4"></i>
+            <p class="text-gray-600 text-xs">No matching officers found</p>
+          </div>
+        } @else if (!getPresident() && !selectedPosition()) {
+          <!-- No filter applied and no officers loaded at all -->
           <div class="text-center py-12 bg-white rounded-sm shadow-sm border border-gray-100">
             <i class="pi pi-users text-gray-200 text-5xl mb-4"></i>
-            <p class="text-gray-600 text-xs">No other officers found</p>
+            <p class="text-gray-600 text-xs">No officers found</p>
           </div>
         }
       </div>
@@ -962,7 +1051,8 @@
                 <div class="col-span-8">
                   <input
                     type="text"
-                    [(ngModel)]="memberForm().first_name"
+                    [ngModel]="memberForm().first_name"
+                    (ngModelChange)="updateMemberForm('first_name', $event)"
                     name="first_name"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none uppercase rounded-sm"
                     placeholder="FIRST NAME"
@@ -978,7 +1068,8 @@
                 <div class="col-span-8">
                   <input
                     type="text"
-                    [(ngModel)]="memberForm().middle_name"
+                    [ngModel]="memberForm().middle_name"
+                    (ngModelChange)="updateMemberForm('middle_name', $event)"
                     name="middle_name"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none uppercase rounded-sm"
                     placeholder="MIDDLE NAME"
@@ -994,7 +1085,8 @@
                 <div class="col-span-8">
                   <input
                     type="text"
-                    [(ngModel)]="memberForm().last_name"
+                    [ngModel]="memberForm().last_name"
+                    (ngModelChange)="updateMemberForm('last_name', $event)"
                     name="last_name"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none uppercase rounded-sm"
                     placeholder="FAMILY NAME"
@@ -1009,7 +1101,8 @@
                 </label>
                 <div class="col-span-8">
                   <select
-                    [(ngModel)]="memberForm().position"
+                    [ngModel]="memberForm().position"
+                    (ngModelChange)="updateMemberForm('position', $event)"
                     name="position"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none uppercase rounded-sm"
                   >
@@ -1043,7 +1136,8 @@
                 <div class="col-span-8">
                   <input
                     type="text"
-                    [(ngModel)]="memberForm().sr_code"
+                    [ngModel]="memberForm().sr_code"
+                    (ngModelChange)="updateMemberForm('sr_code', $event)"
                     name="sr_code"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none rounded-sm"
                     placeholder="24-36121"
@@ -1059,7 +1153,8 @@
                 <div class="col-span-8">
                   <input
                     type="text"
-                    [(ngModel)]="adviserForm().educational_attainment"
+                    [ngModel]="adviserForm().educational_attainment"
+                    (ngModelChange)="updateAdviserForm('educational_attainment', $event)"
                     name="course"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none uppercase rounded-sm"
                     placeholder="BACHELOR OF COMPUTER ENGINEERING TECHNOLOGY"
@@ -1074,16 +1169,17 @@
                 </label>
                 <div class="col-span-8">
                   <select
-                    [(ngModel)]="memberForm().year_level"
+                    [ngModel]="memberForm().year_level"
+                    (ngModelChange)="updateMemberForm('year_level', $event)"
                     name="year_level"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none uppercase rounded-sm"
                   >
                     <option value="">SELECT YEAR</option>
-                    <option value="FIRST YEAR">FIRST YEAR</option>
-                    <option value="SECOND YEAR">SECOND YEAR</option>
-                    <option value="THIRD YEAR">THIRD YEAR</option>
-                    <option value="FOURTH YEAR">FOURTH YEAR</option>
-                    <option value="FIFTH YEAR">FIFTH YEAR</option>
+                    <option value="1st Year">1ST YEAR</option>
+                    <option value="2nd Year">2ND YEAR</option>
+                    <option value="3rd Year">3RD YEAR</option>
+                    <option value="4th Year">4TH YEAR</option>
+                    <option value="5th Year">5TH YEAR</option>
                   </select>
                 </div>
               </div>
@@ -1096,7 +1192,8 @@
                 <div class="col-span-8">
                   <input
                     type="text"
-                    [(ngModel)]="adviserForm().notes"
+                    [ngModel]="adviserForm().notes"
+                    (ngModelChange)="updateAdviserForm('notes', $event)"
                     name="gwa"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none rounded-sm"
                     placeholder="1.8152"
@@ -1112,7 +1209,8 @@
                 <div class="col-span-8">
                   <input
                     type="text"
-                    [(ngModel)]="adviserForm().campus"
+                    [ngModel]="adviserForm().campus"
+                    (ngModelChange)="updateAdviserForm('campus', $event)"
                     name="campus"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none rounded-sm uppercase"
                     placeholder="E.G., LIPA CAMPUS"
@@ -1128,7 +1226,8 @@
                 <div class="col-span-8">
                   <input
                     type="text"
-                    [(ngModel)]="memberForm().contact_number"
+                    [ngModel]="memberForm().contact_number"
+                    (ngModelChange)="updateMemberForm('contact_number', $event)"
                     name="contact_number"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none rounded-sm"
                     placeholder="09XX XXX XXXX"
@@ -1144,7 +1243,8 @@
                 <div class="col-span-8">
                   <input
                     type="text"
-                    [(ngModel)]="adviserForm().telephone_number"
+                    [ngModel]="adviserForm().telephone_number"
+                    (ngModelChange)="updateAdviserForm('telephone_number', $event)"
                     name="telephone_number"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none rounded-sm"
                     placeholder="N/A OR NUMBER"
@@ -1160,7 +1260,8 @@
                 <div class="col-span-8">
                   <input
                     type="date"
-                    [(ngModel)]="adviserForm().birth_date"
+                    [ngModel]="adviserForm().birth_date"
+                    (ngModelChange)="updateAdviserForm('birth_date', $event)"
                     name="birth_date"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none rounded-sm uppercase"
                   />
@@ -1175,7 +1276,8 @@
                 <div class="col-span-8">
                   <input
                     type="text"
-                    [(ngModel)]="adviserForm().age"
+                    [ngModel]="adviserForm().age"
+                    (ngModelChange)="updateAdviserForm('age', $event)"
                     name="age"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none rounded-sm uppercase"
                     placeholder="18 YEARS OLD"
@@ -1190,7 +1292,8 @@
                 </label>
                 <div class="col-span-8">
                   <select
-                    [(ngModel)]="adviserForm().civil_status"
+                    [ngModel]="adviserForm().civil_status"
+                    (ngModelChange)="updateAdviserForm('civil_status', $event)"
                     name="civil_status"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none rounded-sm uppercase"
                   >
@@ -1211,7 +1314,8 @@
                 <div class="col-span-8">
                   <input
                     type="email"
-                    [(ngModel)]="memberForm().email"
+                    [ngModel]="memberForm().email"
+                    (ngModelChange)="updateMemberForm('email', $event)"
                     name="email"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none rounded-sm lowercase"
                     placeholder="email@batstate-u.edu.ph"
@@ -1227,7 +1331,8 @@
                 <div class="col-span-8">
                   <input
                     type="text"
-                    [(ngModel)]="adviserForm().home_address"
+                    [ngModel]="adviserForm().home_address"
+                    (ngModelChange)="updateAdviserForm('home_address', $event)"
                     name="home_address"
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none rounded-sm uppercase"
                     placeholder="FULL ADDRESS"
@@ -1242,22 +1347,40 @@
                 </label>
                 <div class="col-span-8">
                   <div class="flex flex-col gap-2">
-                    @if (selectedSignature()) {
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs text-gray-600">{{ selectedSignature()?.name }}</span>
-                        <button
-                          type="button"
-                          (click)="selectedSignature.set(null)"
-                          class="text-xs text-red-600 hover:text-red-800"
-                        >
-                          <i class="pi pi-times"></i>
-                        </button>
+                    @if (signaturePreview()) {
+                      <!-- Visible preview of the uploaded / existing e-signature -->
+                      <div class="inline-flex flex-col gap-2">
+                        <img
+                          [src]="signaturePreview()"
+                          alt="E-signature preview"
+                          class="max-w-xs h-16 object-contain border border-gray-200 rounded-sm p-1 bg-white"
+                          (error)="onImageError($event)"
+                        />
+                        <div class="flex items-center gap-3">
+                          @if (selectedSignature()) {
+                            <span class="text-xs text-gray-500 truncate max-w-[220px]">{{ selectedSignature()?.name }}</span>
+                          }
+                          <button
+                            type="button"
+                            (click)="triggerSignatureUpload()"
+                            class="text-xs text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
+                          >
+                            <i class="pi pi-refresh text-xs"></i> Replace
+                          </button>
+                          <button
+                            type="button"
+                            (click)="removeSignature()"
+                            class="text-xs text-red-600 hover:text-red-800 inline-flex items-center gap-1"
+                          >
+                            <i class="pi pi-times text-xs"></i> Remove
+                          </button>
+                        </div>
                       </div>
                     } @else {
                       <button
                         type="button"
                         (click)="triggerSignatureUpload()"
-                        class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-sm hover:bg-gray-200 transition inline-flex items-center gap-2"
+                        class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-sm hover:bg-gray-200 transition inline-flex items-center gap-2 self-start"
                       >
                         <i class="pi pi-upload text-xs"></i>
                         Upload E-Signature
@@ -1498,11 +1621,11 @@
                     class="w-full px-3 py-1.5 text-xs font-medium bg-gray-100 border-0 outline-none rounded-sm uppercase"
                   >
                     <option value="">SELECT YEAR</option>
-                    <option value="FIRST YEAR">FIRST YEAR</option>
-                    <option value="SECOND YEAR">SECOND YEAR</option>
-                    <option value="THIRD YEAR">THIRD YEAR</option>
-                    <option value="FOURTH YEAR">FOURTH YEAR</option>
-                    
+                    <option value="1st Year">1ST YEAR</option>
+                    <option value="2nd Year">2ND YEAR</option>
+                    <option value="3rd Year">3RD YEAR</option>
+                    <option value="4th Year">4TH YEAR</option>
+                    <option value="5th Year">5TH YEAR</option>
                   </select>
                 </div>
               </div>
@@ -1670,22 +1793,40 @@
                 </label>
                 <div class="col-span-8">
                   <div class="flex flex-col gap-2">
-                    @if (selectedSignature()) {
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs text-gray-600">{{ selectedSignature()?.name }}</span>
-                        <button
-                          type="button"
-                          (click)="selectedSignature.set(null)"
-                          class="text-xs text-red-600 hover:text-red-800"
-                        >
-                          <i class="pi pi-times"></i>
-                        </button>
+                    @if (signaturePreview()) {
+                      <!-- Visible preview of the uploaded / existing e-signature -->
+                      <div class="inline-flex flex-col gap-2">
+                        <img
+                          [src]="signaturePreview()"
+                          alt="E-signature preview"
+                          class="max-w-xs h-16 object-contain border border-gray-200 rounded-sm p-1 bg-white"
+                          (error)="onImageError($event)"
+                        />
+                        <div class="flex items-center gap-3">
+                          @if (selectedSignature()) {
+                            <span class="text-xs text-gray-500 truncate max-w-[220px]">{{ selectedSignature()?.name }}</span>
+                          }
+                          <button
+                            type="button"
+                            (click)="triggerSignatureUpload()"
+                            class="text-xs text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
+                          >
+                            <i class="pi pi-refresh text-xs"></i> Replace
+                          </button>
+                          <button
+                            type="button"
+                            (click)="removeSignature()"
+                            class="text-xs text-red-600 hover:text-red-800 inline-flex items-center gap-1"
+                          >
+                            <i class="pi pi-times text-xs"></i> Remove
+                          </button>
+                        </div>
                       </div>
                     } @else {
                       <button
                         type="button"
                         (click)="triggerSignatureUpload()"
-                        class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-sm hover:bg-gray-200 transition inline-flex items-center gap-2"
+                        class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-sm hover:bg-gray-200 transition inline-flex items-center gap-2 self-start"
                       >
                         <i class="pi pi-upload text-xs"></i>
                         Upload E-Signature
@@ -2313,15 +2454,23 @@
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
     <div class="bg-white rounded-sm shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
       <div class="px-6 py-5 border-b border-gray-100">
-        <h3 class="text-xs font-semibold text-gray-900">Upload Organization Population</h3>
-        <p class="text-xs text-gray-400 mt-0.5">Upload an Excel file with member information</p>
+        <h3 class="text-xs font-semibold text-gray-900">
+          {{ bulkUploadEditMode() ? 'Edit Organization Population' : 'Upload Organization Population' }}
+        </h3>
+        <p class="text-xs text-gray-400 mt-0.5">
+          {{ bulkUploadEditMode()
+            ? 'Update the record details. Uploading a new file is optional.'
+            : 'Upload an Excel file with member information' }}
+        </p>
       </div>
       <div class="p-6 overflow-y-auto flex-1">
         <!-- Info Banner -->
         <div class="mb-4 px-3 py-2 bg-blue-50 border border-blue-200 rounded-sm">
           <p class="text-xs text-blue-900 mb-1.5">
             <i class="pi pi-info-circle text-xs mr-1"></i>
-            Download the template to see the required format
+            {{ bulkUploadEditMode()
+              ? 'Leave the file empty to keep the existing file.'
+              : 'Download the template to see the required format' }}
           </p>
           <button
             (click)="downloadTemplate()"
@@ -2482,13 +2631,13 @@
         <button
           type="button"
           (click)="uploadMembers()"
-          [disabled]="loading() || !bulkUploadForm().file || !bulkUploadForm().academic_year_id || !bulkUploadForm().section || !bulkUploadForm().year_level || !bulkUploadForm().department || !bulkUploadForm().semester"
+          [disabled]="loading() || !bulkUploadForm().academic_year_id || !bulkUploadForm().section || !bulkUploadForm().year_level || !bulkUploadForm().department || !bulkUploadForm().semester || (!bulkUploadEditMode() && !bulkUploadForm().file)"
           class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs"></i>
           }
-          Upload Members
+          {{ bulkUploadEditMode() ? 'Save Changes' : 'Upload Members' }}
         </button>
       </div>
     </div>

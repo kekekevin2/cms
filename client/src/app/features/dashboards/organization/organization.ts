@@ -1,11 +1,10 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Auth } from '../../../services/auth/auth';
 import { ThemeService } from '../../../services/theme/theme.service';
 import { OrganizationService } from '../../../services/organization/organization.service';
-import { OrganizationEventService } from '../../../services/organization/organization-event.service';
 import { EventAnalyticsService, SDGEventData } from '../../../services/organization/event-analytics.service';
 import { CVLAttachmentService, CVLAttachment } from '../../../services/organization/cvl-attachment.service';
 import { OrganizationMembersComponent } from '../../organization/members/organization-members';
@@ -15,6 +14,7 @@ import { SDGEventsChartComponent } from '../../../shared/components/sdg-events-c
 import Swal from 'sweetalert2';
 
 interface OrganizationStats {
+  totalEvents: number; // Each submitted report counts as one organization event
   approvedEvents: number;
   pendingEvents: number;
   totalMembers: number;
@@ -45,7 +45,6 @@ export class OrganizationDashboard implements OnInit {
   themeService = inject(ThemeService);
   private router = inject(Router);
   private organizationService = inject(OrganizationService);
-  private eventService = inject(OrganizationEventService);
   private eventAnalyticsService = inject(EventAnalyticsService);
   private cvlAttachmentService = inject(CVLAttachmentService);
 
@@ -59,6 +58,7 @@ export class OrganizationDashboard implements OnInit {
   advisers = signal<any[]>([]);
   sdgEventData = signal<SDGEventData[]>([]);
   stats = signal<OrganizationStats>({
+    totalEvents: 0,
     approvedEvents: 0,
     pendingEvents: 0,
     totalMembers: 0,
@@ -98,6 +98,67 @@ export class OrganizationDashboard implements OnInit {
   cvlSuccessMessage = signal('');
   cvlEditMode = signal(false);
   cvlEditType = signal<string | null>(null); // Store attachment type for editing
+
+  // CVL Attachments — search & filters
+  cvlSearchQuery = signal('');
+  cvlSelectedAttachment = signal<string | undefined>(undefined);
+  cvlSelectedSemester = signal<string | undefined>(undefined);
+
+  // Available attachment options (matches the modal dropdown)
+  readonly cvlAttachmentOptions: string[] = [
+    'Attachment A',
+    'Attachment B',
+    'Attachment C',
+    'Attachment D',
+    'Attachment E',
+    'Attachment F',
+    'Attachment G',
+    'Attachment H',
+    'Attachment J',
+  ];
+
+  // Client-side filtered view over the currently logged-in org's attachments
+  filteredCVLAttachments = computed<CVLAttachment[]>(() => {
+    const list = this.cvlAttachments();
+    const query = this.cvlSearchQuery().trim().toLowerCase();
+    const attachmentFilter = this.cvlSelectedAttachment();
+    const semesterFilter = this.cvlSelectedSemester();
+
+    return list.filter((a) => {
+      // Attachment letter filter
+      if (attachmentFilter && a.attachment !== attachmentFilter) {
+        return false;
+      }
+      // Semester filter
+      if (semesterFilter && a.semester !== semesterFilter) {
+        return false;
+      }
+      // Search by title or filename (case-insensitive)
+      if (query) {
+        const title = (a.title || '').toLowerCase();
+        const filename = (a.filename || '').toLowerCase();
+        if (!title.includes(query) && !filename.includes(query)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  });
+
+  // Whether any filter/search is currently applied
+  hasActiveCVLFilters = computed<boolean>(() => {
+    return (
+      this.cvlSearchQuery().trim() !== '' ||
+      this.cvlSelectedAttachment() !== undefined ||
+      this.cvlSelectedSemester() !== undefined
+    );
+  });
+
+  clearCVLFilters() {
+    this.cvlSearchQuery.set('');
+    this.cvlSelectedAttachment.set(undefined);
+    this.cvlSelectedSemester.set(undefined);
+  }
 
   ngOnInit() {
     const userInfo = this.authService.currentUser();
@@ -184,40 +245,97 @@ export class OrganizationDashboard implements OnInit {
   loadStatistics() {
     this.loading.set(true);
 
-    // Load events statistics
-    this.eventService.getEvents().subscribe({
-      next: (events) => {
-        this.stats.update((s) => ({
-          ...s,
-          approvedEvents: events.length,
-          pendingEvents: 0,
-        }));
-      },
-      error: (error) => {
-        console.error('Failed to load events:', error);
-      },
-    });
-
     // Load members and documents to calculate statistics
+    // Note: "Total Events" is now derived from the submitted reports count below,
+    // since each submitted report is treated as one organization event.
     this.organizationService.getMembers(1, 999).subscribe({
       next: (response) => {
-        // Exclude advisers from member statistics
-        const members = response.members.filter((m: any) => 
-          m.position && m.position.toLowerCase() !== 'adviser' && m.position.toLowerCase() !== 'advisor'
-        );
-        const activeMembers = members.filter((m: any) => m.is_active).length;
+        // Known officer positions — any member whose Position column matches
+        // one of these (case-insensitive, whitespace-normalized) is treated
+        // as an officer and excluded from the regular-member counts. This is
+        // applied every time statistics are loaded, so newly bulk-uploaded
+        // officer rows are excluded from "Total Members" automatically.
+        const officerPositions = new Set([
+          'adviser',
+          'advisor',
+          'president',
+          'vice president',
+          'vp',
+          'secretary',
+          'assistant secretary',
+          'asst. secretary',
+          'asst secretary',
+          'treasurer',
+          'assistant treasurer',
+          'asst. treasurer',
+          'asst treasurer',
+          'auditor',
+          'p.r.o.',
+          'pro',
+          'pio',
+          'business manager',
+          'media and publicity head',
+          'media and publicity committee',
+          'media and publicity',
+          'commdrrm head',
+          'commdrrm committee',
+          '1st year representative',
+          'first year representative',
+          '2nd year representative',
+          'second year representative',
+          '3rd year representative',
+          'third year representative',
+          '4th year representative',
+          'fourth year representative',
+          'year representative',
+        ]);
 
-        // Count by position (excluding null/undefined and advisers)
+        // Normalize a position string so we can compare it reliably. Empty
+        // strings, `null`, and rows without a position field all normalize
+        // to '' — which is NOT in the officer set, so they count as members.
+        const normalizePosition = (value: any): string =>
+          (value ?? '').toString().trim().replace(/\s+/g, ' ').toLowerCase();
+
+        const isOfficer = (m: any): boolean =>
+          officerPositions.has(normalizePosition(m.position));
+
+        // Regular members only — anything whose Position is NOT a recognized
+        // officer role (President, VP, Secretary, Treasurer, Auditor,
+        // PIO/P.R.O., Business Manager, Adviser, Year Reps, etc.). Records
+        // with a blank position or an unrecognized value still count as
+        // regular members, so mixed bulk-upload files behave sensibly.
+        const regularMembers = response.members.filter((m: any) => !isOfficer(m));
+        const activeMembers = regularMembers.filter((m: any) => m.is_active).length;
+
+        // Count by position for the "Members by Position" chart.
+        // Rules:
+        //  - Regular members (position === "Member") are always counted,
+        //    whether they came from Excel or were added manually.
+        //  - Officer positions are counted only when they were added through
+        //    the Officers Profile (no `upload_id`). Officer positions coming
+        //    from an uploaded Excel file are ignored, so officer data is
+        //    sourced exclusively from the Officers Profile.
         const positionCounts: { [key: string]: number } = {};
-        members.forEach((m: any) => {
-          if (m.position && m.position.trim() !== '') {
+        response.members.forEach((m: any) => {
+          const pos = normalizePosition(m.position);
+          if (!pos) return; // rows with no position are skipped
+
+          const isFromExcel = m.upload_id !== null && m.upload_id !== undefined;
+
+          if (pos === 'member') {
+            // Regular members — always include regardless of source
+            positionCounts[m.position] = (positionCounts[m.position] || 0) + 1;
+          } else if (isOfficer(m) && !isFromExcel) {
+            // Officer position added through the Officers Profile
             positionCounts[m.position] = (positionCounts[m.position] || 0) + 1;
           }
+          // Officer positions imported from Excel are intentionally ignored.
         });
 
-        // Count by year level (excluding null/undefined)
+        // Count by year level — regular members only, so percentages divided
+        // by totalMembers stay accurate.
         const yearCounts: { [key: string]: number } = {};
-        members.forEach((m: any) => {
+        regularMembers.forEach((m: any) => {
           if (m.year_level && m.year_level.trim() !== '') {
             yearCounts[m.year_level] = (yearCounts[m.year_level] || 0) + 1;
           }
@@ -225,7 +343,7 @@ export class OrganizationDashboard implements OnInit {
 
         this.stats.update((s) => ({
           ...s,
-          totalMembers: members.length,
+          totalMembers: regularMembers.length,
           activeMembers,
           membersByPosition: Object.entries(positionCounts).map(([position, count]) => ({
             position,
@@ -245,9 +363,13 @@ export class OrganizationDashboard implements OnInit {
     this.organizationService.getDocuments(1, 999).subscribe({
       next: (response) => {
         const documents = response.documents;
+        const submittedCount = documents.length;
         this.stats.update((s) => ({
           ...s,
-          documentsSubmitted: documents.length,
+          // Each submitted report is treated as one organization event
+          totalEvents: submittedCount,
+          approvedEvents: submittedCount,
+          documentsSubmitted: submittedCount,
           documentsPending: documents.filter((d: any) => d.status === 'pending').length,
           documentsApproved: documents.filter((d: any) => d.status === 'approved').length,
           documentsRejected: documents.filter((d: any) => d.status === 'rejected').length,
