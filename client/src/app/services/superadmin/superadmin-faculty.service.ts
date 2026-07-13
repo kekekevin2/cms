@@ -14,10 +14,10 @@ export interface Faculty {
   department_id: number;
   user_id: number;
   department?: {
-    department_id: number;
+    department_id: number | null;
     department_name: string;
-    department_acronym: string;
-  };
+    department_acronym: string | null;
+  } | null;
   createdAt?: string;
   updatedAt?: string;
 }

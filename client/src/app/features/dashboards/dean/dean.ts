@@ -1,8 +1,8 @@
-import { Component, signal, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, signal, OnInit, ViewChild, ElementRef, AfterViewInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../../../services/auth/auth';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ThemeService } from '../../../services/theme/theme.service';
 import { DeanFacultyManagement } from '../../dean/faculty-management/faculty-management';
 import { DeanOrganizationManagement } from '../../dean/organization-management/organization-management';
@@ -14,6 +14,7 @@ import {
   DeanRequirementService,
   DepartmentStatistics,
 } from '../../../services/dean/dean-requirement.service';
+import { CollegeDepartmentProfileService } from '../../../services/dean/college-department-profile.service';
 import { DropdownService, DropdownAcademicYear } from '../../../services/core/dropdown.service';
 import {
   DeanAnalyticsService,
@@ -54,12 +55,25 @@ export class DeanDashboard implements OnInit, AfterViewInit {
   @ViewChild('extensionChart') extensionChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('seminarsChart') seminarsChartRef!: ElementRef<HTMLCanvasElement>;
 
+  private route = inject(ActivatedRoute);
+
   isSidebarOpen = signal(true);
   activeTab = signal<string>('dashboard');
   dashboardSubTab = signal<string>('overview');
   isUserMenuOpen = signal(false);
   isChangePasswordOpen = signal(false);
   deanName = signal<string>('');
+
+  // Acronym of the dean's department (e.g. "COET"), shown beneath the
+  // "Department Portal" title in the sidebar. Kept as its own signal so
+  // we can populate it from the college-department profile endpoint,
+  // which is the same source used by the Department Profile page.
+  departmentAcronym = signal<string>('');
+
+  // Organization scope passed to organization-analytics / member-demographics
+  // child components. Set by query params when navigating from the
+  // Organization Management action icons.
+  scopedOrganizationId = signal<number | null>(null);
 
   // Dashboard data
   loading = signal(false);
@@ -104,12 +118,33 @@ export class DeanDashboard implements OnInit, AfterViewInit {
     private analyticsService: DeanAnalyticsService,
     private deanService: DeanService,
     public themeService: ThemeService,
+    private collegeDepartmentProfileService: CollegeDepartmentProfileService,
   ) {}
 
   ngOnInit() {
     this.loadDeanProfile();
+    this.loadDepartmentAcronym();
     this.loadAcademicYears();
     this.loadDepartmentStats();
+
+    // Deep-link support: query params can preselect a tab / sub-tab and
+    // scope the analytics/demographics views to a specific organization
+    // (used by the Organization Management action icons).
+    this.route.queryParamMap.subscribe((params) => {
+      const tab = params.get('tab');
+      const subTab = params.get('subTab');
+      const orgIdRaw = params.get('organizationId');
+
+      if (tab) {
+        this.activeTab.set(tab);
+      }
+      if (subTab) {
+        this.dashboardSubTab.set(subTab);
+      }
+
+      const orgId = orgIdRaw ? Number(orgIdRaw) : NaN;
+      this.scopedOrganizationId.set(Number.isFinite(orgId) && orgId > 0 ? orgId : null);
+    });
   }
 
   ngAfterViewInit() {
@@ -141,6 +176,25 @@ export class DeanDashboard implements OnInit, AfterViewInit {
             .join(' ');
           this.deanName.set(formattedName);
         }
+      },
+    });
+  }
+
+  /**
+   * Pull the department acronym from the college-department profile
+   * endpoint so the sidebar can show it beneath "Department Portal",
+   * mirroring how the Organization Portal shows the organization name.
+   */
+  loadDepartmentAcronym() {
+    this.collegeDepartmentProfileService.getProfile().subscribe({
+      next: (res) => {
+        const acronym = res.record?.department?.acronym?.trim();
+        if (acronym) {
+          this.departmentAcronym.set(acronym);
+        }
+      },
+      error: (error) => {
+        console.error('Error loading department acronym:', error);
       },
     });
   }

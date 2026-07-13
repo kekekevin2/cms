@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChanges, Input, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -18,33 +18,40 @@ interface MemberStats {
   membersByYearLevel: Array<{ year: string; count: number }>;
 }
 
-interface Organization {
-  organization_id: number;
-  organization_name: string;
-}
-
 interface AcademicYear {
   academic_year_id: number;
   year_start: number;
   year_end: number;
 }
 
+/**
+ * Department Portal → Member Demographics.
+ *
+ * UI mirrors the Organization Portal demographics tab exactly. Data is
+ * aggregated across every organization in the dean's department by
+ * default. When an `organizationId` is supplied (via the Organization
+ * Management action icon deep-link), the same view is scoped to a
+ * single organization instead.
+ */
 @Component({
   selector: 'app-dean-member-demographics',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './dean-member-demographics.html',
 })
-export class DeanMemberDemographicsComponent implements OnInit {
+export class DeanMemberDemographicsComponent implements OnInit, OnChanges {
   private http = inject(HttpClient);
 
+  /**
+   * Optional organization scope. When set the view filters to a single
+   * organization; otherwise data aggregates across the department.
+   */
+  @Input() organizationId?: number | null;
+
   loading = signal(false);
-  selectedOrganization: number | undefined = undefined;
   selectedAcademicYear: number | undefined = undefined;
   selectedSemester: string | undefined = undefined;
-  activeOnly = signal(true);
 
-  organizations = signal<Organization[]>([]);
   academicYears = signal<AcademicYear[]>([]);
 
   demographics = signal<MemberDemographics>({
@@ -62,19 +69,15 @@ export class DeanMemberDemographicsComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.loadOrganizations();
     this.loadAcademicYears();
+    this.loadDemographics();
   }
 
-  loadOrganizations() {
-    this.http.get<any>(`${environment.apiUrl}/dean/organizations`).subscribe({
-      next: (response) => {
-        this.organizations.set(response.organizations || []);
-      },
-      error: (error) => {
-        console.error('Error loading organizations:', error);
-      },
-    });
+  ngOnChanges(changes: SimpleChanges) {
+    const change = changes['organizationId'];
+    if (!change || change.firstChange) return;
+    // Re-scope when the parent switches organizations at runtime.
+    this.loadDemographics();
   }
 
   loadAcademicYears() {
@@ -89,13 +92,13 @@ export class DeanMemberDemographicsComponent implements OnInit {
   }
 
   loadDemographics() {
-    if (!this.selectedOrganization) {
-      return;
-    }
-
     this.loading.set(true);
 
-    let params = new HttpParams().set('organizationId', this.selectedOrganization.toString());
+    let params = new HttpParams();
+
+    if (this.organizationId != null) {
+      params = params.set('organizationId', this.organizationId.toString());
+    }
 
     if (this.selectedAcademicYear) {
       params = params.set('academicYearId', this.selectedAcademicYear.toString());
@@ -105,10 +108,8 @@ export class DeanMemberDemographicsComponent implements OnInit {
       params = params.set('semester', this.selectedSemester);
     }
 
-    params = params.set('activeOnly', this.activeOnly().toString());
-
     this.http
-      .get<any>(`${environment.apiUrl}/dean/organizations/member-demographics`, { params })
+      .get<any>(`${environment.apiUrl}/dean/dashboard/organizations/member-demographics`, { params })
       .subscribe({
         next: (response) => {
           this.demographics.set(response.demographics);
@@ -123,17 +124,18 @@ export class DeanMemberDemographicsComponent implements OnInit {
   }
 
   getProgramColor(index: number): string {
+    // Match the Organization Portal palette exactly.
     const colors = [
-      '#FF6384',
-      '#36A2EB',
-      '#FFCE56',
-      '#4BC0C0',
-      '#9966FF',
-      '#FF9F40',
-      '#FF6384',
-      '#C9CBCF',
-      '#4BC0C0',
-      '#FF6384',
+      '#8b5cf6', // purple
+      '#3b82f6', // blue
+      '#10b981', // green
+      '#f59e0b', // amber
+      '#ef4444', // red
+      '#ec4899', // pink
+      '#06b6d4', // cyan
+      '#84cc16', // lime
+      '#f97316', // orange
+      '#6366f1', // indigo
     ];
     return colors[index % colors.length];
   }

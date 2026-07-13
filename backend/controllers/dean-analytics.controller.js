@@ -31,6 +31,7 @@ exports.getFacultyDemographics = async (req, res) => {
       include: [
         {
           model: db.PersonalDataSheet,
+          as: 'PersonalDataSheet', // Add alias
           required: false, // LEFT JOIN to include faculty without PDS
           attributes: [
             "sex",
@@ -517,6 +518,7 @@ exports.getEducationAnalytics = async (req, res) => {
       include: [
         {
           model: db.PersonalDataSheet,
+          as: 'PersonalDataSheet', // Add alias
           required: false,
           include: [
             {
@@ -640,6 +642,7 @@ exports.getResearchAnalytics = async (req, res) => {
       include: [
         {
           model: db.PersonalDataSheet,
+          as: 'PersonalDataSheet', // Add alias
           required: false,
           include: [
             {

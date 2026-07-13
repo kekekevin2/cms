@@ -750,7 +750,8 @@ exports.importFromProfile = async (req, res) => {
       }
     }
 
-    // Import employment profiles as work experience
+    // Import employment profiles as work experience - DELETE ALL FIRST
+    await db.PDSWorkExperience.destroy({ where: { pds_id: pds.pds_id } });
     for (const employment of employmentProfiles) {
       // Skip if essential fields are missing
       if (
@@ -788,28 +789,19 @@ exports.importFromProfile = async (req, res) => {
       }
     }
 
-    // Import seminars/trainings
+    // Import seminars/trainings - DELETE ALL FIRST to avoid duplicates
+    await db.PDSTraining.destroy({ where: { pds_id: pds.pds_id } });
     for (const seminar of seminars) {
-      const existingTraining = await db.PDSTraining.findOne({
-        where: {
-          pds_id: pds.pds_id,
-          title: seminar.title,
-          date_from: seminar.date,
-        },
+      await db.PDSTraining.create({
+        pds_id: pds.pds_id,
+        title: seminar.title || "",
+        date_from: seminar.date || "",
+        date_to: seminar.date || "",
+        number_of_hours: null,
+        type_of_ld: seminar.category || "",
+        conducted_by:
+          seminar.training_provider || seminar.sponsoring_agency || "",
       });
-
-      if (!existingTraining) {
-        await db.PDSTraining.create({
-          pds_id: pds.pds_id,
-          title: seminar.title || "",
-          date_from: seminar.date || "",
-          date_to: seminar.date || "",
-          number_of_hours: null,
-          type_of_ld: seminar.category || "",
-          conducted_by:
-            seminar.training_provider || seminar.sponsoring_agency || "",
-        });
-      }
     }
 
     // Import professional memberships as other info (MEMBERSHIP)
@@ -850,7 +842,15 @@ exports.importFromProfile = async (req, res) => {
       }
     }
 
-    // Import research activities as voluntary work
+    // Import research activities as voluntary work - DELETE ALL RESEARCH ENTRIES FIRST
+    await db.PDSVoluntaryWork.destroy({ 
+      where: { 
+        pds_id: pds.pds_id,
+        position_nature_of_work: {
+          [db.Sequelize.Op.like]: 'Research:%'
+        }
+      } 
+    });
     for (const research of researchActivities) {
       const existingResearch = await db.PDSVoluntaryWork.findOne({
         where: {
@@ -872,26 +872,24 @@ exports.importFromProfile = async (req, res) => {
       }
     }
 
-    // Import extension activities as voluntary work
+    // Import extension activities as voluntary work - DELETE ALL EXTENSION ENTRIES FIRST
+    await db.PDSVoluntaryWork.destroy({ 
+      where: { 
+        pds_id: pds.pds_id,
+        position_nature_of_work: {
+          [db.Sequelize.Op.like]: 'Extension:%'
+        }
+      } 
+    });
     for (const extension of extensionActivities) {
-      const existingExtension = await db.PDSVoluntaryWork.findOne({
-        where: {
-          pds_id: pds.pds_id,
-          organization_name: extension.beneficiary,
-          position_nature_of_work: extension.extension_title,
-        },
+      await db.PDSVoluntaryWork.create({
+        pds_id: pds.pds_id,
+        organization_name: extension.beneficiary || "",
+        date_from: extension.date_of_implementation || "",
+        date_to: extension.date_of_implementation || "",
+        number_of_hours: null,
+        position_nature_of_work: `Extension: ${extension.extension_title} (${extension.location})`,
       });
-
-      if (!existingExtension) {
-        await db.PDSVoluntaryWork.create({
-          pds_id: pds.pds_id,
-          organization_name: extension.beneficiary || "",
-          date_from: extension.date_of_implementation || "",
-          date_to: extension.date_of_implementation || "",
-          number_of_hours: null,
-          position_nature_of_work: `Extension: ${extension.extension_title} (${extension.location})`,
-        });
-      }
     }
 
     // Fetch complete PDS with all relations

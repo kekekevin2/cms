@@ -29,39 +29,11 @@ exports.getFaculty = async (req, res) => {
     const search = req.query.search || "";
     const department_id = req.query.department_id;
 
-    // Static departments list (matches dropdown.controller.js)
-    const departments = [
-      {
-        department_id: 1,
-        department_name: "College of Engineering",
-        department_acronym: "COE",
-      },
-      {
-        department_id: 2,
-        department_name: "College of Education",
-        department_acronym: "COED",
-      },
-      {
-        department_id: 3,
-        department_name: "College of Arts and Sciences",
-        department_acronym: "CAS",
-      },
-      {
-        department_id: 4,
-        department_name: "College of Business Administration",
-        department_acronym: "CBA",
-      },
-      {
-        department_id: 5,
-        department_name: "College of Information Technology",
-        department_acronym: "CIT",
-      },
-      {
-        department_id: 6,
-        department_name: "College of Nursing",
-        department_acronym: "CON",
-      },
-    ];
+    // Fetch all departments from database instead of using static list
+    const departments = await db.Department.findAll({
+      attributes: ['department_id', 'department_name', 'acronym'],
+      where: { is_active: true }
+    });
 
     const whereClause = {};
 
@@ -90,11 +62,11 @@ exports.getFaculty = async (req, res) => {
       order: [["last_name", "ASC"]],
     });
 
-    // Map department names to department objects with acronyms
+    // Map department names to department objects with acronyms from database
     const facultyWithDepartments = rows.map((faculty) => {
       const facultyData = faculty.toJSON();
 
-      // Find matching department by name
+      // Find matching department by exact name from database
       if (facultyData.department) {
         const dept = departments.find(
           (d) => d.department_name === facultyData.department,
@@ -104,9 +76,18 @@ exports.getFaculty = async (req, res) => {
           facultyData.department = {
             department_id: dept.department_id,
             department_name: dept.department_name,
-            department_acronym: dept.department_acronym,
+            department_acronym: dept.acronym,
+          };
+        } else {
+          // If no exact match found, keep as string but wrap in object for consistency
+          facultyData.department = {
+            department_id: null,
+            department_name: facultyData.department,
+            department_acronym: null,
           };
         }
+      } else {
+        facultyData.department = null;
       }
 
       return facultyData;

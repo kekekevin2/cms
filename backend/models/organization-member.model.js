@@ -117,6 +117,56 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: true,
       comment: "Path to member photo",
     },
+    upload_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      comment: "Links member to the bulk upload record it came from (for analytics)",
+    },
+    course: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+      comment: "Student course/program (e.g., BACHELOR OF COMPUTER ENGINEERING TECHNOLOGY)",
+    },
+    gwa: {
+      type: Sequelize.STRING(10),
+      allowNull: true,
+      comment: "Grade Weighted Average (e.g., 1.8152)",
+    },
+    campus: {
+      type: Sequelize.STRING(100),
+      allowNull: true,
+      comment: "Campus location (e.g., LIPA CAMPUS)",
+    },
+    telephone_number: {
+      type: Sequelize.STRING(20),
+      allowNull: true,
+      comment: "Landline telephone number",
+    },
+    birth_date: {
+      type: Sequelize.DATEONLY,
+      allowNull: true,
+      comment: "Date of birth",
+    },
+    age: {
+      type: Sequelize.STRING(50),
+      allowNull: true,
+      comment: "Age in text format (e.g., 18 YEARS OLD)",
+    },
+    civil_status: {
+      type: Sequelize.ENUM("SINGLE", "MARRIED", "WIDOWED", "SEPARATED"),
+      allowNull: true,
+      comment: "Civil/marital status",
+    },
+    home_address: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+      comment: "Complete home address",
+    },
+    signature_url: {
+      type: Sequelize.STRING(500),
+      allowNull: true,
+      comment: "Path to uploaded e-signature image",
+    },
   });
 
   return OrganizationMember;

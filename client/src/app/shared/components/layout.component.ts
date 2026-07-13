@@ -366,8 +366,8 @@ import { ThemeService } from '../../services/theme/theme.service';
                   routerLinkActive="bg-green-50 text-green-600"
                   class="flex items-center px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
                 >
-                  <i class="pi pi-file shrink-0 text-sm w-5 text-center"></i>
-                  <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Portfolio</span>
+                  <i class="fas fa-award shrink-0 text-sm w-5 text-center"></i>
+                  <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Accomplishments</span>
                 </a>
               </li>
               <li>

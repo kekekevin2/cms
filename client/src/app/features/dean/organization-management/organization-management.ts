@@ -35,7 +35,6 @@ export class DeanOrganizationManagement implements OnInit {
     description: '',
     email: '',
     adviser_id_1: 0,
-    adviser_id_2: 0,
   };
   editForm = {
     organization_id: 0,
@@ -139,7 +138,6 @@ export class DeanOrganizationManagement implements OnInit {
       description: '',
       email: '',
       adviser_id_1: 0,
-      adviser_id_2: 0,
     };
     this.showCreateModal.set(true);
   }
@@ -162,25 +160,7 @@ export class DeanOrganizationManagement implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Validation Error',
-        text: 'Please select Adviser 1',
-        confirmButtonColor: '#2563eb',
-      });
-      return;
-    }
-    if (!this.createForm.adviser_id_2 || this.createForm.adviser_id_2 === 0) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Validation Error',
-        text: 'Please select Adviser 2',
-        confirmButtonColor: '#2563eb',
-      });
-      return;
-    }
-    if (this.createForm.adviser_id_1 === this.createForm.adviser_id_2) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Validation Error',
-        text: 'Adviser 1 and Adviser 2 must be different faculty members',
+        text: 'Please select adviser',
         confirmButtonColor: '#2563eb',
       });
       return;
@@ -395,12 +375,26 @@ export class DeanOrganizationManagement implements OnInit {
   }
 
   viewAnalytics(organization: Organization) {
-    // Navigate to organization analytics view
-    this.router.navigate(['/dean/organization-analytics', organization.organization_id]);
+    // Open the Dean Dashboard's Organization Analytics sub-tab scoped to
+    // the selected organization.
+    this.router.navigate(['/department/dashboard'], {
+      queryParams: {
+        tab: 'dashboard',
+        subTab: 'organization-analytics',
+        organizationId: organization.organization_id,
+      },
+    });
   }
 
   viewDemographics(organization: Organization) {
-    // Navigate to organization demographics view
-    this.router.navigate(['/dean/organization-demographics', organization.organization_id]);
+    // Open the Dean Dashboard's Member Demographics sub-tab scoped to
+    // the selected organization.
+    this.router.navigate(['/department/dashboard'], {
+      queryParams: {
+        tab: 'dashboard',
+        subTab: 'member-demographics',
+        organizationId: organization.organization_id,
+      },
+    });
   }
 }

@@ -45,6 +45,22 @@ export class FacultyRequirements implements OnInit {
   addFilesSubmission = signal<RequirementSubmission | null>(null);
   addFiles: File[] = [];
 
+  // For view modal
+  showViewModal = signal(false);
+  viewingRequirement = signal<RequirementSubmission | null>(null);
+
+  // For edit modal
+  showEditModal = signal(false);
+  editingRequirement = signal<RequirementSubmission | null>(null);
+  editForm = {
+    submission_id: 0,
+    academic_year_id: 0,
+    semester: '',
+    requirement_name: '',
+    custom_requirement_name: '',
+  };
+  editFiles: File[] = [];
+
   Math = Math;
 
   constructor(
@@ -245,16 +261,26 @@ export class FacultyRequirements implements OnInit {
         this.selectedFiles,
       )
       .subscribe({
-        next: () => {
+        next: (response) => {
           this.uploading.set(false);
+          
+          // Add the new submission to the list instantly
+          if (response.submission) {
+            const currentReqs = this.requirements();
+            // Add new item at the beginning (since list is sorted DESC by date)
+            this.requirements.set([response.submission, ...currentReqs]);
+            this.totalItems.set(this.totalItems() + 1);
+          }
+          
           Swal.fire({
             icon: 'success',
             title: 'Success',
-            text: 'Requirement submitted successfully',
+            text: 'Portfolio submitted successfully',
             confirmButtonColor: '#2563eb',
+            timer: 1500,
+            showConfirmButton: false,
           });
           this.closeSubmitModal();
-          this.loadRequirements();
         },
         error: (error) => {
           this.uploading.set(false);
@@ -367,6 +393,18 @@ export class FacultyRequirements implements OnInit {
   }
 
   deleteSubmission(submission_id: number) {
+    // Check if trying to delete a validated portfolio
+    const requirement = this.requirements().find(r => r.submission_id === submission_id);
+    if (requirement && requirement.status === 'validated') {
+      Swal.fire({
+        icon: 'info',
+        title: 'Cannot Delete',
+        text: 'Validated portfolios cannot be deleted. Please contact your dean if this needs to be removed.',
+        confirmButtonColor: '#2563eb',
+      });
+      return;
+    }
+    
     Swal.fire({
       title: 'Delete Submission?',
       text: 'Are you sure you want to delete this submission? This action cannot be undone.',
@@ -379,13 +417,19 @@ export class FacultyRequirements implements OnInit {
       if (result.isConfirmed) {
         this.requirementService.deleteRequirement(submission_id).subscribe({
           next: () => {
+            // Remove from list instantly
+            const currentReqs = this.requirements();
+            this.requirements.set(currentReqs.filter(r => r.submission_id !== submission_id));
+            this.totalItems.set(this.totalItems() - 1);
+            
             Swal.fire({
               icon: 'success',
               title: 'Deleted',
               text: 'Submission deleted successfully',
               confirmButtonColor: '#2563eb',
+              timer: 1500,
+              showConfirmButton: false,
             });
-            this.loadRequirements();
           },
           error: (error) => {
             Swal.fire({
@@ -443,5 +487,229 @@ export class FacultyRequirements implements OnInit {
       Summer: 'Summer 1',
     };
     return map[semester] ?? semester;
+  }
+
+  // View requirement
+  viewRequirement(requirement: RequirementSubmission) {
+    this.viewingRequirement.set(requirement);
+    this.showViewModal.set(true);
+  }
+
+  closeViewModal() {
+    this.showViewModal.set(false);
+    this.viewingRequirement.set(null);
+  }
+
+  // Edit requirement
+  editRequirement(requirement: RequirementSubmission) {
+    // Check if portfolio is validated
+    if (requirement.status === 'validated') {
+      Swal.fire({
+        icon: 'info',
+        title: 'Cannot Edit',
+        text: 'Validated portfolios cannot be edited. Please contact your dean if changes are needed.',
+        confirmButtonColor: '#2563eb',
+      });
+      return;
+    }
+    
+    this.editingRequirement.set(requirement);
+    this.editForm = {
+      submission_id: requirement.submission_id,
+      academic_year_id: requirement.academic_year_id,
+      semester: requirement.semester,
+      requirement_name: requirement.requirement_name,
+      custom_requirement_name: requirement.requirement_name,
+    };
+    this.editFiles = [];
+    this.showEditModal.set(true);
+  }
+
+  closeEditModal() {
+    this.showEditModal.set(false);
+    this.editingRequirement.set(null);
+    this.editFiles = [];
+  }
+
+  onEditFilesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const files = Array.from(input.files);
+      
+      if (files.length > 10) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Too Many Files',
+          text: 'You can upload a maximum of 10 files at once.',
+          confirmButtonColor: '#2563eb',
+        });
+        input.value = '';
+        return;
+      }
+      
+      const maxSize = 200 * 1024 * 1024;
+      const oversizedFiles = files.filter(f => f.size > maxSize);
+      
+      if (oversizedFiles.length > 0) {
+        Swal.fire({
+          icon: 'error',
+          title: 'File Too Large',
+          text: `Some files exceed 200MB limit: ${oversizedFiles.map(f => f.name).join(', ')}`,
+          confirmButtonColor: '#2563eb',
+        });
+        input.value = '';
+        return;
+      }
+      
+      this.editFiles = files;
+    }
+  }
+
+  removeEditFile(index: number) {
+    this.editFiles.splice(index, 1);
+  }
+
+  removeExistingFile(submission_id: number, file_id: number) {
+    Swal.fire({
+      title: 'Remove File?',
+      text: 'Are you sure you want to remove this file?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Remove',
+      confirmButtonColor: '#dc2626',
+      cancelButtonText: 'Cancel',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.requirementService.deleteFile(submission_id, file_id).subscribe({
+          next: () => {
+            // Update the editing requirement files instantly
+            const currentEditing = this.editingRequirement();
+            if (currentEditing && currentEditing.files) {
+              const updatedFiles = currentEditing.files.filter(f => f.file_id !== file_id);
+              this.editingRequirement.set({
+                ...currentEditing,
+                files: updatedFiles
+              });
+              
+              // Also update in the main list
+              const currentReqs = this.requirements();
+              const index = currentReqs.findIndex(r => r.submission_id === submission_id);
+              if (index !== -1) {
+                const newReqs = [...currentReqs];
+                newReqs[index] = {
+                  ...newReqs[index],
+                  files: updatedFiles
+                };
+                this.requirements.set(newReqs);
+              }
+            }
+            
+            Swal.fire({
+              icon: 'success',
+              title: 'Removed',
+              text: 'File removed successfully',
+              confirmButtonColor: '#2563eb',
+              timer: 1500,
+              showConfirmButton: false,
+            });
+          },
+          error: (error) => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: error.error?.message || 'Failed to remove file',
+              confirmButtonColor: '#2563eb',
+            });
+          },
+        });
+      }
+    });
+  }
+
+  updateRequirement() {
+    if (!this.editForm.academic_year_id || !this.editForm.semester || !this.editForm.requirement_name) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Incomplete Form',
+        text: 'Please fill all required fields',
+        confirmButtonColor: '#2563eb',
+      });
+      return;
+    }
+
+    // Check if editing requirement has at least one file (existing or new)
+    const hasExistingFiles = this.editingRequirement()?.files && this.editingRequirement()!.files!.length > 0;
+    if (!hasExistingFiles && this.editFiles.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Files',
+        text: 'Portfolio must have at least one file. Please add files.',
+        confirmButtonColor: '#2563eb',
+      });
+      return;
+    }
+
+    const requirementName = this.editForm.requirement_name === 'Other Documents'
+      ? this.editForm.custom_requirement_name
+      : this.editForm.requirement_name;
+
+    this.uploading.set(true);
+
+    // If there are new files to add, add them first
+    if (this.editFiles.length > 0) {
+      this.requirementService.addFiles(this.editForm.submission_id, this.editFiles).subscribe({
+        next: (response) => {
+          this.uploading.set(false);
+          
+          // Update the item in the list instantly
+          const currentReqs = this.requirements();
+          const index = currentReqs.findIndex(r => r.submission_id === this.editForm.submission_id);
+          if (index !== -1) {
+            // Reload this specific item from server to get updated files
+            this.requirementService.getMyRequirements(1, 1000).subscribe({
+              next: (res) => {
+                const updated = res.requirements.find(r => r.submission_id === this.editForm.submission_id);
+                if (updated) {
+                  const newReqs = [...currentReqs];
+                  newReqs[index] = updated;
+                  this.requirements.set(newReqs);
+                }
+              }
+            });
+          }
+          
+          Swal.fire({
+            icon: 'success',
+            title: 'Updated',
+            text: 'Portfolio updated successfully',
+            confirmButtonColor: '#2563eb',
+            timer: 1500,
+            showConfirmButton: false,
+          });
+          this.closeEditModal();
+        },
+        error: (error) => {
+          this.uploading.set(false);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.error?.message || 'Failed to update portfolio',
+            confirmButtonColor: '#2563eb',
+          });
+        },
+      });
+    } else {
+      // No new files, just show success (metadata updates would go here if backend supported it)
+      this.uploading.set(false);
+      Swal.fire({
+        icon: 'success',
+        title: 'Updated',
+        text: 'Portfolio updated successfully',
+        confirmButtonColor: '#2563eb',
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      this.closeEditModal();
+    }
   }
 }

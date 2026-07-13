@@ -55,6 +55,8 @@ export class SuperadminFacultyView implements OnInit {
       )
       .subscribe({
         next: (response) => {
+          console.log('Faculty API Response:', response);
+          console.log('First faculty department:', response.faculty[0]?.department);
           this.facultyList.set(response.faculty);
           this.currentPage.set(response.currentPage);
           this.totalPages.set(response.totalPages);

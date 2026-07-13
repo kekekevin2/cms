@@ -21,21 +21,38 @@ const User = db.User;
  */
 exports.getFacultyList = async (req, res) => {
 	try {
-		const deanId = req.user.dean_id;
+		console.log("📋 Getting faculty list for user:", req.user.user_id, "Role:", req.user.role);
+		
+		const userId = req.user.user_id;
+		const userRole = req.user.role;
 
-		if (!deanId) {
-			return res.status(403).json({ message: "Access denied. Dean ID not found." });
+		// Get department based on user role
+		let department;
+		if (userRole === "dean") {
+			const deanId = req.user.dean_id;
+			if (!deanId) {
+				return res.status(403).json({ message: "Access denied. Dean ID not found." });
+			}
+			const dean = await db.Dean.findByPk(deanId);
+			if (!dean) {
+				return res.status(404).json({ message: "Dean profile not found" });
+			}
+			department = dean.department;
+		} else if (userRole === "college_department") {
+			const deanInfo = await getDepartmentForUser(userId);
+			if (!deanInfo) {
+				return res.status(404).json({ message: "Department profile not found" });
+			}
+			department = deanInfo.department;
+		} else {
+			return res.status(403).json({ message: "Access denied. Invalid role." });
 		}
 
-		// Get dean's department
-		const dean = await db.Dean.findByPk(deanId);
-		if (!dean) {
-			return res.status(404).json({ message: "Dean profile not found" });
-		}
+		console.log("📍 Department:", department);
 
-		// Get all faculty in the dean's department
+		// Get all faculty in the department
 		const facultyList = await Faculty.findAll({
-			where: { department: dean.department },
+			where: { department: department },
 			include: [
 				{
 					model: User,
@@ -54,6 +71,8 @@ exports.getFacultyList = async (req, res) => {
 			order: [["last_name", "ASC"], ["first_name", "ASC"]],
 		});
 
+		console.log("✅ Found", facultyList.length, "faculty members");
+
 		// Format the response
 		const formattedFaculty = facultyList.map((faculty) => ({
 			faculty_id: faculty.faculty_id,
@@ -71,7 +90,7 @@ exports.getFacultyList = async (req, res) => {
 			total: formattedFaculty.length,
 		});
 	} catch (error) {
-		console.error("Error fetching faculty list:", error);
+		console.error("❌ Error fetching faculty list:", error);
 		res.status(500).json({
 			message: "Error fetching faculty list",
 			error: error.message,
@@ -84,7 +103,10 @@ exports.getFacultyList = async (req, res) => {
  */
 exports.sendNotification = async (req, res) => {
 	try {
-		const deanId = req.user.dean_id;
+		console.log("📧 Sending notification from user:", req.user.user_id, "Role:", req.user.role);
+		
+		const userId = req.user.user_id;
+		const userRole = req.user.role;
 		const { faculty_ids, subject, message } = req.body;
 
 		// Validation
@@ -100,17 +122,41 @@ exports.sendNotification = async (req, res) => {
 			return res.status(400).json({ message: "Message is required" });
 		}
 
-		// Get dean info
-		const dean = await db.Dean.findByPk(deanId);
-		if (!dean) {
-			return res.status(404).json({ message: "Dean profile not found" });
+		// Get sender info and department based on role
+		let senderName, senderTitle, department;
+		if (userRole === "dean") {
+			const deanId = req.user.dean_id;
+			const dean = await db.Dean.findByPk(deanId);
+			if (!dean) {
+				return res.status(404).json({ message: "Dean profile not found" });
+			}
+			senderName = `${dean.first_name} ${dean.last_name}`;
+			senderTitle = dean.title || "Dean";
+			department = dean.department;
+		} else if (userRole === "college_department") {
+			const deanInfo = await getDepartmentForUser(userId);
+			if (!deanInfo) {
+				return res.status(404).json({ message: "Department profile not found" });
+			}
+			const collegeDept = await db.CollegeDepartment.findOne({ where: { user_id: userId } });
+			if (!collegeDept) {
+				return res.status(404).json({ message: "College department profile not found" });
+			}
+			senderName = collegeDept.dean_name || collegeDept.name;
+			senderTitle = "Dean";
+			department = deanInfo.department;
+		} else {
+			return res.status(403).json({ message: "Access denied. Invalid role." });
 		}
+
+		console.log("👤 Sender:", senderName, "-", senderTitle);
+		console.log("📍 Department:", department);
 
 		// Get selected faculty members
 		const facultyList = await Faculty.findAll({
 			where: {
 				faculty_id: faculty_ids,
-				department: dean.department, // Ensure faculty are from dean's department
+				department: department, // Ensure faculty are from sender's department
 			},
 			include: [
 				{
@@ -124,67 +170,93 @@ exports.sendNotification = async (req, res) => {
 			return res.status(404).json({ message: "No valid faculty members found" });
 		}
 
-		// Prepare email details
-		const deanName = `${dean.first_name} ${dean.last_name}`;
-		const deanTitle = dean.title || "Dean";
-		const department = dean.department;
+		console.log("📬 Sending to", facultyList.length, "faculty members");
 
-		// Send emails to each faculty member
+		// Send emails to each faculty member (with timeout)
 		const emailResults = [];
-		for (const faculty of facultyList) {
+		const emailPromises = facultyList.map(async (faculty) => {
 			const facultyEmail = faculty.email || faculty.User?.email;
 			const facultyName = `${faculty.first_name} ${faculty.last_name}`;
 
 			if (!facultyEmail) {
-				emailResults.push({
+				return {
 					faculty_id: faculty.faculty_id,
 					name: facultyName,
 					success: false,
 					error: "No email address found",
-				});
-				continue;
+				};
 			}
 
-			// Create HTML email
-			const htmlContent = createNotificationEmail(
-				facultyName,
-				subject,
-				message,
-				deanName,
-				deanTitle,
-				department
-			);
+			try {
+				// Create HTML email
+				const htmlContent = createNotificationEmail(
+					facultyName,
+					subject,
+					message,
+					senderName,
+					senderTitle,
+					department
+				);
 
-			// Send email
-			const result = await sendEmail(
-				facultyEmail,
-				`📢 ${subject}`,
-				message, // Plain text fallback
-				htmlContent
-			);
+				// Send email with 5 second timeout
+				const emailPromise = sendEmail(
+					facultyEmail,
+					`📢 ${subject}`,
+					message, // Plain text fallback
+					htmlContent
+				);
 
-			emailResults.push({
-				faculty_id: faculty.faculty_id,
-				name: facultyName,
-				email: facultyEmail,
-				success: result.success,
-				error: result.error || null,
-			});
-		}
+				const timeoutPromise = new Promise((resolve) =>
+					setTimeout(() => resolve({ success: false, error: "Email timeout" }), 5000)
+				);
+
+				const result = await Promise.race([emailPromise, timeoutPromise]);
+
+				return {
+					faculty_id: faculty.faculty_id,
+					name: facultyName,
+					email: facultyEmail,
+					success: result.success,
+					error: result.error || null,
+				};
+			} catch (error) {
+				return {
+					faculty_id: faculty.faculty_id,
+					name: facultyName,
+					email: facultyEmail,
+					success: false,
+					error: error.message,
+				};
+			}
+		});
+
+		// Wait for all emails with overall timeout of 15 seconds
+		const allEmailsPromise = Promise.all(emailPromises);
+		const overallTimeoutPromise = new Promise((resolve) =>
+			setTimeout(() => {
+				console.log("⏱️ Email sending timed out, returning partial results");
+				resolve(emailResults);
+			}, 15000)
+		);
+
+		const results = await Promise.race([allEmailsPromise, overallTimeoutPromise]);
+		const finalResults = results.length > 0 ? results : emailResults;
 
 		// Count successes and failures
-		const successCount = emailResults.filter((r) => r.success).length;
-		const failureCount = emailResults.filter((r) => !r.success).length;
+		const successCount = finalResults.filter((r) => r.success).length;
+		const failureCount = finalResults.filter((r) => !r.success).length;
+
+		console.log(`✅ Notification sent: ${successCount} succeeded, ${failureCount} failed`);
 
 		res.json({
 			success: true,
-			message: `Notification sent successfully to ${successCount} faculty member(s)`,
+			message: `Notification sent successfully to ${successCount} faculty member(s)${failureCount > 0 ? ` (${failureCount} failed)` : ""}`,
 			results: {
-				total: emailResults.length,
+				total: finalResults.length,
 				successful: successCount,
 				failed: failureCount,
 			},
-			details: emailResults,
+			details: finalResults,
 		});
 	} catch (error) {
 		console.error("Error sending notification:", error);

@@ -1,7 +1,8 @@
-import { Component, AfterViewInit, OnDestroy, signal, input, effect, ElementRef, ViewChild } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, signal, input, effect, ElementRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import { ThemeService } from '../../../services/theme/theme.service';
 
 Chart.register(...registerables);
 
@@ -22,11 +23,15 @@ export class SDGEventsChartComponent implements AfterViewInit, OnDestroy {
   
   data = input.required<SDGEventData[]>();
   title = input<string>('Events per SDG per Year');
-  
+
+  themeService = inject(ThemeService);
   chart: Chart | null = null;
   loading = signal(true);
   chartId = `sdgChart_${Math.random().toString(36).substr(2, 9)}`;
-  
+
+  // Selectable HTML legend items
+  legendItems = signal<{ label: string; value: number; color: string }[]>([]);
+
   // Filters
   selectedYear = signal<number | 'all'>('all');
   selectedSDG = signal<number | 'all'>('all');
@@ -55,6 +60,27 @@ export class SDGEventsChartComponent implements AfterViewInit, OnDestroy {
         console.log('No SDG data available');
       }
     });
+
+    // React to theme changes — re-style the canvas-rendered legend and slice borders
+    effect(() => {
+      // read the signal so the effect tracks it
+      this.themeService.isDarkMode();
+      if (this.chart) {
+        this.applyThemeToChart();
+        this.chart.update();
+      }
+    });
+  }
+
+  private applyThemeToChart() {
+    if (!this.chart) return;
+    const isDark = this.themeService.isDarkMode();
+    const sliceBorder = isDark ? '#1f2937' : '#ffffff'; // gray-800 card bg / white
+
+    const dataset = this.chart.data.datasets?.[0] as any;
+    if (dataset) {
+      dataset.borderColor = sliceBorder;
+    }
   }
 
   ngAfterViewInit() {
@@ -128,6 +154,14 @@ export class SDGEventsChartComponent implements AfterViewInit, OnDestroy {
     console.log('Creating SDG chart...');
     const chartData = this.prepareChartData();
 
+    const isDark = this.themeService.isDarkMode();
+    const sliceBorder = isDark ? '#1f2937' : '#ffffff';
+
+    // ensure fresh dataset border matches current theme
+    if (chartData.datasets && chartData.datasets[0]) {
+      (chartData.datasets[0] as any).borderColor = sliceBorder;
+    }
+
     const config: ChartConfiguration = {
       type: 'pie',
       data: chartData,
@@ -135,31 +169,9 @@ export class SDGEventsChartComponent implements AfterViewInit, OnDestroy {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
+          // Canvas legend disabled — legend is rendered as selectable HTML in the template
           legend: {
-            position: 'right',
-            labels: {
-              font: {
-                size: 11,
-              },
-              padding: 10,
-              generateLabels: (chart) => {
-                const data = chart.data;
-                if (data.labels && data.datasets.length) {
-                  return data.labels.map((label, i) => {
-                    const dataset = data.datasets[0];
-                    const value = dataset.data[i];
-                    const bgColors = dataset.backgroundColor as string[];
-                    return {
-                      text: `${label}: ${value} event(s)`,
-                      fillStyle: bgColors[i],
-                      hidden: false,
-                      index: i,
-                    };
-                  });
-                }
-                return [];
-              },
-            },
+            display: false,
           },
           title: {
             display: false,
@@ -193,6 +205,7 @@ export class SDGEventsChartComponent implements AfterViewInit, OnDestroy {
     const filteredData = this.getFilteredData();
     
     if (filteredData.length === 0) {
+      this.legendItems.set([]);
       return {
         labels: [],
         datasets: [],
@@ -214,6 +227,15 @@ export class SDGEventsChartComponent implements AfterViewInit, OnDestroy {
     const data = sortedSDGs.map(([, count]) => count);
     const colors = sortedSDGs.map(([sdg]) => this.getSDGColor(sdg));
 
+    // Keep the selectable HTML legend in sync with the chart data
+    this.legendItems.set(
+      sortedSDGs.map(([sdg, count]) => ({
+        label: `SDG ${sdg}: ${this.getSDGName(sdg)}`,
+        value: count,
+        color: this.getSDGColor(sdg),
+      }))
+    );
+
     return {
       labels,
       datasets: [
@@ -232,6 +254,7 @@ export class SDGEventsChartComponent implements AfterViewInit, OnDestroy {
     
     const chartData = this.prepareChartData();
     this.chart.data = chartData;
+    this.applyThemeToChart();
     this.chart.update();
   }
 

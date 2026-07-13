@@ -7,6 +7,7 @@ const checkRole = require("../middleware/role.middleware");
 const memberController = require("../controllers/organization-member.controller");
 const documentController = require("../controllers/organization-document.controller");
 const adviserController = require("../controllers/organization-adviser.controller");
+const cvlAttachmentController = require("../controllers/cvl-attachment.controller");
 
 // Configure multer for document uploads
 const storage = multer.diskStorage({
@@ -40,12 +41,12 @@ const upload = multer({
   },
 });
 
-// Configure multer for Excel file uploads (memory storage for parsing)
+// Configure multer for Excel file uploads (persisted for download/preview)
 const fs = require("fs");
 const csvUpload = multer({
   storage: multer.diskStorage({
     destination: function (req, file, cb) {
-      const uploadPath = "uploads/temp/";
+      const uploadPath = "uploads/organization-population/";
       // Create directory if it doesn't exist
       if (!fs.existsSync(uploadPath)) {
         fs.mkdirSync(uploadPath, { recursive: true });
@@ -80,7 +81,13 @@ const csvUpload = multer({
 // Configure multer for member photo uploads
 const photoStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = "uploads/member-photos/";
+    let uploadPath = "uploads/member-photos/";
+    
+    // Use different path for signatures
+    if (file.fieldname === 'signature') {
+      uploadPath = "uploads/member-signatures/";
+    }
+    
     // Create directory if it doesn't exist
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
@@ -89,7 +96,8 @@ const photoStorage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, "member-" + uniqueSuffix + path.extname(file.originalname));
+    const prefix = file.fieldname === 'signature' ? 'signature-' : 'member-';
+    cb(null, prefix + uniqueSuffix + path.extname(file.originalname));
   },
 });
 
@@ -142,14 +150,20 @@ router.post(
   "/members",
   verifyToken,
   checkRole("organization"),
-  photoUpload.single("photo"),
+  photoUpload.fields([
+    { name: "photo", maxCount: 1 },
+    { name: "signature", maxCount: 1 }
+  ]),
   memberController.createMember,
 );
 router.put(
   "/members/:id",
   verifyToken,
   checkRole("organization"),
-  photoUpload.single("photo"),
+  photoUpload.fields([
+    { name: "photo", maxCount: 1 },
+    { name: "signature", maxCount: 1 }
+  ]),
   memberController.updateMember,
 );
 router.delete(
@@ -186,6 +200,35 @@ router.get(
   verifyToken,
   checkRole("organization"),
   memberController.getBulkUploadHistory,
+);
+
+router.put(
+  "/members/bulk-upload/:upload_id",
+  verifyToken,
+  checkRole("organization"),
+  csvUpload.single("file"),
+  memberController.updateBulkUpload,
+);
+
+router.delete(
+  "/members/bulk-upload/:upload_id",
+  verifyToken,
+  checkRole("organization"),
+  memberController.deleteBulkUpload,
+);
+
+router.get(
+  "/members/bulk-upload/:upload_id/download",
+  verifyToken,
+  checkRole("organization"),
+  memberController.downloadBulkUpload,
+);
+
+router.get(
+  "/members/bulk-upload/:upload_id/preview",
+  verifyToken,
+  checkRole("organization"),
+  memberController.previewBulkUpload,
 );
 
 // Document routes
@@ -259,6 +302,52 @@ router.get(
   verifyToken,
   checkRole("organization"),
   memberController.getDemographics,
+);
+
+// CVL Attachment routes
+router.get(
+  "/cvl-attachments",
+  verifyToken,
+  checkRole("organization"),
+  cvlAttachmentController.getCVLAttachments,
+);
+router.post(
+  "/cvl-attachments",
+  verifyToken,
+  checkRole("organization"),
+  upload.array("documents", 10), // Allow up to 10 files
+  cvlAttachmentController.createCVLAttachment,
+);
+router.put(
+  "/cvl-attachments/:attachment_type",
+  verifyToken,
+  checkRole("organization"),
+  upload.array("documents", 10),
+  cvlAttachmentController.updateCVLAttachment,
+);
+router.delete(
+  "/cvl-attachments/:attachment_type",
+  verifyToken,
+  checkRole("organization"),
+  cvlAttachmentController.deleteCVLAttachment,
+);
+router.delete(
+  "/cvl-attachments/file/:id",
+  verifyToken,
+  checkRole("organization"),
+  cvlAttachmentController.deleteCVLAttachmentById,
+);
+router.get(
+  "/cvl-attachments/:attachment_type/download",
+  verifyToken,
+  checkRole("organization"),
+  cvlAttachmentController.downloadCVLAttachment,
+);
+router.get(
+  "/cvl-attachments/file/:id/download",
+  verifyToken,
+  checkRole("organization"),
+  cvlAttachmentController.downloadCVLFile,
 );
 
 module.exports = router;

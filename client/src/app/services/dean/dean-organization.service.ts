@@ -43,7 +43,6 @@ export interface CreateOrganizationData {
   description?: string;
   email: string;
   adviser_id_1: number;
-  adviser_id_2: number;
 }
 
 export interface CreateOrganizationResponse {

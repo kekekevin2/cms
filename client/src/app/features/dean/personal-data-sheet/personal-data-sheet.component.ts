@@ -123,9 +123,8 @@ export class DeanPersonalDataSheetComponent implements OnInit {
         }
         this.loading.set(false);
 
-        // Auto-sync with My Profile on every load to ensure data is always current
-        console.log('PDS loaded, syncing with My Profile...');
-        this.syncWithProfile();
+        // Auto-sync disabled to prevent infinite loading
+        // Use the "Import from My Profile" button to sync manually
       },
       error: (error) => {
         if (error.status === 404) {
@@ -326,6 +325,10 @@ export class DeanPersonalDataSheetComponent implements OnInit {
         this.photoPreview.set(e.target.result);
       };
       reader.readAsDataURL(file);
+      // Persist immediately so the saved photo_path stays in sync with the
+      // preview. Without this, the preview looks uploaded but the server
+      // still has no photo, and Submit fails with "Please upload a photo".
+      this.uploadPhoto();
     }
   }
 

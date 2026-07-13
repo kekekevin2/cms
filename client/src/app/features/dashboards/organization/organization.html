@@ -8,12 +8,15 @@
     <!-- Logo/Brand -->
     <div class="mb-6 px-2 flex flex-col items-center">
       <img src="/assets/logo.png" alt="Logo" class="h-24 mb-3" />
-      <h2 class="text-xl font-bold text-gray-900 text-center">Organization Portal</h2>
-      <p class="text-sm text-gray-600 text-center mt-1">{{ organizationName() }}</p>
+      <h2 class="text-lg font-bold text-gray-900 text-center">Organization Portal</h2>
+      @if (organizationName()) {
+        <p class="text-xs text-gray-500 text-center mt-0.5">
+          {{ organizationName() }}
+        </p>
+      }
     </div>
 
-    <ul class="space-y-2 font-medium">
-      <!-- Dashboard -->
+    <ul class="space-y-1 font-medium">
       <li>
         <button
           (click)="selectTab('dashboard')"
@@ -21,27 +24,13 @@
           [class.text-green-600]="activeTab() === 'dashboard'"
           class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
         >
-          <svg class="shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M10 6.025A7.5 7.5 0 1 0 17.975 14H10V6.025Z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13.5 3c-.169 0-.334.014-.5.025V11h7.975c.011-.166.025-.331.025-.5A7.5 7.5 0 0 0 13.5 3Z"
-            />
-          </svg>
-          <span class="flex-1 ms-3 whitespace-nowrap text-left">Dashboard</span>
+          <i class="pi pi-chart-pie shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Dashboard</span>
         </button>
       </li>
 
       <li class="pt-2 mt-2 border-t border-gray-200"></li>
 
-      <!-- Members -->
       <li>
         <button
           (click)="selectTab('members')"
@@ -49,19 +38,11 @@
           [class.text-green-600]="activeTab() === 'members'"
           class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
         >
-          <svg class="shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-            />
-          </svg>
-          <span class="flex-1 ms-3 whitespace-nowrap text-left">Members</span>
+          <i class="pi pi-users shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Members</span>
         </button>
       </li>
 
-      <!-- Reports -->
       <li>
         <button
           (click)="selectTab('documents')"
@@ -69,15 +50,20 @@
           [class.text-green-600]="activeTab() === 'documents'"
           class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
         >
-          <svg class="shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          <span class="flex-1 ms-3 whitespace-nowrap text-left">Reports</span>
+          <i class="pi pi-file shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">Reports</span>
+        </button>
+      </li>
+
+      <li>
+        <button
+          (click)="selectTab('cvl-attachments')"
+          [class.bg-green-50]="activeTab() === 'cvl-attachments'"
+          [class.text-green-600]="activeTab() === 'cvl-attachments'"
+          class="flex items-center w-full px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
+        >
+          <i class="pi pi-paperclip shrink-0 text-sm w-5 text-center"></i>
+          <span class="flex-1 ms-3 whitespace-nowrap text-left text-sm">CVL Attachments</span>
         </button>
       </li>
     </ul>
@@ -95,110 +81,219 @@
     <button
       (click)="toggleSidebar()"
       type="button"
-      class="text-gray-900 bg-transparent hover:bg-gray-200 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm p-2 focus:outline-none"
+      class="text-gray-900 bg-transparent hover:bg-gray-200 font-medium rounded-lg text-sm p-2 focus:outline-none"
     >
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h10" />
-      </svg>
+      <i class="pi pi-bars text-lg"></i>
     </button>
-    <h1 class="text-xl font-bold text-gray-900">{{ getPageTitle() }}</h1>
+    <h1 class="text-sm font-semibold text-gray-900">{{ getPageTitle() }}</h1>
   </div>
 
-  <!-- Right Section: Dark Mode + User Menu -->
   <div class="flex items-center gap-3">
-    <!-- Dark Mode Toggle Button -->
-    <button
-      (click)="themeService.toggleTheme()"
-      class="flex items-center justify-center p-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 border border-gray-300 dark:border-gray-600"
-      title="Toggle Dark Mode"
-      aria-label="Toggle Dark Mode"
-    >
-      @if (themeService.isDarkMode()) {
-        <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-          />
-        </svg>
-      } @else {
-        <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-          />
-        </svg>
-      }
-    </button>
-
-    <!-- User Menu -->
     <div class="relative">
       <button
         (click)="toggleUserMenu()"
-        class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
+        class="inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
       >
-        <div
-          class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm"
-        >
-          {{ organizationName().charAt(0) }}
-        </div>
-        <span class="font-medium hidden sm:inline">{{ organizationName() }}</span>
-        <svg
-          class="w-4 h-4 transition-transform"
-        [class.rotate-180]="isUserMenuOpen()"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-      </svg>
-    </button>
+        <i class="pi pi-user text-sm"></i>
+        <span class="text-xs font-medium">
+          {{ organizationName() }}
+        </span>
+        <i
+          class="pi pi-chevron-down text-xs transition-transform"
+          [class.rotate-180]="isUserMenuOpen()"
+        ></i>
+      </button>
 
-    @if (isUserMenuOpen()) {
-      <div class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg">
-        <button
-          (click)="isChangePasswordOpen.set(true); isUserMenuOpen.set(false)"
-          class="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-t-lg transition"
+      @if (isUserMenuOpen()) {
+        <div
+          class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg"
         >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-            />
-          </svg>
-          <span>Change Password</span>
-        </button>
-        <button
-          (click)="logout()"
-          class="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-b-lg transition"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-            />
-          </svg>
-          <span>Sign Out</span>
-        </button>
-      </div>
-    }
+          <button
+            (click)="themeService.toggleTheme()"
+            class="inline-flex items-center gap-2 w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-t-lg transition"
+          >
+            @if (themeService.isDarkMode()) {
+              <i class="pi pi-sun text-sm text-yellow-500"></i>
+              <span class="text-xs">Light Mode</span>
+            } @else {
+              <i class="pi pi-moon text-sm text-indigo-600"></i>
+              <span class="text-xs">Dark Mode</span>
+            }
+          </button>
+          <button
+            (click)="isChangePasswordOpen.set(true); isUserMenuOpen.set(false)"
+            class="inline-flex items-center gap-2 w-full px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 transition"
+          >
+            <i class="pi pi-lock text-sm"></i>
+            <span class="text-xs">Change Password</span>
+          </button>
+          <button
+            (click)="logout()"
+            class="inline-flex items-center gap-2 w-full px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 rounded-b-lg transition"
+          >
+            <i class="pi pi-sign-out text-sm"></i>
+            <span class="text-xs">Sign Out</span>
+          </button>
+        </div>
+      }
+    </div>
   </div>
-</div>
 </div>
 
 <!-- Main Content -->
 <div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300" [class.ml-64]="isSidebarOpen()">
-  @if (activeTab() === 'dashboard') {
-    <div class="p-4 border border-gray-200 border-dashed rounded-lg">
+  @if (activeTab() === 'cvl-attachments') {
+    <div class="space-y-5">
+      <!-- Header & Actions -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="relative max-w-xs">
+            <i
+              class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"
+            ></i>
+            <input
+              type="text"
+              [(ngModel)]="cvlSearchQuery"
+              placeholder="Search by title or filename…"
+              class="w-full pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-200"
+            />
+          </div>
+          <select
+            [(ngModel)]="cvlSelectedAttachment"
+            class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-300 bg-white"
+          >
+            <option [ngValue]="undefined">All Attachments</option>
+            @for (option of cvlAttachmentOptions; track option) {
+              <option [ngValue]="option">{{ option }}</option>
+            }
+          </select>
+          <select
+            [(ngModel)]="cvlSelectedSemester"
+            class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-300 bg-white"
+          >
+            <option [ngValue]="undefined">All Semesters</option>
+            <option value="1st Semester">1st Semester</option>
+            <option value="2nd Semester">2nd Semester</option>
+            <option value="Summer 1">Summer 1</option>
+            <option value="Summer 2">Summer 2</option>
+          </select>
+        </div>
+        <button
+          (click)="openCVLAttachmentModal()"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white text-xs font-medium rounded-sm hover:bg-red-600 transition-colors"
+        >
+          <i class="pi pi-plus text-xs"></i> Add Attachment
+        </button>
+      </div>
+
+      <!-- CVL Attachments List -->
+    <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+      <table class="w-full text-xs table-fixed">
+        <thead>
+          <tr class="border-b border-gray-100 bg-gray-50">
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[12%]">
+              Attachment
+            </th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[22%]">
+              Title
+            </th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[26%]">
+              Filename
+            </th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[12%]">
+              Date Created
+            </th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[13%]">
+              Semester
+            </th>
+            <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-[15%]">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          @if (cvlAttachments().length === 0) {
+            <tr>
+              <td colspan="6" class="px-5 py-12 text-center">
+                <i class="pi pi-inbox text-4xl text-gray-300 mb-2"></i>
+                <p class="text-xs text-gray-400">No CVL attachments yet</p>
+                <p class="text-xs text-gray-400 mt-1">Click "Add Attachment" to create your first entry</p>
+              </td>
+            </tr>
+          } @else if (filteredCVLAttachments().length === 0) {
+            <tr>
+              <td colspan="6" class="px-5 py-12 text-center">
+                <i class="pi pi-search text-4xl text-gray-300 mb-2"></i>
+                <p class="text-xs text-gray-400">No attachments match your search or filters</p>
+              </td>
+            </tr>
+          } @else {
+            @for (attachment of filteredCVLAttachments(); track attachment.id) {
+              <tr class="hover:bg-gray-50/60 transition-colors">
+                <td class="px-5 py-3.5 text-gray-700 text-xs font-medium">
+                  <div class="truncate" [title]="attachment.attachment">
+                    {{ attachment.attachment }}
+                  </div>
+                </td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs">
+                  <div class="truncate" [title]="attachment.title">
+                    {{ attachment.title }}
+                  </div>
+                </td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs">
+                  <div class="truncate" [title]="attachment.filename">
+                    {{ attachment.filename }}
+                  </div>
+                </td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs whitespace-nowrap">
+                  {{ attachment.date_created ? formatDate(attachment.date_created) : 'N/A' }}
+                </td>
+                <td class="px-5 py-3.5 text-gray-500 text-xs whitespace-nowrap">
+                  {{ attachment.semester || 'N/A' }}
+                </td>
+                <td class="px-5 py-3.5 text-right">
+                  <div class="inline-flex gap-1">
+                    <button
+                      (click)="viewCVLAttachment(attachment)"
+                      class="px-2 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition inline-flex items-center gap-1"
+                      title="View"
+                    >
+                      <i class="pi pi-eye text-xs"></i>
+                    </button>
+                    <button
+                      (click)="downloadCVLAttachment(attachment)"
+                      class="px-2 py-1.5 text-xs font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition inline-flex items-center gap-1"
+                      title="Download"
+                    >
+                      <i class="pi pi-download text-xs"></i>
+                    </button>
+                    <button
+                      (click)="editCVLAttachment(attachment)"
+                      class="px-2 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition inline-flex items-center gap-1"
+                      title="Edit"
+                    >
+                      <i class="pi pi-pencil text-xs"></i>
+                    </button>
+                    <button
+                      (click)="deleteCVLAttachment(attachment.id)"
+                      class="px-2 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition inline-flex items-center gap-1"
+                      title="Delete"
+                    >
+                      <i class="pi pi-trash text-xs"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  } @else if (activeTab() === 'dashboard') {
+    <div class="space-y-4">
       <!-- Dashboard Tabs -->
-      <div class="mb-6 border-b border-gray-200">
+      <div class="mb-2 border-b border-gray-200">
         <nav class="flex space-x-8">
           <button
             (click)="selectDashboardTab('analytics')"
@@ -206,7 +301,7 @@
             [class.text-green-600]="dashboardTab() === 'analytics'"
             [class.border-transparent]="dashboardTab() !== 'analytics'"
             [class.text-gray-500]="dashboardTab() !== 'analytics'"
-            class="py-4 px-1 border-b-2 font-medium text-sm hover:text-green-600 hover:border-green-300 transition"
+            class="py-3 px-1 border-b-2 font-medium text-xs hover:text-green-600 hover:border-green-300 transition"
           >
             Organization Analytics
           </button>
@@ -216,7 +311,7 @@
             [class.text-green-600]="dashboardTab() === 'demographics'"
             [class.border-transparent]="dashboardTab() !== 'demographics'"
             [class.text-gray-500]="dashboardTab() !== 'demographics'"
-            class="py-4 px-1 border-b-2 font-medium text-sm hover:text-green-600 hover:border-green-300 transition"
+            class="py-3 px-1 border-b-2 font-medium text-xs hover:text-green-600 hover:border-green-300 transition"
           >
             Member Demographics
           </button>
@@ -225,66 +320,80 @@
 
       <!-- Analytics Tab Content -->
       @if (dashboardTab() === 'analytics') {
-        <!-- Dashboard Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- Stat Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div
-            class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg p-6"
+            class="bg-linear-to-br from-purple-500 to-purple-600 text-white rounded-sm shadow p-4"
           >
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-sm font-medium opacity-90 mb-1">Total Events</h3>
-                <p class="text-4xl font-bold">{{ stats().approvedEvents }}</p>
-                <p class="text-xs opacity-75 mt-1">All organization events</p>
-              </div>
-              <div class="text-5xl opacity-30">
-                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-xs font-medium opacity-80">Total Members</p>
+              <i class="pi pi-users text-white/60 text-sm"></i>
             </div>
+            <p class="text-2xl font-bold">{{ stats().totalMembers }}</p>
+            <p class="text-xs opacity-70 mt-1">{{ stats().activeMembers || 0 }} Active</p>
           </div>
 
           <div
-            class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6"
+            class="bg-linear-to-br from-green-500 to-green-600 text-white rounded-sm shadow p-4"
           >
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-sm font-medium opacity-90 mb-1">Documents Submitted</h3>
-                <p class="text-4xl font-bold">{{ stats().documentsSubmitted }}</p>
-                <p class="text-xs opacity-75 mt-1">{{ stats().documentsPending }} pending</p>
-              </div>
-              <div class="text-5xl opacity-30">
-                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-xs font-medium opacity-80">Documents Approved</p>
+              <i class="pi pi-check-circle text-white/60 text-sm"></i>
             </div>
+            <p class="text-2xl font-bold">{{ stats().documentsApproved }}</p>
+            <p class="text-xs opacity-70 mt-1">{{ stats().documentsRejected }} Rejected</p>
           </div>
 
           <div
-            class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6"
+            class="bg-linear-to-br from-indigo-500 to-indigo-600 text-white rounded-sm shadow p-4"
           >
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-sm font-medium opacity-90 mb-1">Approved Documents</h3>
-                <p class="text-4xl font-bold">{{ stats().documentsApproved }}</p>
-                <p class="text-xs opacity-75 mt-1">{{ stats().documentsRejected }} rejected</p>
-              </div>
-              <div class="text-5xl opacity-30">
-                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-xs font-medium opacity-80">Total Events</p>
+              <i class="pi pi-calendar text-white/60 text-sm"></i>
             </div>
+            <p class="text-2xl font-bold">{{ stats().totalEvents }}</p>
+            <p class="text-xs opacity-70 mt-1">All organization events</p>
+          </div>
+        </div>
+
+        <!-- Status mini-cards row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="bg-white border border-gray-100 rounded-sm p-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+              <p class="text-xs text-gray-500">Approved</p>
+            </div>
+            <p class="text-xl font-bold text-gray-700">{{ stats().documentsApproved }}</p>
+            <p class="text-xs text-gray-400">Documents cleared</p>
+          </div>
+          <div class="bg-white border border-gray-100 rounded-sm p-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-2 h-2 rounded-full bg-yellow-400 shrink-0"></span>
+              <p class="text-xs text-gray-500">Pending</p>
+            </div>
+            <p class="text-xl font-bold text-gray-700">{{ stats().documentsPending }}</p>
+            <p class="text-xs text-gray-400">Awaiting review</p>
+          </div>
+          <div class="bg-white border border-gray-100 rounded-sm p-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-2 h-2 rounded-full bg-red-400 shrink-0"></span>
+              <p class="text-xs text-gray-500">Rejected</p>
+            </div>
+            <p class="text-xl font-bold text-gray-700">{{ stats().documentsRejected }}</p>
+            <p class="text-xs text-gray-400">Needs revision</p>
+          </div>
+          <div class="bg-white border border-gray-100 rounded-sm p-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span>
+              <p class="text-xs text-gray-500">Total Submitted</p>
+            </div>
+            <p class="text-xl font-bold text-gray-700">{{ stats().documentsSubmitted }}</p>
+            <p class="text-xs text-gray-400">All documents</p>
           </div>
         </div>
 
         <!-- Charts Section -->
-        <div class="grid grid-cols-1 gap-6 mb-6">
+        <div class="grid grid-cols-1 gap-4 mb-4">
           <!-- SDG Reports Chart -->
           <app-sdg-events-chart
             [data]="sdgEventData()"
@@ -292,23 +401,25 @@
           />
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <!-- Members by Position Chart -->
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Members by Position</h3>
+          <div class="bg-white rounded-sm border border-gray-100 p-4">
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-4">
+              Position
+            </p>
             @if (stats().membersByPosition.length === 0) {
               <div class="text-center py-8 text-gray-500">
-                <p>No member data available</p>
+                <p class="text-xs">No member data available</p>
               </div>
             } @else {
               <div class="space-y-3">
                 @for (item of stats().membersByPosition.slice(0, 8); track item.position) {
                   <div class="flex items-center">
-                    <div class="w-32 text-sm font-medium text-gray-700 truncate">
+                    <div class="w-28 text-xs font-medium text-gray-700 truncate">
                       {{ item.position }}
                     </div>
-                    <div class="flex-1 mx-3">
-                      <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                    <div class="flex-1 mx-2">
+                      <div class="w-full bg-gray-100 rounded-full h-5 overflow-hidden">
                         <div
                           class="bg-gradient-to-r from-purple-500 to-purple-600 h-full rounded-full flex items-center justify-end pr-2 text-xs font-semibold text-white transition-all duration-500"
                           [style.width.%]="(item.count / stats().totalMembers) * 100"
@@ -319,7 +430,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="w-12 text-right text-sm font-semibold text-gray-900">
+                    <div class="w-10 text-right text-xs font-semibold text-gray-900">
                       {{ item.count }}
                     </div>
                   </div>
@@ -329,21 +440,23 @@
           </div>
 
           <!-- Members by Year Level Chart -->
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Members by Year Level</h3>
+          <div class="bg-white rounded-sm border border-gray-100 p-4">
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-4">
+              Year Level
+            </p>
             @if (stats().membersByYearLevel.length === 0) {
               <div class="text-center py-8 text-gray-500">
-                <p>No member data available</p>
+                <p class="text-xs">No member data available</p>
               </div>
             } @else {
               <div class="space-y-3">
                 @for (item of stats().membersByYearLevel; track item.year) {
                   <div class="flex items-center">
-                    <div class="w-28 text-sm font-medium text-gray-700">{{ item.year }}</div>
-                    <div class="flex-1 mx-3">
-                      <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                    <div class="w-24 text-xs font-medium text-gray-700">{{ item.year }}</div>
+                    <div class="flex-1 mx-2">
+                      <div class="w-full bg-gray-100 rounded-full h-5 overflow-hidden">
                         <div
-                          class="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full flex items-center justify-end pr-2 text-xs font-semibold text-white transition-all duration-500"
+                          class="bg-gradient-to-r from-indigo-500 to-indigo-600 h-full rounded-full flex items-center justify-end pr-2 text-xs font-semibold text-white transition-all duration-500"
                           [style.width.%]="(item.count / stats().totalMembers) * 100"
                         >
                           @if ((item.count / stats().totalMembers) * 100 > 15) {
@@ -352,10 +465,10 @@
                         </div>
                       </div>
                     </div>
-                    <div class="w-12 text-right text-sm font-semibold text-gray-900">
+                    <div class="w-10 text-right text-xs font-semibold text-gray-900">
                       {{ item.count }}
                     </div>
-                    <div class="w-16 text-right text-xs text-gray-500">
+                    <div class="w-12 text-right text-xs text-gray-500">
                       {{ ((item.count / stats().totalMembers) * 100).toFixed(0) }}%
                     </div>
                   </div>
@@ -364,103 +477,81 @@
             }
           </div>
         </div>
-
-        <!-- Demographics Tab Content -->
       } @else if (dashboardTab() === 'demographics') {
-        <div class="space-y-6">
-          <!-- Filters for Demographics -->
-          <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
-                <select
-                  [(ngModel)]="demographicsAcademicYear"
-                  (ngModelChange)="loadDemographics()"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option [ngValue]="undefined">All Years</option>
-                  <!-- Add academic years here -->
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                <select
-                  [(ngModel)]="demographicsSemester"
-                  (ngModelChange)="loadDemographics()"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option [ngValue]="undefined">All Semesters</option>
-                  <option value="1st Semester">1st Semester</option>
-                  <option value="2nd Semester">2nd Semester</option>
-                  <option value="Summer">Summer</option>
-                </select>
-              </div>
-              <div class="flex items-end">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    [(ngModel)]="demographicsActiveOnly"
-                    (ngModelChange)="loadDemographics()"
-                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-green-500"
-                  />
-                  <span class="text-sm font-medium text-gray-700">Active Only</span>
-                </label>
-              </div>
+        <!-- Member Demographics -->
+        <div class="space-y-5">
+          <!-- Filters -->
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Academic Year</label>
+              <select
+                [(ngModel)]="demographicsAcademicYear"
+                (ngModelChange)="loadDemographics()"
+                class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-300 bg-white"
+              >
+                <option [ngValue]="undefined">All Years</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Semester</label>
+              <select
+                [(ngModel)]="demographicsSemester"
+                (ngModelChange)="loadDemographics()"
+                class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-300 bg-white"
+              >
+                <option [ngValue]="undefined">All Semesters</option>
+                <option value="1st Semester">1st Semester</option>
+                <option value="2nd Semester">2nd Semester</option>
+                <option value="Summer 1">Summer 1</option>
+                <option value="Summer 2">Summer 2</option>
+              </select>
             </div>
           </div>
 
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Member Demographics</h3>
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="bg-purple-50 rounded-sm border border-purple-200 p-4">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-medium text-purple-700">Total Members</p>
+                <i class="pi pi-users text-purple-400 text-sm"></i>
+              </div>
+              <p class="text-2xl font-bold text-purple-900">{{ stats().totalMembers }}</p>
+            </div>
+            <div class="bg-blue-50 rounded-sm border border-blue-200 p-4">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-medium text-blue-700">Male Members</p>
+                <i class="pi pi-user text-blue-400 text-sm"></i>
+              </div>
+              <p class="text-2xl font-bold text-blue-900">{{ demographics().maleCount || 0 }}</p>
+              <p class="text-xs text-blue-600 mt-1">{{ demographics().malePercentage || 0 }}%</p>
+            </div>
+            <div class="bg-pink-50 rounded-sm border border-pink-200 p-4">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-medium text-pink-700">Female Members</p>
+                <i class="pi pi-user text-pink-400 text-sm"></i>
+              </div>
+              <p class="text-2xl font-bold text-pink-900">{{ demographics().femaleCount || 0 }}</p>
+              <p class="text-xs text-pink-600 mt-1">{{ demographics().femalePercentage || 0 }}%</p>
+            </div>
+          </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div
-                class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200"
-              >
-                <p class="text-sm text-purple-700 font-medium mb-1">Total Members</p>
-                <p class="text-3xl font-bold text-purple-900">{{ stats().totalMembers }}</p>
-              </div>
-              <div
-                class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200"
-              >
-                <p class="text-sm text-blue-700 font-medium mb-1">Active Members</p>
-                <p class="text-3xl font-bold text-blue-900">{{ stats().activeMembers || 0 }}</p>
-              </div>
-              <div
-                class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200"
-              >
-                <p class="text-sm text-green-700 font-medium mb-1">Male Members</p>
-                <p class="text-3xl font-bold text-green-900">{{ demographics().maleCount || 0 }}</p>
-              </div>
-              <div
-                class="bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg p-4 border border-pink-200"
-              >
-                <p class="text-sm text-pink-700 font-medium mb-1">Female Members</p>
-                <p class="text-3xl font-bold text-pink-900">
-                  {{ demographics().femaleCount || 0 }}
+          <!-- Gender + Program -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <!-- Gender Distribution -->
+            <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+              <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                <i class="pi pi-chart-pie text-xs text-gray-400"></i>
+                <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  Gender Distribution
                 </p>
               </div>
-            </div>
-
-            <!-- Gender Distribution with Pie Chart -->
-            <div class="mb-6">
-              <h4 class="text-md font-semibold text-gray-800 mb-4">Gender Distribution</h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Pie Chart -->
-                <div class="flex justify-center items-center">
-                  @if (demographics().maleCount > 0 || demographics().femaleCount > 0) {
-                    <div class="relative w-64 h-64">
+              <div class="p-4">
+                @if (demographics().maleCount > 0 || demographics().femaleCount > 0) {
+                  <div class="flex items-center gap-6">
+                    <!-- Donut -->
+                    <div class="relative w-36 h-36 shrink-0">
                       <svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                        <!-- Background circle -->
-                        <circle
-                          cx="100"
-                          cy="100"
-                          r="80"
-                          fill="none"
-                          stroke="#e5e7eb"
-                          stroke-width="40"
-                        />
-
-                        <!-- Male segment (Blue) -->
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" stroke-width="40" />
                         @if (demographics().malePercentage > 0) {
                           <circle
                             cx="100"
@@ -475,8 +566,6 @@
                             stroke-dashoffset="0"
                           />
                         }
-
-                        <!-- Female segment (Pink) -->
                         @if (demographics().femalePercentage > 0) {
                           <circle
                             cx="100"
@@ -488,81 +577,68 @@
                             [attr.stroke-dasharray]="
                               (demographics().femalePercentage / 100) * 502.65 + ' 502.65'
                             "
-                            [attr.stroke-dashoffset]="
-                              -(demographics().malePercentage / 100) * 502.65
-                            "
+                            [attr.stroke-dashoffset]="-(demographics().malePercentage / 100) * 502.65"
                           />
                         }
                       </svg>
-
-                      <!-- Center text -->
                       <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <p class="text-3xl font-bold text-gray-900">{{ stats().totalMembers }}</p>
-                        <p class="text-sm text-gray-600">Total</p>
+                        <p class="text-xl font-bold text-gray-800">{{ stats().totalMembers }}</p>
+                        <p class="text-xs text-gray-400">Total</p>
                       </div>
                     </div>
-                  } @else {
-                    <div class="text-center py-12 text-gray-500">
-                      <p>No gender data available</p>
-                    </div>
-                  }
-                </div>
-
-                <!-- Legend and Stats -->
-                <div class="flex flex-col justify-center space-y-4">
-                  <div class="flex items-center">
-                    <div class="w-6 h-6 bg-blue-500 rounded mr-3"></div>
-                    <div class="flex-1">
-                      <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-gray-700">Male</span>
-                        <span class="text-lg font-bold text-gray-900">{{
-                          demographics().maleCount || 0
-                        }}</span>
+                    <!-- Legend -->
+                    <div class="space-y-3 flex-1">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-3 h-3 rounded-sm bg-blue-500 shrink-0"></span>
+                          <span class="text-xs text-gray-600">Male</span>
+                        </div>
+                        <div class="text-right">
+                          <span class="text-xs font-semibold text-gray-800">{{
+                            demographics().maleCount || 0
+                          }}</span>
+                          <span class="text-xs text-gray-400 ml-1"
+                            >{{ demographics().malePercentage || 0 }}%</span
+                          >
+                        </div>
                       </div>
-                      <div class="text-xs text-gray-500">
-                        {{ demographics().malePercentage || 0 }}% of total
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="flex items-center">
-                    <div class="w-6 h-6 bg-pink-500 rounded mr-3"></div>
-                    <div class="flex-1">
-                      <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-gray-700">Female</span>
-                        <span class="text-lg font-bold text-gray-900">{{
-                          demographics().femaleCount || 0
-                        }}</span>
-                      </div>
-                      <div class="text-xs text-gray-500">
-                        {{ demographics().femalePercentage || 0 }}% of total
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-3 h-3 rounded-sm bg-pink-500 shrink-0"></span>
+                          <span class="text-xs text-gray-600">Female</span>
+                        </div>
+                        <div class="text-right">
+                          <span class="text-xs font-semibold text-gray-800">{{
+                            demographics().femaleCount || 0
+                          }}</span>
+                          <span class="text-xs text-gray-400 ml-1"
+                            >{{ demographics().femalePercentage || 0 }}%</span
+                          >
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                } @else {
+                  <p class="text-xs text-gray-400 text-center py-4">No gender data available</p>
+                }
               </div>
             </div>
 
-            <!-- Program Distribution with Pie Chart -->
-            <div class="mb-6">
-              <h4 class="text-md font-semibold text-gray-800 mb-4">Members by Program</h4>
-              @if (demographics().byProgram && demographics().byProgram.length > 0) {
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <!-- Pie Chart -->
-                  <div class="flex justify-center items-center">
-                    <div class="relative w-64 h-64">
+            <!-- Program Distribution -->
+            <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+              <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                <i class="pi pi-book text-xs text-gray-400"></i>
+                <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  Program
+                </p>
+              </div>
+              <div class="p-4">
+                @if (demographics().byProgram && demographics().byProgram.length > 0) {
+                  <div class="flex items-center gap-6">
+                    <!-- Donut -->
+                    <div class="relative w-36 h-36 shrink-0">
                       <svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                        <!-- Background circle -->
-                        <circle
-                          cx="100"
-                          cy="100"
-                          r="80"
-                          fill="none"
-                          stroke="#e5e7eb"
-                          stroke-width="40"
-                        />
-
-                        <!-- Program segments -->
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" stroke-width="40" />
                         @for (
                           program of demographics().byProgram;
                           track program.program;
@@ -576,75 +652,70 @@
                             [attr.stroke]="getProgramColor(i)"
                             stroke-width="40"
                             [attr.stroke-dasharray]="
-                              (((program.count / stats().totalMembers) * 100) / 100) * 502.65 +
-                              ' 502.65'
+                              (((program.count / stats().totalMembers) * 100) / 100) * 502.65 + ' 502.65'
                             "
                             [attr.stroke-dashoffset]="-getAccumulatedOffset(i)"
                           />
                         }
                       </svg>
-
-                      <!-- Center text -->
                       <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <p class="text-3xl font-bold text-gray-900">
+                        <p class="text-xl font-bold text-gray-800">
                           {{ demographics().byProgram.length }}
                         </p>
-                        <p class="text-sm text-gray-600">Programs</p>
+                        <p class="text-xs text-gray-400">Programs</p>
                       </div>
                     </div>
-                  </div>
-
-                  <!-- Legend -->
-                  <div class="flex flex-col justify-center space-y-3 max-h-64 overflow-y-auto">
-                    @for (
-                      program of demographics().byProgram;
-                      track program.program;
-                      let i = $index
-                    ) {
-                      <div class="flex items-center">
-                        <div
-                          class="w-6 h-6 rounded mr-3"
-                          [style.background-color]="getProgramColor(i)"
-                        ></div>
-                        <div class="flex-1 min-w-0">
-                          <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-700 truncate">{{
-                              program.program
-                            }}</span>
-                            <span class="text-sm font-bold text-gray-900 ml-2">{{
-                              program.count
-                            }}</span>
+                    <!-- Legend -->
+                    <div class="space-y-2 flex-1 max-h-36 overflow-y-auto">
+                      @for (program of demographics().byProgram; track program.program; let i = $index) {
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2 min-w-0">
+                            <span
+                              class="w-3 h-3 rounded-sm shrink-0"
+                              [style.background-color]="getProgramColor(i)"
+                            ></span>
+                            <span class="text-xs text-gray-600 truncate">{{ program.program }}</span>
                           </div>
-                          <div class="text-xs text-gray-500">
-                            {{ ((program.count / stats().totalMembers) * 100).toFixed(1) }}%
+                          <div class="text-right shrink-0 ml-2">
+                            <span class="text-xs font-semibold text-gray-800">{{ program.count }}</span>
+                            <span class="text-xs text-gray-400 ml-1"
+                              >{{ ((program.count / stats().totalMembers) * 100).toFixed(0) }}%</span
+                            >
                           </div>
                         </div>
-                      </div>
-                    }
+                      }
+                    </div>
                   </div>
-                </div>
-              } @else {
-                <p class="text-gray-500 text-center py-4">No program data available</p>
-              }
+                } @else {
+                  <p class="text-xs text-gray-400 text-center py-4">No program data available</p>
+                }
+              </div>
             </div>
+          </div>
 
-            <!-- Year Level Distribution -->
-            <div>
-              <h4 class="text-md font-semibold text-gray-800 mb-3">Members by Year Level</h4>
+          <!-- Year Level -->
+          <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+              <i class="pi pi-graduation-cap text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                Year Level
+              </p>
+            </div>
+            <div class="p-4">
               @if (stats().membersByYearLevel && stats().membersByYearLevel.length > 0) {
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                   @for (yearLevel of stats().membersByYearLevel; track yearLevel.year) {
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
-                      <p class="text-sm text-gray-600 mb-1">{{ yearLevel.year }}</p>
-                      <p class="text-2xl font-bold text-gray-900">{{ yearLevel.count }}</p>
-                      <p class="text-xs text-gray-500 mt-1">
+                    <div class="text-center p-3 bg-gray-50 rounded-sm border border-gray-100">
+                      <p class="text-xs text-gray-500 mb-1">{{ yearLevel.year }}</p>
+                      <p class="text-xl font-bold text-gray-700">{{ yearLevel.count }}</p>
+                      <p class="text-xs text-gray-400 mt-0.5">
                         {{ ((yearLevel.count / stats().totalMembers) * 100).toFixed(1) }}%
                       </p>
                     </div>
                   }
                 </div>
               } @else {
-                <p class="text-gray-500 text-center py-4">No year level data available</p>
+                <p class="text-xs text-gray-400 text-center py-4">No year level data available</p>
               }
             </div>
           </div>
@@ -660,4 +731,295 @@
 
 @if (isChangePasswordOpen()) {
   <app-change-password-modal (close)="isChangePasswordOpen.set(false)" />
+}
+
+<!-- CVL Attachment Modal -->
+@if (showCVLAttachmentModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-100">
+          <h3 class="text-xs font-semibold text-gray-900">CVL Attachment</h3>
+          <p class="text-xs text-gray-400 mt-0.5">Upload attachments and documents</p>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 overflow-y-auto flex-1">
+          <form class="space-y-4">
+            <!-- Attachment Dropdown -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">
+                Attachment <span class="text-red-500">*</span>
+              </label>
+              <select
+                [(ngModel)]="cvlForm().attachment"
+                name="attachment"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 transition"
+                [class.border-red-300]="cvlFormSubmitted() && !cvlForm().attachment"
+              >
+                <option value="">Select Attachment</option>
+                <option value="Attachment A">Attachment A (Commitment Letter of the Adviser)</option>
+                <option value="Attachment B">Attachment B (Certification of Academic Qualifications)</option>
+                <option value="Attachment C">Attachment C (Profile of Student Organization)</option>
+                <option value="Attachment D">Attachment D (List of Members)</option>
+                <option value="Attachment E">Attachment E (History of Student Organization)</option>
+                <option value="Attachment F">Attachment F (Declaration of the Organization’s Revolving Fund)</option>
+                <option value="Attachment G">Attachment G (Preamble)</option>
+                <option value="Attachment H">Attachment H (Student Organization’s Adviser Profile)</option>
+                <option value="Attachment J">Attachment J (List of Officers)</option>
+              </select>
+              @if (cvlFormSubmitted() && !cvlForm().attachment) {
+                <p class="text-xs text-red-600 mt-1">Attachment is required</p>
+              }
+            </div>
+
+            <!-- Date Created/Uploaded -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">
+                Date Created
+              </label>
+              <input
+                type="date"
+                [(ngModel)]="cvlForm().dateCreated"
+                name="dateCreated"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 transition"
+              />
+            </div>
+
+            <!-- Semester -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">
+                Semester <span class="text-red-500">*</span>
+              </label>
+              <select
+                [(ngModel)]="cvlForm().semester"
+                name="semester"
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 transition"
+                [class.border-red-300]="cvlFormSubmitted() && !cvlForm().semester"
+              >
+                <option value="">Select Semester</option>
+                <option value="1st Semester">1st Semester</option>
+                <option value="2nd Semester">2nd Semester</option>
+                <option value="Summer 1">Summer 1</option>
+                <option value="Summer 2">Summer 2</option>
+              </select>
+              @if (cvlFormSubmitted() && !cvlForm().semester) {
+                <p class="text-xs text-red-600 mt-1">Semester is required</p>
+              }
+            </div>
+
+            <!-- Documents Upload -->
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">
+                Upload File <span class="text-red-500">*</span>
+              </label>
+              
+              <!-- Show existing attachments in edit mode -->
+              @if (cvlEditMode() && cvlExistingFiles().length > 0) {
+                <div class="mb-3">
+                  <p class="text-xs font-medium text-gray-600 mb-2">Current Attachments:</p>
+                  <div class="space-y-2">
+                    @for (file of cvlExistingFiles(); track $index; let i = $index) {
+                      <div class="flex items-center justify-between px-3 py-2 bg-blue-50 border border-blue-200 rounded-sm">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                          <i class="pi pi-file text-blue-500 text-sm flex-shrink-0"></i>
+                          <div class="flex-1 min-w-0">
+                            <p class="text-xs text-gray-700 font-medium truncate">{{ file.name }}</p>
+                            <p class="text-xs text-gray-400">{{ formatFileSize(file.size) }}</p>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <button
+                            type="button"
+                            (click)="downloadExistingFile(file)"
+                            class="flex-shrink-0 text-blue-600 hover:text-blue-800 transition"
+                            title="Download file"
+                          >
+                            <i class="pi pi-download text-sm"></i>
+                          </button>
+                          <button
+                            type="button"
+                            (click)="removeExistingFile(i)"
+                            class="flex-shrink-0 text-red-600 hover:text-red-800 transition"
+                            title="Remove file"
+                          >
+                            <i class="pi pi-times text-sm"></i>
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+              
+              <input
+                type="file"
+                (change)="onCVLFilesSelected($event)"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                multiple
+                class="w-full px-3 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 transition file:mr-3 file:px-3 file:py-1.5 file:rounded-sm file:border-0 file:text-xs file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 file:cursor-pointer"
+                [class.border-red-300]="cvlFormSubmitted() && cvlUploadedFiles().length === 0 && cvlExistingFiles().length === 0"
+              />
+              <p class="text-xs text-gray-400 mt-1">
+                Accepted: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Max 10MB each)
+              </p>
+
+              @if (cvlFormSubmitted() && cvlUploadedFiles().length === 0 && cvlExistingFiles().length === 0) {
+                <p class="text-xs text-red-600 mt-1">At least one document is required</p>
+              }
+
+              <!-- Newly Uploaded Files List -->
+              @if (cvlUploadedFiles().length > 0) {
+                <div class="mt-3">
+                  <p class="text-xs font-medium text-gray-600 mb-2">New Files to Upload:</p>
+                  <div class="space-y-2">
+                    @for (file of cvlUploadedFiles(); track $index; let i = $index) {
+                      <div class="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                          <i class="pi pi-file text-gray-400 text-sm flex-shrink-0"></i>
+                          <div class="flex-1 min-w-0">
+                            <p class="text-xs text-gray-700 font-medium truncate">{{ file.name }}</p>
+                            <p class="text-xs text-gray-400">{{ formatFileSize(file.size) }}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          (click)="removeCVLFile(i)"
+                          class="flex-shrink-0 text-red-600 hover:text-red-800 transition"
+                          title="Remove file"
+                        >
+                          <i class="pi pi-times text-sm"></i>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (cvlErrorMessage()) {
+              <div class="px-3 py-2 bg-red-50 border border-red-200 rounded-sm text-red-800 text-xs">
+                {{ cvlErrorMessage() }}
+              </div>
+            }
+
+            @if (cvlSuccessMessage()) {
+              <div class="px-3 py-2 bg-green-50 border border-green-200 rounded-sm text-green-800 text-xs">
+                {{ cvlSuccessMessage() }}
+              </div>
+            }
+          </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+          <button
+            type="button"
+            (click)="closeCVLAttachmentModal()"
+            [disabled]="cvlLoading()"
+            class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="saveCVLAttachment()"
+            [disabled]="cvlLoading()"
+            class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+          >
+            @if (cvlLoading()) {
+              <i class="pi pi-spin pi-spinner text-xs"></i>
+            }
+            Submit Attachment
+          </button>
+        </div>
+    </div>
+  </div>
+}
+
+<!-- CVL Attachment View Modal -->
+@if (showCVLViewModal() && selectedCVLAttachment()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+      <div class="px-6 py-5 border-b border-gray-100">
+        <h3 class="text-xs font-semibold text-gray-900">CVL Attachment Details</h3>
+        <p class="text-xs text-gray-400 mt-0.5">View attachment information</p>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1">
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Attachment Type</label>
+              <p class="text-xs text-gray-900 font-medium">{{ selectedCVLAttachment()!.attachment }}</p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Title</label>
+              <p class="text-xs text-gray-900">{{ selectedCVLAttachment()!.title }}</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Date Created</label>
+              <p class="text-xs text-gray-900">
+                {{ selectedCVLAttachment()!.date_created ? formatDate(selectedCVLAttachment()!.date_created!) : 'N/A' }}
+              </p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Semester</label>
+              <p class="text-xs text-gray-900">
+                {{ selectedCVLAttachment()!.semester || 'N/A' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="border-t border-gray-100 pt-4">
+            <label class="block text-xs font-medium text-gray-500 mb-2">File Information</label>
+            <div class="bg-gray-50 rounded-sm p-3 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500">File Name:</span>
+                <button
+                  (click)="downloadCVLAttachment(selectedCVLAttachment()!)"
+                  class="text-blue-600 hover:text-blue-800 hover:underline text-xs font-medium inline-flex items-center gap-1"
+                >
+                  <i class="pi pi-download text-xs"></i>{{ selectedCVLAttachment()!.filename }}
+                </button>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500">File Size:</span>
+                <span class="text-xs text-gray-900 font-medium">{{ formatFileSize(selectedCVLAttachment()!.file_size) }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500">File Type:</span>
+                <span class="text-xs text-gray-900 font-medium">{{ selectedCVLAttachment()!.mime_type }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t border-gray-100 pt-4">
+            <label class="block text-xs font-medium text-gray-500 mb-2">Upload Information</label>
+            <div class="text-xs text-gray-700">
+              <p>Uploaded on: {{ formatDate(selectedCVLAttachment()!.uploaded_at) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+        <button
+          type="button"
+          (click)="closeCVLViewModal()"
+          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+        >
+          Close
+        </button>
+        <button
+          type="button"
+          (click)="downloadCVLAttachment(selectedCVLAttachment()!); closeCVLViewModal()"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-xs font-medium rounded-sm hover:bg-green-700 transition"
+        >
+          <i class="pi pi-download text-xs"></i> Download
+        </button>
+      </div>
+    </div>
+  </div>
 }

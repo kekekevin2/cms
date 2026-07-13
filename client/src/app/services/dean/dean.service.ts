@@ -75,7 +75,13 @@ export class DeanService {
     return this.http.get<{ faculty: any[] }>(`${this.deanApiUrl}/faculty`);
   }
 
-  getOrganizationDashboard(): Observable<any> {
-    return this.http.get<any>(`${this.deanApiUrl}/dashboard/organizations/dashboard`);
+  getOrganizationDashboard(organizationId?: number): Observable<any> {
+    let params = new HttpParams();
+    if (organizationId != null) {
+      params = params.set('organizationId', organizationId.toString());
+    }
+    return this.http.get<any>(`${this.deanApiUrl}/dashboard/organizations/dashboard`, {
+      params,
+    });
   }
 }

@@ -1,19 +1,17 @@
-<div class="p-3 space-y-4">
+<!--
+  Mirrors the Organization Portal's Member Demographics tab
+  (client/src/app/features/dashboards/organization/organization.html)
+  so the Department Portal has the exact same layout, cards, charts,
+  filters, and labels. The only difference is data scope:
+    - Organization Portal → single organization
+    - Department Portal   → aggregated across all organizations in
+                            the dean's department (or a single org
+                            when scoped via the Organization
+                            Management action icons).
+-->
+<div class="space-y-5">
   <!-- Filters -->
   <div class="flex flex-wrap items-end gap-3">
-    <div>
-      <label class="block text-xs font-medium text-gray-500 mb-1">Organization</label>
-      <select
-        [(ngModel)]="selectedOrganization"
-        (ngModelChange)="loadDemographics()"
-        class="px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:ring-0 focus:border-gray-300 bg-white"
-      >
-        <option [ngValue]="undefined">Select Organization</option>
-        @for (org of organizations(); track org.organization_id) {
-          <option [ngValue]="org.organization_id">{{ org.organization_name }}</option>
-        }
-      </select>
-    </div>
     <div>
       <label class="block text-xs font-medium text-gray-500 mb-1">Academic Year</label>
       <select
@@ -39,253 +37,221 @@
         <option [ngValue]="undefined">All Semesters</option>
         <option value="1st Semester">1st Semester</option>
         <option value="2nd Semester">2nd Semester</option>
-        <option value="Summer">Summer</option>
+        <option value="Summer 1">Summer 1</option>
+        <option value="Summer 2">Summer 2</option>
       </select>
-    </div>
-    <div class="flex items-center gap-2 pb-0.5">
-      <input
-        type="checkbox"
-        [(ngModel)]="activeOnly"
-        (ngModelChange)="loadDemographics()"
-        class="w-3.5 h-3.5 rounded-sm border-gray-300"
-        id="activeOnly"
-      />
-      <label for="activeOnly" class="text-xs text-gray-600 cursor-pointer">Active Only</label>
     </div>
   </div>
 
-  @if (!selectedOrganization) {
-    <div class="bg-white rounded-sm border border-gray-100 px-5 py-14 text-center">
-      <div class="inline-flex flex-col items-center gap-2 text-gray-400">
-        <i class="pi pi-users text-5xl text-gray-200"></i>
-        <p class="text-xs font-medium text-gray-600">Select an Organization</p>
-        <p class="text-xs text-gray-400">
-          Choose an organization above to view member demographics
-        </p>
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div class="bg-purple-50 rounded-sm border border-purple-200 p-4">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-medium text-purple-700">Total Members</p>
+        <i class="pi pi-users text-purple-400 text-sm"></i>
       </div>
+      <p class="text-2xl font-bold text-purple-900">{{ stats().totalMembers }}</p>
     </div>
-  } @else if (loading()) {
-    <div class="flex justify-center py-16 text-gray-400">
-      <i class="pi pi-spin pi-spinner text-2xl"></i>
+    <div class="bg-blue-50 rounded-sm border border-blue-200 p-4">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-medium text-blue-700">Male Members</p>
+        <i class="pi pi-user text-blue-400 text-sm"></i>
+      </div>
+      <p class="text-2xl font-bold text-blue-900">{{ demographics().maleCount || 0 }}</p>
+      <p class="text-xs text-blue-600 mt-1">{{ demographics().malePercentage || 0 }}%</p>
     </div>
-  } @else {
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <div class="bg-linear-to-br from-purple-500 to-purple-600 text-white rounded-sm shadow p-4">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-xs font-medium opacity-80">Total Members</p>
-          <i class="pi pi-users text-white/60 text-sm"></i>
-        </div>
-        <p class="text-2xl font-bold">{{ stats().totalMembers }}</p>
+    <div class="bg-pink-50 rounded-sm border border-pink-200 p-4">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-medium text-pink-700">Female Members</p>
+        <i class="pi pi-user text-pink-400 text-sm"></i>
       </div>
-      <div class="bg-linear-to-br from-blue-500 to-blue-600 text-white rounded-sm shadow p-4">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-xs font-medium opacity-80">Active Members</p>
-          <i class="pi pi-check-circle text-white/60 text-sm"></i>
-        </div>
-        <p class="text-2xl font-bold">{{ stats().activeMembers || 0 }}</p>
-      </div>
-      <div class="bg-linear-to-br from-cyan-500 to-cyan-600 text-white rounded-sm shadow p-4">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-xs font-medium opacity-80">Male Members</p>
-          <i class="pi pi-user text-white/60 text-sm"></i>
-        </div>
-        <p class="text-2xl font-bold">{{ demographics().maleCount || 0 }}</p>
-        <p class="text-xs opacity-70 mt-1">{{ demographics().malePercentage || 0 }}%</p>
-      </div>
-      <div class="bg-linear-to-br from-pink-500 to-pink-600 text-white rounded-sm shadow p-4">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-xs font-medium opacity-80">Female Members</p>
-          <i class="pi pi-user text-white/60 text-sm"></i>
-        </div>
-        <p class="text-2xl font-bold">{{ demographics().femaleCount || 0 }}</p>
-        <p class="text-xs opacity-70 mt-1">{{ demographics().femalePercentage || 0 }}%</p>
-      </div>
+      <p class="text-2xl font-bold text-pink-900">{{ demographics().femaleCount || 0 }}</p>
+      <p class="text-xs text-pink-600 mt-1">{{ demographics().femalePercentage || 0 }}%</p>
     </div>
+  </div>
 
-    <!-- Gender + Program -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <!-- Gender Distribution -->
-      <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-        <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
-          <i class="pi pi-chart-pie text-xs text-gray-400"></i>
-          <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-            Gender Distribution
-          </p>
-        </div>
-        <div class="p-4">
-          @if (demographics().maleCount > 0 || demographics().femaleCount > 0) {
-            <div class="flex items-center gap-6">
-              <!-- Donut -->
-              <div class="relative w-36 h-36 shrink-0">
-                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" stroke-width="40" />
-                  @if (demographics().malePercentage > 0) {
-                    <circle
-                      cx="100"
-                      cy="100"
-                      r="80"
-                      fill="none"
-                      stroke="#3b82f6"
-                      stroke-width="40"
-                      [attr.stroke-dasharray]="
-                        (demographics().malePercentage / 100) * 502.65 + ' 502.65'
-                      "
-                      stroke-dashoffset="0"
-                    />
-                  }
-                  @if (demographics().femalePercentage > 0) {
-                    <circle
-                      cx="100"
-                      cy="100"
-                      r="80"
-                      fill="none"
-                      stroke="#ec4899"
-                      stroke-width="40"
-                      [attr.stroke-dasharray]="
-                        (demographics().femalePercentage / 100) * 502.65 + ' 502.65'
-                      "
-                      [attr.stroke-dashoffset]="-(demographics().malePercentage / 100) * 502.65"
-                    />
-                  }
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                  <p class="text-xl font-bold text-gray-800">{{ stats().totalMembers }}</p>
-                  <p class="text-xs text-gray-400">Total</p>
-                </div>
-              </div>
-              <!-- Legend -->
-              <div class="space-y-3 flex-1">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-sm bg-blue-500 shrink-0"></span>
-                    <span class="text-xs text-gray-600">Male</span>
-                  </div>
-                  <div class="text-right">
-                    <span class="text-xs font-semibold text-gray-800">{{
-                      demographics().maleCount || 0
-                    }}</span>
-                    <span class="text-xs text-gray-400 ml-1"
-                      >{{ demographics().malePercentage || 0 }}%</span
-                    >
-                  </div>
-                </div>
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-sm bg-pink-500 shrink-0"></span>
-                    <span class="text-xs text-gray-600">Female</span>
-                  </div>
-                  <div class="text-right">
-                    <span class="text-xs font-semibold text-gray-800">{{
-                      demographics().femaleCount || 0
-                    }}</span>
-                    <span class="text-xs text-gray-400 ml-1"
-                      >{{ demographics().femalePercentage || 0 }}%</span
-                    >
-                  </div>
-                </div>
-              </div>
-            </div>
-          } @else {
-            <p class="text-xs text-gray-400 text-center py-4">No gender data available</p>
-          }
-        </div>
-      </div>
-
-      <!-- Program Distribution -->
-      <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-        <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
-          <i class="pi pi-book text-xs text-gray-400"></i>
-          <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-            Members by Program
-          </p>
-        </div>
-        <div class="p-4">
-          @if (demographics().byProgram && demographics().byProgram.length > 0) {
-            <div class="flex items-center gap-6">
-              <!-- Donut -->
-              <div class="relative w-36 h-36 shrink-0">
-                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" stroke-width="40" />
-                  @for (
-                    program of demographics().byProgram;
-                    track program.program;
-                    let i = $index
-                  ) {
-                    <circle
-                      cx="100"
-                      cy="100"
-                      r="80"
-                      fill="none"
-                      [attr.stroke]="getProgramColor(i)"
-                      stroke-width="40"
-                      [attr.stroke-dasharray]="
-                        (((program.count / stats().totalMembers) * 100) / 100) * 502.65 + ' 502.65'
-                      "
-                      [attr.stroke-dashoffset]="-getAccumulatedOffset(i)"
-                    />
-                  }
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                  <p class="text-xl font-bold text-gray-800">
-                    {{ demographics().byProgram.length }}
-                  </p>
-                  <p class="text-xs text-gray-400">Programs</p>
-                </div>
-              </div>
-              <!-- Legend -->
-              <div class="space-y-2 flex-1 max-h-36 overflow-y-auto">
-                @for (program of demographics().byProgram; track program.program; let i = $index) {
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 min-w-0">
-                      <span
-                        class="w-3 h-3 rounded-sm shrink-0"
-                        [style.background-color]="getProgramColor(i)"
-                      ></span>
-                      <span class="text-xs text-gray-600 truncate">{{ program.program }}</span>
-                    </div>
-                    <div class="text-right shrink-0 ml-2">
-                      <span class="text-xs font-semibold text-gray-800">{{ program.count }}</span>
-                      <span class="text-xs text-gray-400 ml-1"
-                        >{{ ((program.count / stats().totalMembers) * 100).toFixed(0) }}%</span
-                      >
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-          } @else {
-            <p class="text-xs text-gray-400 text-center py-4">No program data available</p>
-          }
-        </div>
-      </div>
-    </div>
-
-    <!-- Year Level -->
+  <!-- Gender + Program -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <!-- Gender Distribution -->
     <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-      <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
-        <i class="pi pi-graduation-cap text-xs text-gray-400"></i>
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+        <i class="pi pi-chart-pie text-xs text-gray-400"></i>
         <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-          Members by Year Level
+          Gender Distribution
         </p>
       </div>
       <div class="p-4">
-        @if (stats().membersByYearLevel && stats().membersByYearLevel.length > 0) {
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            @for (yearLevel of stats().membersByYearLevel; track yearLevel.year) {
-              <div class="text-center p-3 bg-gray-50 rounded-sm border border-gray-100">
-                <p class="text-xs text-gray-500 mb-1">{{ yearLevel.year }}</p>
-                <p class="text-xl font-bold text-gray-700">{{ yearLevel.count }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">
-                  {{ ((yearLevel.count / stats().totalMembers) * 100).toFixed(1) }}%
-                </p>
+        @if (demographics().maleCount > 0 || demographics().femaleCount > 0) {
+          <div class="flex items-center gap-6">
+            <!-- Donut -->
+            <div class="relative w-36 h-36 shrink-0">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" stroke-width="40" />
+                @if (demographics().malePercentage > 0) {
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="80"
+                    fill="none"
+                    stroke="#3b82f6"
+                    stroke-width="40"
+                    [attr.stroke-dasharray]="
+                      (demographics().malePercentage / 100) * 502.65 + ' 502.65'
+                    "
+                    stroke-dashoffset="0"
+                  />
+                }
+                @if (demographics().femalePercentage > 0) {
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="80"
+                    fill="none"
+                    stroke="#ec4899"
+                    stroke-width="40"
+                    [attr.stroke-dasharray]="
+                      (demographics().femalePercentage / 100) * 502.65 + ' 502.65'
+                    "
+                    [attr.stroke-dashoffset]="-(demographics().malePercentage / 100) * 502.65"
+                  />
+                }
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <p class="text-xl font-bold text-gray-800">{{ stats().totalMembers }}</p>
+                <p class="text-xs text-gray-400">Total</p>
               </div>
-            }
+            </div>
+            <!-- Legend -->
+            <div class="space-y-3 flex-1">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-sm bg-blue-500 shrink-0"></span>
+                  <span class="text-xs text-gray-600">Male</span>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs font-semibold text-gray-800">{{
+                    demographics().maleCount || 0
+                  }}</span>
+                  <span class="text-xs text-gray-400 ml-1"
+                    >{{ demographics().malePercentage || 0 }}%</span
+                  >
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-sm bg-pink-500 shrink-0"></span>
+                  <span class="text-xs text-gray-600">Female</span>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs font-semibold text-gray-800">{{
+                    demographics().femaleCount || 0
+                  }}</span>
+                  <span class="text-xs text-gray-400 ml-1"
+                    >{{ demographics().femalePercentage || 0 }}%</span
+                  >
+                </div>
+              </div>
+            </div>
           </div>
         } @else {
-          <p class="text-xs text-gray-400 text-center py-4">No year level data available</p>
+          <p class="text-xs text-gray-400 text-center py-4">No gender data available</p>
         }
       </div>
     </div>
-  }
+
+    <!-- Program Distribution -->
+    <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+        <i class="pi pi-book text-xs text-gray-400"></i>
+        <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+          Program
+        </p>
+      </div>
+      <div class="p-4">
+        @if (demographics().byProgram && demographics().byProgram.length > 0) {
+          <div class="flex items-center gap-6">
+            <!-- Donut -->
+            <div class="relative w-36 h-36 shrink-0">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" stroke-width="40" />
+                @for (
+                  program of demographics().byProgram;
+                  track program.program;
+                  let i = $index
+                ) {
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="80"
+                    fill="none"
+                    [attr.stroke]="getProgramColor(i)"
+                    stroke-width="40"
+                    [attr.stroke-dasharray]="
+                      (((program.count / stats().totalMembers) * 100) / 100) * 502.65 + ' 502.65'
+                    "
+                    [attr.stroke-dashoffset]="-getAccumulatedOffset(i)"
+                  />
+                }
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <p class="text-xl font-bold text-gray-800">
+                  {{ demographics().byProgram.length }}
+                </p>
+                <p class="text-xs text-gray-400">Programs</p>
+              </div>
+            </div>
+            <!-- Legend -->
+            <div class="space-y-2 flex-1 max-h-36 overflow-y-auto">
+              @for (program of demographics().byProgram; track program.program; let i = $index) {
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span
+                      class="w-3 h-3 rounded-sm shrink-0"
+                      [style.background-color]="getProgramColor(i)"
+                    ></span>
+                    <span class="text-xs text-gray-600 truncate">{{ program.program }}</span>
+                  </div>
+                  <div class="text-right shrink-0 ml-2">
+                    <span class="text-xs font-semibold text-gray-800">{{ program.count }}</span>
+                    <span class="text-xs text-gray-400 ml-1"
+                      >{{ ((program.count / stats().totalMembers) * 100).toFixed(0) }}%</span
+                    >
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <p class="text-xs text-gray-400 text-center py-4">No program data available</p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Year Level -->
+  <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+    <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+      <i class="pi pi-graduation-cap text-xs text-gray-400"></i>
+      <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+        Year Level
+      </p>
+    </div>
+    <div class="p-4">
+      @if (stats().membersByYearLevel && stats().membersByYearLevel.length > 0) {
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          @for (yearLevel of stats().membersByYearLevel; track yearLevel.year) {
+            <div class="text-center p-3 bg-gray-50 rounded-sm border border-gray-100">
+              <p class="text-xs text-gray-500 mb-1">{{ yearLevel.year }}</p>
+              <p class="text-xl font-bold text-gray-700">{{ yearLevel.count }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">
+                {{ ((yearLevel.count / stats().totalMembers) * 100).toFixed(1) }}%
+              </p>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="text-xs text-gray-400 text-center py-4">No year level data available</p>
+      }
+    </div>
+  </div>
 </div>

@@ -50,7 +50,6 @@ export class OrganizationDocumentsComponent implements OnInit {
   // Modals
   showSubmitModal = signal(false);
   showUpdateModal = signal(false);
-  showDeleteModal = signal(false);
   showViewModal = signal(false);
   selectedDocument = signal<OrganizationDocument | null>(null);
 
@@ -208,12 +207,18 @@ export class OrganizationDocumentsComponent implements OnInit {
       venue: document.venue || '',
       participants: document.participants || undefined,
     });
+    // Load existing SDGs
+    if (document.sdgs) {
+      this.selectedSDGs.set(this.parseSDGs(document.sdgs));
+    } else {
+      this.selectedSDGs.set([]);
+    }
     this.showUpdateModal.set(true);
   }
 
   openDeleteModal(document: OrganizationDocument) {
     this.selectedDocument.set(document);
-    this.showDeleteModal.set(true);
+    this.deleteDocument();
   }
 
   openViewModal(document: OrganizationDocument) {
@@ -224,7 +229,6 @@ export class OrganizationDocumentsComponent implements OnInit {
   closeModals() {
     this.showSubmitModal.set(false);
     this.showUpdateModal.set(false);
-    this.showDeleteModal.set(false);
     this.showViewModal.set(false);
     this.selectedDocument.set(null);
     this.resetForm();
@@ -291,9 +295,8 @@ export class OrganizationDocumentsComponent implements OnInit {
           icon: 'success',
           title: 'Success!',
           text: response.message || 'Document submitted successfully',
-          confirmButtonColor: '#16a34a',
-          timer: 2000,
-          showConfirmButton: false,
+          confirmButtonColor: '#3b82f6',
+          confirmButtonText: 'OK',
         });
         this.closeModals();
         this.loadDocuments();
@@ -309,10 +312,17 @@ export class OrganizationDocumentsComponent implements OnInit {
     const documentId = this.selectedDocument()?.document_id;
     if (!documentId) return;
 
+    const form = this.documentForm();
     const file = this.selectedFile();
 
-    if (!file) {
-      this.errorMessage.set('Please select a file to upload');
+    // Validate required fields
+    if (!form.document_title || !form.academic_year_id || !form.activity_date || !form.venue || !form.participants) {
+      this.errorMessage.set('All fields are required');
+      return;
+    }
+
+    if (this.selectedSDGs().length === 0) {
+      this.errorMessage.set('Please select at least one SDG');
       return;
     }
 
@@ -320,17 +330,27 @@ export class OrganizationDocumentsComponent implements OnInit {
     this.errorMessage.set('');
 
     const formData = new FormData();
-    formData.append('document', file);
+    formData.append('document_title', form.document_title);
+    formData.append('academic_year_id', form.academic_year_id.toString());
+    formData.append('semester', form.semester);
+    formData.append('activity_date', form.activity_date);
+    formData.append('venue', form.venue);
+    formData.append('participants', form.participants.toString());
+    formData.append('sdgs', JSON.stringify(this.selectedSDGs()));
+    
+    // Only append file if a new one was selected
+    if (file) {
+      formData.append('document', file);
+    }
 
     this.organizationService.updateDocument(documentId, formData).subscribe({
       next: (response) => {
         Swal.fire({
           icon: 'success',
-          title: 'Updated!',
+          title: 'Success!',
           text: response.message || 'Document updated successfully',
-          confirmButtonColor: '#16a34a',
-          timer: 2000,
-          showConfirmButton: false,
+          confirmButtonColor: '#3b82f6',
+          confirmButtonText: 'OK',
         });
         this.closeModals();
         this.loadDocuments();
@@ -347,13 +367,13 @@ export class OrganizationDocumentsComponent implements OnInit {
     if (!documentId) return;
 
     Swal.fire({
-      title: 'Delete Document?',
-      text: 'Are you sure you want to delete this document? This action cannot be undone.',
-      icon: 'warning',
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this report?',
+      icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#dc2626',
+      confirmButtonColor: '#3b82f6',
       cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Yes, delete',
+      confirmButtonText: 'Yes',
       cancelButtonText: 'Cancel',
     }).then((result) => {
       if (result.isConfirmed) {
@@ -364,23 +384,23 @@ export class OrganizationDocumentsComponent implements OnInit {
           next: (response) => {
             Swal.fire({
               icon: 'success',
-              title: 'Deleted!',
-              text: response.message || 'Document deleted successfully',
-              confirmButtonColor: '#16a34a',
-              timer: 2000,
-              showConfirmButton: false,
+              title: 'Success!',
+              text: 'Report has been deleted successfully',
+              confirmButtonColor: '#3b82f6',
+              confirmButtonText: 'OK',
             });
             this.closeModals();
             this.loadDocuments();
           },
           error: (error) => {
-            this.errorMessage.set(error.error?.message || 'Failed to delete document');
+            this.errorMessage.set(error.error?.message || 'Failed to delete report');
             this.loading.set(false);
             Swal.fire({
               icon: 'error',
-              title: 'Error',
-              text: error.error?.message || 'Failed to delete document',
-              confirmButtonColor: '#dc2626',
+              title: 'Error!',
+              text: error.error?.message || 'Failed to delete report',
+              confirmButtonColor: '#ef4444',
+              confirmButtonText: 'OK',
             });
           },
         });
@@ -475,21 +495,27 @@ export class OrganizationDocumentsComponent implements OnInit {
   }
 
   parseSDGs(sdgs: any): number[] {
-    // If it's already an array, return it
+    let raw: any[] = [];
+
+    // If it's already an array, use it as-is
     if (Array.isArray(sdgs)) {
-      return sdgs;
-    }
-    // If it's a string, try to parse it
-    if (typeof sdgs === 'string') {
+      raw = sdgs;
+    } else if (typeof sdgs === 'string') {
+      // If it's a string, try to parse it as JSON
       try {
         const parsed = JSON.parse(sdgs);
-        return Array.isArray(parsed) ? parsed : [];
+        raw = Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         console.error('Error parsing SDGs:', e);
-        return [];
+        raw = [];
       }
     }
-    return [];
+
+    // Coerce to numbers, drop invalid entries, dedupe, sort ascending (SDG 1 -> 17)
+    const nums = raw
+      .map((v) => Number(v))
+      .filter((n) => Number.isFinite(n));
+    return Array.from(new Set(nums)).sort((a, b) => a - b);
   }
   
   // Helper methods for checklist progress

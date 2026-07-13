@@ -51,6 +51,7 @@ export class PersonalDataSheetComponent implements OnInit {
 
   currentTab = signal<number>(1);
   loading = signal(false);
+  isEditMode = signal(false); // Track edit mode for submitted/approved PDS
   photoFile: File | null = null;
   signatureFile: File | null = null;
   photoPreview = signal<string>('');
@@ -69,6 +70,7 @@ export class PersonalDataSheetComponent implements OnInit {
   showAddChildModal = false;
   showAddEducationModal = false;
   showAddEligibilityModal = false;
+  showAddWorkExperienceModal = false;
   showAddVoluntaryModal = false;
   showAddTrainingModal = false;
   showAddReferenceModal = false;
@@ -137,9 +139,8 @@ export class PersonalDataSheetComponent implements OnInit {
         }
         this.loading.set(false);
 
-        // Auto-sync with My Profile on every load to ensure data is always current
-        console.log('PDS loaded, syncing with My Profile...');
-        this.syncWithProfile();
+        // Auto-sync disabled to prevent infinite loading
+        // Use the "Import from My Profile" button to sync manually
       },
       error: (error) => {
         if (error.status === 404) {
@@ -258,6 +259,10 @@ export class PersonalDataSheetComponent implements OnInit {
         this.photoPreview.set(e.target.result);
       };
       reader.readAsDataURL(file);
+      // Persist immediately so the saved photo_path stays in sync with the
+      // preview. Without this, the preview looks uploaded but the server
+      // still has no photo, and Submit fails with "Please upload a photo".
+      this.uploadPhoto();
     }
   }
 
@@ -348,7 +353,7 @@ export class PersonalDataSheetComponent implements OnInit {
   submitPDS() {
     Swal.fire({
       title: 'Submit Personal Data Sheet?',
-      text: 'Once submitted, you cannot edit the form until it is returned. Make sure all information is accurate.',
+      text: 'Your PDS will be submitted for approval. You can still edit it later if needed.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#2563eb',
@@ -359,6 +364,8 @@ export class PersonalDataSheetComponent implements OnInit {
         this.loading.set(true);
         this.pdsService.submitPDS().subscribe({
           next: () => {
+            // Disable edit mode after successful submission
+            this.isEditMode.set(false);
             Swal.fire({
               icon: 'success',
               title: 'Submitted!',
@@ -647,7 +654,20 @@ export class PersonalDataSheetComponent implements OnInit {
   }
 
   isFormReadonly(): boolean {
-    return this.pds().status === 'submitted' || this.pds().status === 'approved';
+    const status = this.pds().status;
+    const isSubmittedOrApproved = status === 'submitted' || status === 'approved';
+    // Allow editing if edit mode is enabled, otherwise check status
+    return isSubmittedOrApproved && !this.isEditMode();
+  }
+
+  enableEditMode() {
+    this.isEditMode.set(true);
+  }
+
+  cancelEditMode() {
+    this.isEditMode.set(false);
+    // Reload PDS to discard changes
+    this.loadPDS();
   }
 
   getStatusBadgeClass(): string {

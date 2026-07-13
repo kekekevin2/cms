@@ -20,10 +20,30 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       comment: "Original name of the uploaded CSV/Excel file",
     },
+    file_path: {
+      type: Sequelize.STRING(500),
+      allowNull: true,
+      comment: "Stored path of the uploaded Excel/CSV file",
+    },
     department: {
       type: Sequelize.STRING(100),
       allowNull: false,
       comment: "Department to which the uploaded members belong",
+    },
+    section: {
+      type: Sequelize.STRING(50),
+      allowNull: true,
+      comment: "Section for the uploaded members",
+    },
+    year_level: {
+      type: Sequelize.STRING(20),
+      allowNull: true,
+      comment: "Year level for the uploaded members",
+    },
+    semester: {
+      type: Sequelize.STRING(20),
+      allowNull: true,
+      comment: "Semester for the uploaded members",
     },
     academic_year_id: {
       type: Sequelize.INTEGER,

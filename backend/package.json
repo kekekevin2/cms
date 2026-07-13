@@ -22,6 +22,7 @@
     "create-dean-profile-tables": "node create-dean-profile-tables.js"
   },
   "dependencies": {
+    "archiver": "^8.0.0",
     "axios": "^1.16.1",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",

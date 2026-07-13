@@ -72,6 +72,61 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       comment: "Account status: true=active (can login), false=disabled (cannot login)",
     },
+    academic_rank: {
+      type: Sequelize.STRING(100),
+      allowNull: true,
+      comment: "Academic rank (e.g., ASSOC. PROF. III, PROFESSOR I, etc.)",
+    },
+    employment_status: {
+      type: Sequelize.STRING(100),
+      allowNull: true,
+      comment: "Employment status (e.g., PERMANENT FACULTY, TEMPORARY, etc.)",
+    },
+    educational_attainment: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+      comment: "Educational attainment course (e.g., PhD IN DEVELOPMENT ADMINISTRATION)",
+    },
+    campus: {
+      type: Sequelize.STRING(100),
+      allowNull: true,
+      comment: "Campus location (e.g., LIPA CAMPUS)",
+    },
+    telephone_number: {
+      type: Sequelize.STRING(20),
+      allowNull: true,
+      comment: "Landline telephone number",
+    },
+    birth_date: {
+      type: Sequelize.DATEONLY,
+      allowNull: true,
+      comment: "Date of birth",
+    },
+    age: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      comment: "Age in years",
+    },
+    civil_status: {
+      type: Sequelize.STRING(20),
+      allowNull: true,
+      comment: "Civil/marital status",
+    },
+    home_address: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+      comment: "Complete home address",
+    },
+    photo_url: {
+      type: Sequelize.STRING(500),
+      allowNull: true,
+      comment: "Path to faculty photo",
+    },
+    signature_url: {
+      type: Sequelize.STRING(500),
+      allowNull: true,
+      comment: "Path to uploaded e-signature image",
+    },
   });
 
   return Faculty;

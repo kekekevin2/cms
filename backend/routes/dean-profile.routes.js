@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 const deanProfileController = require("../controllers/dean-profile.controller");
 const verifyToken = require("../middleware/auth.middleware");
 const checkRole = require("../middleware/role.middleware");
@@ -16,7 +17,7 @@ const storage = multer.diskStorage({
     let uploadPath = "uploads/";
 
     if (req.path.includes("/personal")) {
-      uploadPath += "profiles/";
+      uploadPath += "profile-pictures/";
     } else if (req.path.includes("/awards")) {
       uploadPath += "awards/";
     } else if (req.path.includes("/seminars")) {
@@ -25,6 +26,12 @@ const storage = multer.diskStorage({
       uploadPath += "research/";
     } else if (req.path.includes("/extension")) {
       uploadPath += "extension/";
+    }
+
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+      console.log("📁 Created directory:", uploadPath);
     }
 
     cb(null, uploadPath);

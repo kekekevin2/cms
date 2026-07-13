@@ -1,0 +1,62 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Verify bug exists on unfixed code (exploration)": [
+      {
+        "executionId": "8eb3b250-7edb-47f2-88f0-6f0e8a1e1809",
+        "chatSessionId": "sess_4a025d26-0515-4856-a7c7-6490c8987290",
+        "timestamp": 1783431545677
+      },
+      {
+        "executionId": "8eb3b250-7edb-47f2-88f0-6f0e8a1e1809",
+        "chatSessionId": "sess_4a025d26-0515-4856-a7c7-6490c8987290",
+        "timestamp": 1783431569410
+      },
+      {
+        "executionId": "8eb3b250-7edb-47f2-88f0-6f0e8a1e1809",
+        "chatSessionId": "sess_4a025d26-0515-4856-a7c7-6490c8987290",
+        "timestamp": 1783431965520
+      }
+    ],
+    "2.1 Update `sdg-events-chart.ts` to disable the built-in legend and expose `legendItems`": [
+      {
+        "executionId": "8eb3b250-7edb-47f2-88f0-6f0e8a1e1809",
+        "chatSessionId": "sess_4a025d26-0515-4856-a7c7-6490c8987290",
+        "timestamp": 1783431545746
+      },
+      {
+        "executionId": "8eb3b250-7edb-47f2-88f0-6f0e8a1e1809",
+        "chatSessionId": "sess_4a025d26-0515-4856-a7c7-6490c8987290",
+        "timestamp": 1783431972303
+      }
+    ],
+    "2.2 Update `sdg-events-chart.html` to render the HTML legend next to the canvas": [
+      {
+        "executionId": "8eb3b250-7edb-47f2-88f0-6f0e8a1e1809",
+        "chatSessionId": "sess_4a025d26-0515-4856-a7c7-6490c8987290",
+        "timestamp": 1783431545858
+      }
+    ],
+    "2.3 Verify the fix builds without errors": [
+      {
+        "executionId": "8eb3b250-7edb-47f2-88f0-6f0e8a1e1809",
+        "chatSessionId": "sess_4a025d26-0515-4856-a7c7-6490c8987290",
+        "timestamp": 1783431545966
+      }
+    ],
+    "3. Post-fix visual verification (fix + preservation)": [
+      {
+        "executionId": "8eb3b250-7edb-47f2-88f0-6f0e8a1e1809",
+        "chatSessionId": "sess_4a025d26-0515-4856-a7c7-6490c8987290",
+        "timestamp": 1783431546099
+      }
+    ],
+    "4. Checkpoint - Ensure all verifications pass": [
+      {
+        "executionId": "8eb3b250-7edb-47f2-88f0-6f0e8a1e1809",
+        "chatSessionId": "sess_4a025d26-0515-4856-a7c7-6490c8987290",
+        "timestamp": 1783431546228
+      }
+    ]
+  }
+}
