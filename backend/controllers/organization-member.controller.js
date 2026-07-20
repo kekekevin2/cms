@@ -292,7 +292,7 @@ exports.createMember = async (req, res) => {
     console.log("Is Active:", member.is_active);
 
     res.status(201).json({
-      message: "Member added successfully",
+      message: "Officer added successfully",
       member,
     });
   } catch (error) {
@@ -303,7 +303,7 @@ exports.createMember = async (req, res) => {
       errors: error.errors
     });
     res.status(500).json({ 
-      message: "Error creating member",
+      message: "Error creating officer",
       details: error.message 
     });
   }
@@ -338,7 +338,7 @@ exports.updateMember = async (req, res) => {
     });
 
     if (!member) {
-      return res.status(404).json({ message: "Member not found" });
+      return res.status(404).json({ message: "Officer not found" });
     }
 
     console.log("📋 Current member data:");
@@ -472,13 +472,13 @@ exports.updateMember = async (req, res) => {
     }
 
     res.json({
-      message: "Member updated successfully",
+      message: "Officer updated successfully",
       member: verification, // Return the fresh DB read to ensure accuracy
     });
   } catch (error) {
     console.error("❌ Update member error:", error);
     console.error("Error details:", error.message);
-    res.status(500).json({ message: "Error updating member" });
+    res.status(500).json({ message: "Error updating officer" });
   }
 };
 
@@ -506,15 +506,15 @@ exports.deleteMember = async (req, res) => {
     });
 
     if (!member) {
-      return res.status(404).json({ message: "Member not found" });
+      return res.status(404).json({ message: "Officer not found" });
     }
 
     await member.destroy();
 
-    res.json({ message: "Member deleted successfully" });
+    res.json({ message: "Officer deleted successfully" });
   } catch (error) {
     console.error("Delete member error:", error);
-    res.status(500).json({ message: "Error deleting member" });
+    res.status(500).json({ message: "Error deleting officer" });
   }
 };
 
@@ -946,7 +946,7 @@ exports.updateBulkUpload = async (req, res) => {
     });
 
     if (!upload) {
-      return res.status(404).json({ message: "Upload record not found" });
+      return res.status(404).json({ message: "File record not found" });
     }
 
     const {
@@ -983,14 +983,14 @@ exports.updateBulkUpload = async (req, res) => {
     await upload.save();
 
     res.json({
-      message: "Upload record updated successfully",
+      message: "File record updated successfully",
       upload,
     });
   } catch (error) {
     console.error("Update bulk upload error:", error);
     res
       .status(500)
-      .json({ message: "Error updating upload record", error: error.message });
+      .json({ message: "Error updating file record", error: error.message });
   }
 };
 
@@ -1019,7 +1019,7 @@ exports.deleteBulkUpload = async (req, res) => {
     });
 
     if (!upload) {
-      return res.status(404).json({ message: "Upload record not found" });
+      return res.status(404).json({ message: "File record not found" });
     }
 
     // Remove analytics data generated from this upload
@@ -1041,10 +1041,10 @@ exports.deleteBulkUpload = async (req, res) => {
 
     await upload.destroy();
 
-    res.json({ message: "Upload record deleted successfully" });
+    res.json({ message: "File record deleted successfully" });
   } catch (error) {
     console.error("Delete bulk upload error:", error);
-    res.status(500).json({ message: "Error deleting upload record" });
+    res.status(500).json({ message: "Error deleting file record" });
   }
 };
 

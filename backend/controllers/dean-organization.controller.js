@@ -240,7 +240,7 @@ exports.createOrganization = async (req, res) => {
       message: "Organization created successfully",
       organization,
       emailSent,
-      generatedPassword: !emailSent ? generatedPassword : undefined,
+      generatedPassword, // Always return password for modal display
     });
   } catch (error) {
     await transaction.rollback();

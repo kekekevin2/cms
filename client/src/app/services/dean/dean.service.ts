@@ -67,8 +67,16 @@ export class DeanService {
     return this.http.get<Dean>(`${this.deanApiUrl}/dashboard/profile`);
   }
 
-  getOrganizations(): Observable<{ organizations: any[] }> {
-    return this.http.get<{ organizations: any[] }>(`${this.deanApiUrl}/organizations`);
+  getOrganizations(page: number = 1, limit: number = 100, search: string = ''): Observable<{ organizations: any[]; currentPage: number; totalPages: number; totalItems: number }> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
+    
+    if (search) {
+      params = params.set('search', search);
+    }
+    
+    return this.http.get<{ organizations: any[]; currentPage: number; totalPages: number; totalItems: number }>(`${this.deanApiUrl}/organizations`, { params });
   }
 
   getFaculty(): Observable<{ faculty: any[] }> {

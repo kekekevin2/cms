@@ -48,10 +48,8 @@ export interface CreateOrganizationData {
 export interface CreateOrganizationResponse {
   message: string;
   organization: Organization;
-  credentials: {
-    email: string;
-    password: string;
-  };
+  emailSent: boolean;
+  generatedPassword?: string;
 }
 
 export interface UpdateOrganizationData {

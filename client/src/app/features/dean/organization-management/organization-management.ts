@@ -184,24 +184,35 @@ export class DeanOrganizationManagement implements OnInit {
         // Reload organizations first
         this.loadOrganizations();
 
-        // Show credentials in a modal
-        Swal.fire({
-          icon: 'success',
-          title: 'Organization Created!',
-          html: `
-            <div class="text-left">
-              <p class="mb-4">Organization created successfully. Please save these credentials:</p>
-              <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                <p class="mb-2"><strong>Email:</strong> ${response.credentials.email}</p>
-                <p><strong>Password:</strong> <span class="font-mono text-blue-600">${response.credentials.password}</span></p>
+        // Show success notification with SweetAlert2
+        if (response.emailSent) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: `Organization created successfully! Credentials sent via email to ${this.createForm.email}`,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#3b82f6',
+          });
+        } else {
+          // Email failed - show password
+          Swal.fire({
+            icon: 'warning',
+            title: 'Created (Email Failed)',
+            html: `
+              <div class="text-left">
+                <p class="mb-4">Organization created but credentials email could not be sent.</p>
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                  <p class="mb-2"><strong>Email:</strong> ${this.createForm.email}</p>
+                  <p><strong>Password:</strong> <span class="font-mono text-blue-600">${response.generatedPassword}</span></p>
+                </div>
+                <p class="text-sm text-red-600">⚠️ Save this password now. It won't be shown again.</p>
               </div>
-              <p class="text-sm text-red-600">⚠️ Save this password now. It won't be shown again.</p>
-            </div>
-          `,
-          confirmButtonText: 'I have saved the credentials',
-          confirmButtonColor: '#2563eb',
-          allowOutsideClick: false,
-        });
+            `,
+            confirmButtonText: 'I have saved the credentials',
+            confirmButtonColor: '#3b82f6',
+            allowOutsideClick: false,
+          });
+        }
       },
       error: (error) => {
         this.loading.set(false);
@@ -209,7 +220,7 @@ export class DeanOrganizationManagement implements OnInit {
           icon: 'error',
           title: 'Error',
           text: error.error?.message || 'Failed to create organization',
-          confirmButtonColor: '#2563eb',
+          confirmButtonColor: '#dc2626',
         });
       },
     });

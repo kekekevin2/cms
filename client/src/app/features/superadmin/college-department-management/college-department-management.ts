@@ -39,6 +39,9 @@ export class SuperadminCollegeDepartmentManagement implements OnInit {
 
   showCreateModal = signal(false);
   showEditModal = signal(false);
+  showDeleteModal = signal(false);
+  deleteConfirmText = signal('');
+  itemToDelete: CollegeDepartment | null = null;
 
   createFormCampusId = signal<number>(0);
   editFormCampusId = signal<number>(0);
@@ -370,30 +373,51 @@ export class SuperadminCollegeDepartmentManagement implements OnInit {
   // ── Delete ─────────────────────────────────────────────────────────────────
 
   deleteItem(item: CollegeDepartment) {
-    Swal.fire({
-      title: 'Delete College Department?',
-      text: `"${item.name}" will be permanently removed.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Delete',
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.service.deleteCollegeDepartment(item.college_department_id).subscribe({
-          next: () => {
-            this.loadList();
-            Swal.fire({ icon: 'success', title: 'Deleted', timer: 1200, showConfirmButton: false });
-          },
-          error: () =>
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Failed to delete.',
-              confirmButtonColor: '#dc2626',
-            }),
+    this.itemToDelete = item;
+    this.deleteConfirmText.set('');
+    this.showDeleteModal.set(true);
+  }
+
+  closeDeleteModal() {
+    this.showDeleteModal.set(false);
+    this.deleteConfirmText.set('');
+    this.itemToDelete = null;
+  }
+
+  confirmDelete() {
+    if (this.deleteConfirmText().toUpperCase() !== 'DELETE') {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Confirmation Required',
+        text: 'Please type "DELETE" to confirm.',
+        confirmButtonColor: '#dc2626',
+      });
+      return;
+    }
+
+    if (!this.itemToDelete) return;
+
+    this.service.deleteCollegeDepartment(this.itemToDelete.college_department_id).subscribe({
+      next: () => {
+        this.closeDeleteModal();
+        this.loadList();
+        Swal.fire({
+          icon: 'success',
+          title: 'Deleted',
+          text: 'College department has been removed.',
+          confirmButtonColor: '#16a34a',
+          timer: 1500,
+          showConfirmButton: false,
         });
-      }
+      },
+      error: () => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to delete.',
+          confirmButtonColor: '#dc2626',
+        });
+      },
     });
   }
 }

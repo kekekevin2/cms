@@ -51,6 +51,12 @@
         }
         @if (isEditMode()) {
           <button
+            (click)="autoFillFromProfile()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            <i class="pi pi-sync text-xs"></i> Sync Profile
+          </button>
+          <button
             (click)="cancelEditMode()"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
           >

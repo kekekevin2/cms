@@ -110,7 +110,7 @@ export class OrganizationMembersComponent implements OnInit {
     last_name: '',
     email: '',
     contact_number: '',
-    year_level: '1st Year' as '1st Year' | '2nd Year' | '3rd Year' | '4th Year' | '5th Year',
+    year_level: '1st Year' as string,
     position: '',
     parent_member_id: undefined as number | undefined,
     academic_year_id: undefined as number | undefined,
@@ -229,7 +229,7 @@ export class OrganizationMembersComponent implements OnInit {
       error: (error) => {
         console.error('API error loading bulk uploads:', error);
         this.bulkUploads.set([]);
-        this.errorMessage.set(error.error?.message || 'Failed to load upload records. Please restart the server and try again.');
+        this.errorMessage.set(error.error?.message || 'Failed to load file records. Please restart the server and try again.');
         this.loading.set(false);
       },
     });
@@ -939,7 +939,7 @@ export class OrganizationMembersComponent implements OnInit {
         });
       },
       error: (error) => {
-        this.errorMessage.set(error.error?.message || 'Failed to update member');
+        this.errorMessage.set(error.error?.message || 'Failed to update officer');
         this.loading.set(false);
       },
     });
@@ -1069,7 +1069,7 @@ export class OrganizationMembersComponent implements OnInit {
             Swal.fire({
               icon: 'success',
               title: 'Success!',
-              text: response.message || 'Member deleted successfully',
+              text: response.message || 'Officer deleted successfully',
               confirmButtonColor: '#3b82f6',
               confirmButtonText: 'OK',
             });
@@ -1077,12 +1077,12 @@ export class OrganizationMembersComponent implements OnInit {
             this.loadMembers();
           },
           error: (error) => {
-            this.errorMessage.set(error.error?.message || 'Failed to delete member');
+            this.errorMessage.set(error.error?.message || 'Failed to delete officer');
             this.loading.set(false);
             Swal.fire({
               icon: 'error',
               title: 'Error!',
-              text: error.error?.message || 'Failed to delete member',
+              text: error.error?.message || 'Failed to delete officer',
               confirmButtonColor: '#ef4444',
               confirmButtonText: 'OK',
             });
@@ -1188,7 +1188,7 @@ export class OrganizationMembersComponent implements OnInit {
             Swal.fire({
               icon: 'success',
               title: 'Success!',
-              text: 'Upload deleted successfully',
+              text: 'File deleted successfully',
               confirmButtonColor: '#3b82f6',
               confirmButtonText: 'OK',
             });
@@ -1199,7 +1199,7 @@ export class OrganizationMembersComponent implements OnInit {
             Swal.fire({
               icon: 'error',
               title: 'Error!',
-              text: error.error?.message || 'Failed to delete upload',
+              text: error.error?.message || 'Failed to delete file',
               confirmButtonColor: '#ef4444',
               confirmButtonText: 'OK',
             });
@@ -1556,7 +1556,7 @@ export class OrganizationMembersComponent implements OnInit {
       error: (error: any) => {
         this.errorMessage.set(
           error?.error?.message ||
-            (isEdit ? 'Failed to update upload' : 'Failed to upload members'),
+            (isEdit ? 'Failed to update file' : 'Failed to upload members'),
         );
         this.loading.set(false);
       },
