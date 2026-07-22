@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDS - Personal Data Sheet — BatStateU</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <header>PDS - Personal Data Sheet — BatStateU</header>
+
+    <div id="controls">
+      <button id="prev">← Prev</button>
+      <span id="page-info">Page 1</span>
+      <button id="next">Next →</button>
+      <button id="locator-btn" style="margin-left: 12px; background: #0f766e">
+        📍 Locator: OFF
+      </button>
+      <button id="edit-btn" style="background: #1a1a2e">
+        ✏️ Edit Positions: OFF
+      </button>
+      <button id="save-positions-btn" style="background: #15803d">
+        💾 Save Positions
+      </button>
+      <button id="reset-positions-btn" style="background: #b91c1c">
+        ↺ Reset Positions
+      </button>
+      <span
+        id="coord-live"
+        style="font-size: 12px; color: #0f766e; font-family: monospace"
+      ></span>
+      <button
+        onclick="downloadPDF()"
+        style="margin-left: auto; background: #4f46e5"
+      >
+        ⬇️ Download PDF
+      </button>
+    </div>
+
+    <div id="app-body">
+      <div id="canvas-wrapper">
+        <div id="canvas-container">
+          <canvas id="pdf-canvas"></canvas>
+          <canvas id="overlay"></canvas>
+          <canvas id="locator-canvas" class="inactive"></canvas>
+        </div>
+      </div>
+
+      <aside id="field-list-panel">
+        <input id="field-search" type="text" placeholder="🔎 Search fields..." />
+        <p id="field-list-hint">
+          Click a field, then click on the page to place it (you'll be asked
+          whether to center it). Edit Positions turns on automatically.
+          Positions save to the standalone server in <code>pds/server/</code>
+          — run <code>cd pds/server &amp;&amp; npm install &amp;&amp; npm
+          start</code>, then open <code>http://localhost:2100/</code> (it
+          serves this page too). Falls back to this browser's local storage
+          if that server isn't reachable.
+        </p>
+        <ul id="field-list"></ul>
+      </aside>
+    </div>
+
+    <div id="coord-badge">
+      📍 x: <span id="b-x">0</span> &nbsp; y: <span id="b-y">0</span>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="index.js"></script>
+  </body>
+</html>
