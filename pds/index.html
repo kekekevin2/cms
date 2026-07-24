@@ -16,9 +16,6 @@
       <button id="locator-btn" style="margin-left: 12px; background: #0f766e">
         📍 Locator: OFF
       </button>
-      <button id="edit-btn" style="background: #1a1a2e">
-        ✏️ Edit Positions: OFF
-      </button>
       <button id="save-positions-btn" style="background: #15803d">
         💾 Save Positions
       </button>
@@ -49,14 +46,27 @@
       <aside id="field-list-panel">
         <input id="field-search" type="text" placeholder="🔎 Search fields..." />
         <p id="field-list-hint">
-          Click a field, then click on the page to place it (you'll be asked
-          whether to center it). Edit Positions turns on automatically.
-          Positions save to the standalone server in <code>pds/server/</code>
-          — run <code>cd pds/server &amp;&amp; npm install &amp;&amp; npm
-          start</code>, then open <code>http://localhost:2100/</code> (it
-          serves this page too). Falls back to this browser's local storage
-          if that server isn't reachable.
+          Click a field below, then type its x/y (and whether it's centered)
+          and hit Apply. Saves to this browser's local storage automatically,
+          plus <code>overlay-positions.json</code> via Save Positions.
         </p>
+
+        <div id="field-editor" class="hidden">
+          <div id="field-editor-key"></div>
+          <div id="field-editor-row">
+            <label>X <input id="field-editor-x" type="number" step="1" /></label>
+            <label>Y <input id="field-editor-y" type="number" step="1" /></label>
+          </div>
+          <label id="field-editor-center-row">
+            <input id="field-editor-center" type="checkbox" /> Centered
+          </label>
+          <div id="field-editor-size-row" class="hidden">
+            <label>W <input id="field-editor-w" type="number" step="1" /></label>
+            <label>H <input id="field-editor-h" type="number" step="1" /></label>
+          </div>
+          <button id="field-editor-apply">✓ Apply</button>
+        </div>
+
         <ul id="field-list"></ul>
       </aside>
     </div>

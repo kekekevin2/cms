@@ -39,11 +39,11 @@ Today, adjusting a field's position works by: selecting a field from the sidebar
   - Hardcoded connection constants at the top of the file:
     ```js
     const pool = new Pool({
-      host: "localhost",
-      port: 5432,
-      user: "postgres",
-      password: "postgres",
-      database: "pds_locator",
+    	host: "localhost",
+    	port: 5432,
+    	user: "postgres",
+    	password: "dyasmir",
+    	database: "eche",
     });
     ```
   - Same table shape as today: `field_positions(key TEXT PRIMARY KEY, x REAL, y REAL, center BOOLEAN, updated_at TIMESTAMP)`, created via `CREATE TABLE IF NOT EXISTS` on startup.
@@ -64,6 +64,7 @@ Today, adjusting a field's position works by: selecting a field from the sidebar
 ## Testing
 
 No automated test suite exists for this tool (consistent with the rest of the repo's manual-script conventions). Verification is manual:
+
 - Run the migration script against the real `positions.sqlite3` and confirm the row count printed matches `SELECT count(*) FROM field_positions` in Postgres.
 - Start `pds/server`, open the tool, confirm previously-placed fields render at their saved (pre-migration) coordinates.
 - Edit an x/y input for a field, confirm the overlay moves live and the value persists across a page reload (i.e. round-trips through Postgres).

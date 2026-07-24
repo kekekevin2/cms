@@ -11,14 +11,14 @@ export interface PersonalProfile {
   last_name?: string;
   first_name?: string;
   middle_name?: string;
-  extension?: string;
+  extension_name?: string;
   date_of_birth?: string;
   place_of_birth?: string;
   civil_status?: string;
   sex?: string;
   citizenship?: string;
-  mobile_primary?: string;
-  mobile_secondary?: string;
+  mobile_number_primary?: string;
+  mobile_number_secondary?: string;
   email_primary?: string;
   email_secondary?: string;
   home_country?: string;
@@ -26,6 +26,8 @@ export interface PersonalProfile {
   home_province?: string;
   home_barangay?: string;
   home_street_subdivision?: string;
+  home_street?: string;
+  home_subdivision?: string;
   home_zip_code?: string;
   profile_picture?: string;
   passport_photo?: string;

@@ -8,27 +8,29 @@ const app = express();
 const db = require("./models");
 
 // Enhanced CORS configuration
-app.use(cors({
-  origin: true, // Allow all origins in development
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}));
+app.use(
+	cors({
+		origin: true, // Allow all origins in development
+		credentials: true,
+		methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+		allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+	}),
+);
 
 // Log all incoming requests
 app.use((req, res, next) => {
-  console.log(`📥 ${req.method} ${req.path}`);
-  next();
+	console.log(`📥 ${req.method} ${req.path}`);
+	next();
 });
 
 // Log all outgoing responses
 app.use((req, res, next) => {
-  const originalJson = res.json;
-  res.json = function(data) {
-    console.log(`📤 Response for ${req.method} ${req.path}:`, res.statusCode);
-    return originalJson.call(this, data);
-  };
-  next();
+	const originalJson = res.json;
+	res.json = function (data) {
+		console.log(`📤 Response for ${req.method} ${req.path}:`, res.statusCode);
+		return originalJson.call(this, data);
+	};
+	next();
 });
 
 app.use(express.json());
@@ -143,29 +145,29 @@ const collegeDepartmentPortalRoutes = require("./routes/college-department-porta
 app.use("/api/college-department", collegeDepartmentPortalRoutes);
 
 app.get("/api/hello", (req, res) => {
-  res.json({ message: "Hello from the backend!" });
+	res.json({ message: "Hello from the backend!" });
 });
 
 const PORT = process.env.PORT;
 
 // Test database connection and sync models
 db.sequelize
-  .authenticate()
-  .then(() => {
-    console.log("Database connection successful!");
-    // Sync models with database (creates tables if they don't exist)
-    // Using alter: false to prevent Sequelize from adding duplicate indexes
-    // on every restart. Run migrations manually when schema changes are needed.
-    return db.sequelize.sync({ alter: false });
-  })
-  .then(() => {
-    console.log("Database tables synced!");
-  })
-  .catch((err) => {
-    console.error("Database error:", err.message);
-  });
+	.authenticate()
+	.then(() => {
+		console.log("Database connection successful!");
+		// Sync models with database (creates tables if they don't exist)
+		// Using alter: false to prevent Sequelize from adding duplicate indexes
+		// on every restart. Run migrations manually when schema changes are needed.
+		return db.sequelize.sync({ alter: true });
+	})
+	.then(() => {
+		console.log("Database tables synced!");
+	})
+	.catch((err) => {
+		console.error("Database error:", err.message);
+	});
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Access from other devices using your IP address`);
+	console.log(`Server is running on port ${PORT}`);
+	console.log(`Access from other devices using your IP address`);
 });

@@ -1,4 +1,4 @@
-<div class="p-3">
+﻿<div class="p-3">
   @if (loading()) {
     <div class="flex justify-center py-16 text-gray-300">
       <i class="pi pi-spin pi-spinner text-3xl"></i>
@@ -16,8 +16,8 @@
           [ngClass]="getStatusBadgeClass()"
           >{{ getStatusText() }}</span
         >
-        @if (pds().remarks) {
-          <span class="text-xs text-red-500">Reason: {{ pds().remarks }}</span>
+        @if (pds.remarks) {
+          <span class="text-xs text-red-500">Reason: {{ pds.remarks }}</span>
         }
         @if (!isFormReadonly() && !isEditMode()) {
           <button
@@ -51,6 +51,12 @@
         }
         @if (isEditMode()) {
           <button
+            (click)="autoFillFromProfile()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            <i class="pi pi-sync text-xs"></i> Sync Profile
+          </button>
+          <button
             (click)="cancelEditMode()"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
           >
@@ -72,19 +78,61 @@
           </button>
         }
         <button
-          (click)="exportToExcel()"
+          (click)="previewPDF()"
           [disabled]="loading()"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs"></i>
           } @else {
-            <i class="pi pi-file-excel text-xs"></i>
+            <i class="pi pi-eye text-xs"></i>
           }
-          Export
+          Preview PDF
+        </button>
+        <button
+          (click)="downloadPDF()"
+          [disabled]="loading()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+        >
+          @if (loading()) {
+            <i class="pi pi-spin pi-spinner text-xs"></i>
+          } @else {
+            <i class="pi pi-file-pdf text-xs"></i>
+          }
+          Download PDF
         </button>
       </div>
     </div>
+
+    @if (showPdfPreview()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[90vh] flex flex-col">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <h3 class="text-sm font-semibold text-gray-800">PDS Preview</h3>
+            <div class="flex items-center gap-2">
+              <button
+                (click)="downloadPDF()"
+                [disabled]="loading()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50"
+              >
+                <i class="pi pi-file-pdf text-xs"></i> Download
+              </button>
+              <button
+                (click)="closePdfPreview()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+              >
+                <i class="pi pi-times text-xs"></i> Close
+              </button>
+            </div>
+          </div>
+          <div class="flex-1 min-h-0">
+            @if (pdfPreviewUrl()) {
+              <iframe [src]="pdfPreviewUrl()" class="w-full h-full border-0"></iframe>
+            }
+          </div>
+        </div>
+      </div>
+    }
 
     <div class="flex gap-5 items-start">
       <!-- Left Nav -->
@@ -159,7 +207,7 @@
 
       <!-- Right Scrollable Content -->
       <div class="flex-1 space-y-4 min-w-0">
-        <!-- ──────────────────── SECTION 1: PERSONAL INFORMATION ──────────────────── -->
+        <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SECTION 1: PERSONAL INFORMATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div
           id="section-personal"
           class="bg-white rounded-sm border border-gray-100 overflow-hidden"
@@ -179,7 +227,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Surname</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().surname"
+                    [(ngModel)]="pds.surname"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -188,7 +236,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">First Name</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().first_name"
+                    [(ngModel)]="pds.first_name"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -197,7 +245,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Middle Name</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().middle_name"
+                    [(ngModel)]="pds.middle_name"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -208,7 +256,7 @@
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().name_extension"
+                    [(ngModel)]="pds.name_extension"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -224,7 +272,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Date of Birth</label>
                   <input
                     type="date"
-                    [(ngModel)]="pds().date_of_birth"
+                    [(ngModel)]="pds.date_of_birth"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -233,7 +281,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Place of Birth</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().place_of_birth"
+                    [(ngModel)]="pds.place_of_birth"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -244,8 +292,8 @@
                     <label class="flex items-center gap-1.5 cursor-pointer">
                       <input
                         type="checkbox"
-                        [checked]="pds().sex === 'Male'"
-                        (change)="pds().sex = 'Male'"
+                        [checked]="pds.sex === 'Male'"
+                        (change)="pds.sex = 'Male'"
                         [disabled]="isFormReadonly()"
                         class="w-3.5 h-3.5"
                       />
@@ -254,8 +302,8 @@
                     <label class="flex items-center gap-1.5 cursor-pointer">
                       <input
                         type="checkbox"
-                        [checked]="pds().sex === 'Female'"
-                        (change)="pds().sex = 'Female'"
+                        [checked]="pds.sex === 'Female'"
+                        (change)="pds.sex = 'Female'"
                         [disabled]="isFormReadonly()"
                         class="w-3.5 h-3.5"
                       />
@@ -266,7 +314,7 @@
                 <div>
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Civil Status</label>
                   <select
-                    [(ngModel)]="pds().civil_status"
+                    [(ngModel)]="pds.civil_status"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   >
@@ -281,7 +329,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Height (m)</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().height"
+                    [(ngModel)]="pds.height"
                     [disabled]="isFormReadonly()"
                     placeholder="e.g., 1.65"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
@@ -291,7 +339,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Weight (kg)</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().weight"
+                    [(ngModel)]="pds.weight"
                     [disabled]="isFormReadonly()"
                     placeholder="e.g., 60"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
@@ -300,7 +348,7 @@
                 <div>
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Blood Type</label>
                   <select
-                    [(ngModel)]="pds().blood_type"
+                    [(ngModel)]="pds.blood_type"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   >
@@ -321,8 +369,8 @@
                     <label class="flex items-center gap-1.5 cursor-pointer">
                       <input
                         type="checkbox"
-                        [checked]="pds().citizenship_type === 'Filipino'"
-                        (change)="pds().citizenship_type = 'Filipino'"
+                        [checked]="pds.citizenship_type === 'Filipino'"
+                        (change)="pds.citizenship_type = 'Filipino'"
                         [disabled]="isFormReadonly()"
                         class="w-3.5 h-3.5"
                       />
@@ -331,8 +379,8 @@
                     <label class="flex items-center gap-1.5 cursor-pointer">
                       <input
                         type="checkbox"
-                        [checked]="pds().citizenship_type === 'Dual Citizenship'"
-                        (change)="pds().citizenship_type = 'Dual Citizenship'"
+                        [checked]="pds.citizenship_type === 'Dual Citizenship'"
+                        (change)="pds.citizenship_type = 'Dual Citizenship'"
                         [disabled]="isFormReadonly()"
                         class="w-3.5 h-3.5"
                       />
@@ -340,12 +388,12 @@
                     </label>
                   </div>
                 </div>
-                @if (pds().citizenship_type === 'Dual Citizenship') {
+                @if (pds.citizenship_type === 'Dual Citizenship') {
                   <div>
                     <label class="text-xs font-medium text-gray-500 mb-1 block">Country</label>
                     <input
                       type="text"
-                      [(ngModel)]="pds().dual_citizenship_country"
+                      [(ngModel)]="pds.dual_citizenship_country"
                       [disabled]="isFormReadonly()"
                       class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                     />
@@ -364,7 +412,7 @@
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().residential_house_no"
+                    [(ngModel)]="pds.residential_house_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -373,7 +421,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Street</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().residential_street"
+                    [(ngModel)]="pds.residential_street"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -384,7 +432,7 @@
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().residential_subdivision"
+                    [(ngModel)]="pds.residential_subdivision"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -393,7 +441,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Barangay</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().residential_barangay"
+                    [(ngModel)]="pds.residential_barangay"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -404,7 +452,7 @@
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().residential_city"
+                    [(ngModel)]="pds.residential_city"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -413,7 +461,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Province</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().residential_province"
+                    [(ngModel)]="pds.residential_province"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -422,7 +470,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">ZIP Code</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().residential_zip_code"
+                    [(ngModel)]="pds.residential_zip_code"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -451,7 +499,7 @@
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().permanent_house_no"
+                    [(ngModel)]="pds.permanent_house_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -460,7 +508,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Street</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().permanent_street"
+                    [(ngModel)]="pds.permanent_street"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -471,7 +519,7 @@
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().permanent_subdivision"
+                    [(ngModel)]="pds.permanent_subdivision"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -480,7 +528,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Barangay</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().permanent_barangay"
+                    [(ngModel)]="pds.permanent_barangay"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -491,7 +539,7 @@
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().permanent_city"
+                    [(ngModel)]="pds.permanent_city"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -500,7 +548,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Province</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().permanent_province"
+                    [(ngModel)]="pds.permanent_province"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -509,7 +557,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">ZIP Code</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().permanent_zip_code"
+                    [(ngModel)]="pds.permanent_zip_code"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -525,7 +573,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Telephone No.</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().telephone_no"
+                    [(ngModel)]="pds.telephone_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -534,7 +582,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Mobile No.</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().mobile_no"
+                    [(ngModel)]="pds.mobile_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -543,7 +591,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Email Address</label>
                   <input
                     type="email"
-                    [(ngModel)]="pds().email_address"
+                    [(ngModel)]="pds.email_address"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -559,7 +607,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">GSIS ID No.</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().gsis_id_no"
+                    [(ngModel)]="pds.gsis_id_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -570,7 +618,7 @@
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().pag_ibig_id_no"
+                    [(ngModel)]="pds.pag_ibig_id_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -579,7 +627,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">PhilHealth No.</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().philhealth_no"
+                    [(ngModel)]="pds.philhealth_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -588,7 +636,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">SSS No.</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().sss_no"
+                    [(ngModel)]="pds.sss_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -597,7 +645,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">TIN No.</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().tin_no"
+                    [(ngModel)]="pds.tin_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -608,7 +656,7 @@
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().agency_employee_no"
+                    [(ngModel)]="pds.agency_employee_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -618,7 +666,7 @@
           </div>
         </div>
 
-        <!-- ──────────────────── SECTION 2: FAMILY BACKGROUND ──────────────────── -->
+        <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SECTION 2: FAMILY BACKGROUND â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div id="section-family" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
           <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
             <i class="pi pi-users text-xs text-gray-400"></i>
@@ -635,7 +683,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Surname</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().spouse_surname"
+                    [(ngModel)]="pds.spouse_surname"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -644,7 +692,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">First Name</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().spouse_first_name"
+                    [(ngModel)]="pds.spouse_first_name"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -653,7 +701,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Middle Name</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().spouse_middle_name"
+                    [(ngModel)]="pds.spouse_middle_name"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -662,7 +710,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Occupation</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().spouse_occupation"
+                    [(ngModel)]="pds.spouse_occupation"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -673,7 +721,7 @@
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().spouse_employer"
+                    [(ngModel)]="pds.spouse_employer"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -684,7 +732,7 @@
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().spouse_business_address"
+                    [(ngModel)]="pds.spouse_business_address"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -693,7 +741,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Telephone No.</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().spouse_telephone"
+                    [(ngModel)]="pds.spouse_telephone"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -709,7 +757,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Surname</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().father_surname"
+                    [(ngModel)]="pds.father_surname"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -718,7 +766,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">First Name</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().father_first_name"
+                    [(ngModel)]="pds.father_first_name"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -727,7 +775,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Middle Name</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().father_middle_name"
+                    [(ngModel)]="pds.father_middle_name"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -743,7 +791,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Surname</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().mother_surname"
+                    [(ngModel)]="pds.mother_surname"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -752,7 +800,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">First Name</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().mother_first_name"
+                    [(ngModel)]="pds.mother_first_name"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -761,7 +809,7 @@
                   <label class="text-xs font-medium text-gray-500 mb-1 block">Middle Name</label>
                   <input
                     type="text"
-                    [(ngModel)]="pds().mother_middle_name"
+                    [(ngModel)]="pds.mother_middle_name"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -785,9 +833,9 @@
                   </button>
                 }
               </div>
-              @if (pds().children && pds().children!.length > 0) {
+              @if (pds.children && pds.children!.length > 0) {
                 <div class="space-y-2">
-                  @for (child of pds().children; track child; let i = $index) {
+                  @for (child of pds.children; track child; let i = $index) {
                     <div
                       class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50 flex items-center justify-between"
                     >
@@ -814,7 +862,7 @@
           </div>
         </div>
 
-        <!-- ──────────────────── SECTION 3: EDUCATIONAL BACKGROUND ──────────────────── -->
+        <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SECTION 3: EDUCATIONAL BACKGROUND â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div
           id="section-education"
           class="bg-white rounded-sm border border-gray-100 overflow-hidden"
@@ -837,9 +885,9 @@
             }
           </div>
           <div class="p-4">
-            @if (pds().education && pds().education!.length > 0) {
+            @if (pds.education && pds.education!.length > 0) {
               <div class="space-y-2">
-                @for (edu of pds().education; track edu; let i = $index) {
+                @for (edu of pds.education; track edu; let i = $index) {
                   <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
@@ -887,7 +935,7 @@
           </div>
         </div>
 
-        <!-- ──────────────────── SECTION 4: CIVIL SERVICE ELIGIBILITY ──────────────────── -->
+        <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SECTION 4: CIVIL SERVICE ELIGIBILITY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div
           id="section-eligibility"
           class="bg-white rounded-sm border border-gray-100 overflow-hidden"
@@ -910,9 +958,9 @@
             }
           </div>
           <div class="p-4">
-            @if (pds().eligibilities && pds().eligibilities!.length > 0) {
+            @if (pds.eligibilities && pds.eligibilities!.length > 0) {
               <div class="space-y-2">
-                @for (elig of pds().eligibilities; track elig; let i = $index) {
+                @for (elig of pds.eligibilities; track elig; let i = $index) {
                   <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
@@ -964,7 +1012,7 @@
           </div>
         </div>
 
-        <!-- ──────────────────── SECTION 5: WORK EXPERIENCE ──────────────────── -->
+        <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SECTION 5: WORK EXPERIENCE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div id="section-work" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
           <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -984,9 +1032,9 @@
             }
           </div>
           <div class="p-4">
-            @if (pds().work_experiences && pds().work_experiences!.length > 0) {
+            @if (pds.work_experiences && pds.work_experiences!.length > 0) {
               <div class="space-y-2">
-                @for (work of pds().work_experiences; track work; let i = $index) {
+                @for (work of pds.work_experiences; track work; let i = $index) {
                   <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
@@ -994,10 +1042,10 @@
                         <p class="text-xs text-gray-500">{{ work.department_agency }}</p>
                         <div class="flex flex-wrap gap-3 mt-1">
                           <span class="text-xs text-gray-400"
-                            >{{ work.date_from }} – {{ work.date_to || 'Present' }}</span
+                            >{{ work.date_from | date:'MM/dd/yyyy' }} – {{ work.date_to ? (work.date_to | date:'MM/dd/yyyy') : 'Present' }}</span
                           >
                           @if (work.monthly_salary) {
-                            <span class="text-xs text-gray-400">₱{{ work.monthly_salary }}</span>
+                            <span class="text-xs text-gray-400">₱{{ work.monthly_salary | number:'1.2-2' }}</span>
                           }
                           @if (work.salary_grade) {
                             <span class="text-xs text-gray-400">SG {{ work.salary_grade }}</span>
@@ -1040,7 +1088,7 @@
           </div>
         </div>
 
-        <!-- ──────────────────── SECTION 6: VOLUNTARY WORK ──────────────────── -->
+        <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SECTION 6: VOLUNTARY WORK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div
           id="section-voluntary"
           class="bg-white rounded-sm border border-gray-100 overflow-hidden"
@@ -1063,9 +1111,9 @@
             }
           </div>
           <div class="p-4">
-            @if (pds().voluntary_works && pds().voluntary_works!.length > 0) {
+            @if (pds.voluntary_works && pds.voluntary_works!.length > 0) {
               <div class="space-y-2">
-                @for (vol of pds().voluntary_works; track vol; let i = $index) {
+                @for (vol of pds.voluntary_works; track vol; let i = $index) {
                   <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
@@ -1075,7 +1123,7 @@
                         <p class="text-xs text-gray-500">{{ vol.position_nature_of_work }}</p>
                         <div class="flex gap-3 mt-1">
                           <span class="text-xs text-gray-400"
-                            >{{ vol.date_from }} – {{ vol.date_to }}</span
+                            >{{ vol.date_from | date:'MM/dd/yyyy' }} – {{ vol.date_to | date:'MM/dd/yyyy' }}</span
                           >
                           @if (vol.number_of_hours) {
                             <span class="text-xs text-gray-400">{{ vol.number_of_hours }} hrs</span>
@@ -1101,7 +1149,7 @@
           </div>
         </div>
 
-        <!-- ──────────────────── SECTION 7: TRAINING ──────────────────── -->
+        <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SECTION 7: TRAINING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div
           id="section-training"
           class="bg-white rounded-sm border border-gray-100 overflow-hidden"
@@ -1124,9 +1172,9 @@
             }
           </div>
           <div class="p-4">
-            @if (pds().trainings && pds().trainings!.length > 0) {
+            @if (pds.trainings && pds.trainings!.length > 0) {
               <div class="space-y-2">
-                @for (train of pds().trainings; track train; let i = $index) {
+                @for (train of pds.trainings; track train; let i = $index) {
                   <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
@@ -1134,7 +1182,7 @@
                         <p class="text-xs text-gray-500">{{ train.conducted_by }}</p>
                         <div class="flex gap-3 mt-1">
                           <span class="text-xs text-gray-400"
-                            >{{ train.date_from }} – {{ train.date_to }}</span
+                            >{{ train.date_from | date:'MM/dd/yyyy' }} – {{ train.date_to | date:'MM/dd/yyyy' }}</span
                           >
                           @if (train.number_of_hours) {
                             <span class="text-xs text-gray-400"
@@ -1165,7 +1213,7 @@
           </div>
         </div>
 
-        <!-- ──────────────────── SECTION 8: OTHER INFORMATION ──────────────────── -->
+        <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SECTION 8: OTHER INFORMATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div id="section-other" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
           <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
             <i class="pi pi-star text-xs text-gray-400"></i>
@@ -1198,7 +1246,7 @@
               }
               @if (hasSkills()) {
                 <div class="flex flex-wrap gap-1.5">
-                  @for (info of pds().other_info; track info; let i = $index) {
+                  @for (info of pds.other_info; track info; let i = $index) {
                     @if (info.info_type === 'SKILL') {
                       <span
                         class="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-sm border border-blue-100"
@@ -1246,7 +1294,7 @@
               }
               @if (hasRecognitions()) {
                 <div class="space-y-1">
-                  @for (info of pds().other_info; track info; let i = $index) {
+                  @for (info of pds.other_info; track info; let i = $index) {
                     @if (info.info_type === 'RECOGNITION') {
                       <div class="flex items-center gap-2">
                         <i class="pi pi-check text-xs text-green-500"></i>
@@ -1293,7 +1341,7 @@
               }
               @if (hasMemberships()) {
                 <div class="space-y-1">
-                  @for (info of pds().other_info; track info; let i = $index) {
+                  @for (info of pds.other_info; track info; let i = $index) {
                     @if (info.info_type === 'MEMBERSHIP') {
                       <div class="flex items-center gap-2">
                         <i class="pi pi-circle-fill text-xs text-gray-300"></i>
@@ -1318,7 +1366,7 @@
           </div>
         </div>
 
-        <!-- ──────────────────── SECTION 9: REFERENCES ──────────────────── -->
+        <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SECTION 9: REFERENCES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div
           id="section-references"
           class="bg-white rounded-sm border border-gray-100 overflow-hidden"
@@ -1345,9 +1393,9 @@
               List at least 3 references not related by consanguinity or affinity to you or to any
               appointing authority.
             </p>
-            @if (pds().references && pds().references!.length > 0) {
+            @if (pds.references && pds.references!.length > 0) {
               <div class="space-y-2">
-                @for (ref of pds().references; track ref; let i = $index) {
+                @for (ref of pds.references; track ref; let i = $index) {
                   <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50">
                     <div class="flex items-start justify-between">
                       <div>
@@ -1376,7 +1424,7 @@
           </div>
         </div>
 
-        <!-- ──────────────────── SECTION 10: QUESTIONNAIRE ──────────────────── -->
+        <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SECTION 10: QUESTIONNAIRE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div
           id="section-questionnaire"
           class="bg-white rounded-sm border border-gray-100 overflow-hidden"
@@ -1400,7 +1448,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q34_a_answer"
+                    [ngModel]="pds.q34_a_answer"
                     (ngModelChange)="setPdsField('q34_a_answer', $event)"
                     name="q34_a_answer"
                     [value]="true"
@@ -1412,7 +1460,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q34_a_answer"
+                    [ngModel]="pds.q34_a_answer"
                     (ngModelChange)="setPdsField('q34_a_answer', $event)"
                     name="q34_a_answer"
                     [value]="false"
@@ -1422,13 +1470,13 @@
                   <span class="text-xs text-gray-700">No</span>
                 </label>
               </div>
-              @if (pds().q34_a_answer) {
+              @if (pds.q34_a_answer) {
                 <div class="mt-2">
                   <label class="text-xs font-medium text-gray-500 mb-1 block"
                     >If yes, give details:</label
                   >
                   <textarea
-                    [(ngModel)]="pds().q34_a_details"
+                    [(ngModel)]="pds.q34_a_details"
                     [disabled]="isFormReadonly()"
                     rows="2"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
@@ -1446,7 +1494,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q35_a_answer"
+                    [ngModel]="pds.q35_a_answer"
                     (ngModelChange)="setPdsField('q35_a_answer', $event)"
                     name="q35_a_answer"
                     [value]="true"
@@ -1458,7 +1506,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q35_a_answer"
+                    [ngModel]="pds.q35_a_answer"
                     (ngModelChange)="setPdsField('q35_a_answer', $event)"
                     name="q35_a_answer"
                     [value]="false"
@@ -1468,13 +1516,13 @@
                   <span class="text-xs text-gray-700">No</span>
                 </label>
               </div>
-              @if (pds().q35_a_answer) {
+              @if (pds.q35_a_answer) {
                 <div class="mt-2">
                   <label class="text-xs font-medium text-gray-500 mb-1 block"
                     >If yes, give details:</label
                   >
                   <textarea
-                    [(ngModel)]="pds().q35_a_details"
+                    [(ngModel)]="pds.q35_a_details"
                     [disabled]="isFormReadonly()"
                     rows="2"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
@@ -1492,7 +1540,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q35_b_answer"
+                    [ngModel]="pds.q35_b_answer"
                     (ngModelChange)="setPdsField('q35_b_answer', $event)"
                     name="q35_b_answer"
                     [value]="true"
@@ -1504,7 +1552,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q35_b_answer"
+                    [ngModel]="pds.q35_b_answer"
                     (ngModelChange)="setPdsField('q35_b_answer', $event)"
                     name="q35_b_answer"
                     [value]="false"
@@ -1514,13 +1562,13 @@
                   <span class="text-xs text-gray-700">No</span>
                 </label>
               </div>
-              @if (pds().q35_b_answer) {
+              @if (pds.q35_b_answer) {
                 <div class="mt-2">
                   <label class="text-xs font-medium text-gray-500 mb-1 block"
                     >If yes, give details:</label
                   >
                   <textarea
-                    [(ngModel)]="pds().q35_b_details"
+                    [(ngModel)]="pds.q35_b_details"
                     [disabled]="isFormReadonly()"
                     rows="2"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
@@ -1538,7 +1586,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q36_answer"
+                    [ngModel]="pds.q36_answer"
                     (ngModelChange)="setPdsField('q36_answer', $event)"
                     name="q36_answer"
                     [value]="true"
@@ -1550,7 +1598,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q36_answer"
+                    [ngModel]="pds.q36_answer"
                     (ngModelChange)="setPdsField('q36_answer', $event)"
                     name="q36_answer"
                     [value]="false"
@@ -1560,13 +1608,13 @@
                   <span class="text-xs text-gray-700">No</span>
                 </label>
               </div>
-              @if (pds().q36_answer) {
+              @if (pds.q36_answer) {
                 <div class="mt-2">
                   <label class="text-xs font-medium text-gray-500 mb-1 block"
                     >If yes, give details:</label
                   >
                   <textarea
-                    [(ngModel)]="pds().q36_details"
+                    [(ngModel)]="pds.q36_details"
                     [disabled]="isFormReadonly()"
                     rows="2"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
@@ -1584,7 +1632,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q37_answer"
+                    [ngModel]="pds.q37_answer"
                     (ngModelChange)="setPdsField('q37_answer', $event)"
                     name="q37_answer"
                     [value]="true"
@@ -1596,7 +1644,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q37_answer"
+                    [ngModel]="pds.q37_answer"
                     (ngModelChange)="setPdsField('q37_answer', $event)"
                     name="q37_answer"
                     [value]="false"
@@ -1606,13 +1654,13 @@
                   <span class="text-xs text-gray-700">No</span>
                 </label>
               </div>
-              @if (pds().q37_answer) {
+              @if (pds.q37_answer) {
                 <div class="mt-2">
                   <label class="text-xs font-medium text-gray-500 mb-1 block"
                     >If yes, give details:</label
                   >
                   <textarea
-                    [(ngModel)]="pds().q37_details"
+                    [(ngModel)]="pds.q37_details"
                     [disabled]="isFormReadonly()"
                     rows="2"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
@@ -1630,7 +1678,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q38_answer"
+                    [ngModel]="pds.q38_answer"
                     (ngModelChange)="setPdsField('q38_answer', $event)"
                     name="q38_answer"
                     [value]="true"
@@ -1642,7 +1690,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q38_answer"
+                    [ngModel]="pds.q38_answer"
                     (ngModelChange)="setPdsField('q38_answer', $event)"
                     name="q38_answer"
                     [value]="false"
@@ -1652,13 +1700,13 @@
                   <span class="text-xs text-gray-700">No</span>
                 </label>
               </div>
-              @if (pds().q38_answer) {
+              @if (pds.q38_answer) {
                 <div class="mt-2">
                   <label class="text-xs font-medium text-gray-500 mb-1 block"
                     >If yes, give details:</label
                   >
                   <textarea
-                    [(ngModel)]="pds().q38_details"
+                    [(ngModel)]="pds.q38_details"
                     [disabled]="isFormReadonly()"
                     rows="2"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
@@ -1677,7 +1725,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q39_answer"
+                    [ngModel]="pds.q39_answer"
                     (ngModelChange)="setPdsField('q39_answer', $event)"
                     name="q39_answer"
                     [value]="true"
@@ -1689,7 +1737,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q39_answer"
+                    [ngModel]="pds.q39_answer"
                     (ngModelChange)="setPdsField('q39_answer', $event)"
                     name="q39_answer"
                     [value]="false"
@@ -1699,13 +1747,13 @@
                   <span class="text-xs text-gray-700">No</span>
                 </label>
               </div>
-              @if (pds().q39_answer) {
+              @if (pds.q39_answer) {
                 <div class="mt-2">
                   <label class="text-xs font-medium text-gray-500 mb-1 block"
                     >If yes, give details:</label
                   >
                   <textarea
-                    [(ngModel)]="pds().q39_details"
+                    [(ngModel)]="pds.q39_details"
                     [disabled]="isFormReadonly()"
                     rows="2"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
@@ -1724,7 +1772,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q40_answer"
+                    [ngModel]="pds.q40_answer"
                     (ngModelChange)="setPdsField('q40_answer', $event)"
                     name="q40_answer"
                     [value]="true"
@@ -1736,7 +1784,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q40_answer"
+                    [ngModel]="pds.q40_answer"
                     (ngModelChange)="setPdsField('q40_answer', $event)"
                     name="q40_answer"
                     [value]="false"
@@ -1746,13 +1794,13 @@
                   <span class="text-xs text-gray-700">No</span>
                 </label>
               </div>
-              @if (pds().q40_answer) {
+              @if (pds.q40_answer) {
                 <div class="mt-2">
                   <label class="text-xs font-medium text-gray-500 mb-1 block"
                     >If yes, give details:</label
                   >
                   <textarea
-                    [(ngModel)]="pds().q39_details"
+                    [(ngModel)]="pds.q39_details"
                     [disabled]="isFormReadonly()"
                     rows="2"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
@@ -1770,7 +1818,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q41_answer"
+                    [ngModel]="pds.q41_answer"
                     (ngModelChange)="setPdsField('q41_answer', $event)"
                     name="q41_answer"
                     [value]="true"
@@ -1782,7 +1830,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q41_answer"
+                    [ngModel]="pds.q41_answer"
                     (ngModelChange)="setPdsField('q41_answer', $event)"
                     name="q41_answer"
                     [value]="false"
@@ -1792,14 +1840,14 @@
                   <span class="text-xs text-gray-700">No</span>
                 </label>
               </div>
-              @if (pds().q41_answer) {
+              @if (pds.q41_answer) {
                 <div class="mt-2">
                   <label class="text-xs font-medium text-gray-500 mb-1 block"
                     >If yes, please specify:</label
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().q41_country"
+                    [(ngModel)]="pds.q41_country"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -1816,7 +1864,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q43_answer"
+                    [ngModel]="pds.q43_answer"
                     (ngModelChange)="setPdsField('q43_answer', $event)"
                     name="q43_answer"
                     [value]="true"
@@ -1828,7 +1876,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q43_answer"
+                    [ngModel]="pds.q43_answer"
                     (ngModelChange)="setPdsField('q43_answer', $event)"
                     name="q43_answer"
                     [value]="false"
@@ -1838,14 +1886,14 @@
                   <span class="text-xs text-gray-700">No</span>
                 </label>
               </div>
-              @if (pds().q43_answer) {
+              @if (pds.q43_answer) {
                 <div class="mt-2">
                   <label class="text-xs font-medium text-gray-500 mb-1 block"
                     >If yes, please specify ID No.:</label
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().q43_id_no"
+                    [(ngModel)]="pds.q43_id_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -1860,7 +1908,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q44_answer"
+                    [ngModel]="pds.q44_answer"
                     (ngModelChange)="setPdsField('q44_answer', $event)"
                     name="q44_answer"
                     [value]="true"
@@ -1872,7 +1920,7 @@
                 <label class="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
-                    [ngModel]="pds().q44_answer"
+                    [ngModel]="pds.q44_answer"
                     (ngModelChange)="setPdsField('q44_answer', $event)"
                     name="q44_answer"
                     [value]="false"
@@ -1882,14 +1930,14 @@
                   <span class="text-xs text-gray-700">No</span>
                 </label>
               </div>
-              @if (pds().q44_answer) {
+              @if (pds.q44_answer) {
                 <div class="mt-2">
                   <label class="text-xs font-medium text-gray-500 mb-1 block"
                     >If yes, please specify ID No.:</label
                   >
                   <input
                     type="text"
-                    [(ngModel)]="pds().q44_id_no"
+                    [(ngModel)]="pds.q44_id_no"
                     [disabled]="isFormReadonly()"
                     class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                   />
@@ -1899,7 +1947,7 @@
           </div>
         </div>
 
-        <!-- ──────────────────── SECTION 11: PHOTO & SIGNATURE ──────────────────── -->
+        <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SECTION 11: PHOTO & SIGNATURE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div id="section-photo" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
           <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
             <i class="pi pi-camera text-xs text-gray-400"></i>
@@ -1934,7 +1982,7 @@
                     </div>
                   } @else {
                     <i class="pi pi-camera text-2xl text-gray-300 mb-2 block"></i>
-                    <p class="text-xs text-gray-400 mb-2">Passport-sized photo (4.5cm × 3.5cm)</p>
+                    <p class="text-xs text-gray-400 mb-2">Passport-sized photo (4.5cm Ã— 3.5cm)</p>
                     @if (!isFormReadonly()) {
                       <input
                         type="file"
@@ -2039,7 +2087,7 @@
   }
 </div>
 
-<!-- ──────────────────── MODALS ──────────────────── -->
+<!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ MODALS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 
 <!-- Add Child Modal -->
 @if (showAddChildModal) {

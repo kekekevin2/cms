@@ -1,8 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
+﻿import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import {
   DeanPDSService,
   PersonalDataSheet,
@@ -15,6 +14,7 @@ import {
   PDSOtherInfo,
   PDSReference,
 } from '../../../services/dean/dean-pds.service';
+import { PdsPdfService } from '../../../services/core/pds-pdf.service';
 import { environment } from '../../../environments/environment';
 import Swal from 'sweetalert2';
 
@@ -25,7 +25,7 @@ import Swal from 'sweetalert2';
   styleUrl: './personal-data-sheet.css',
 })
 export class DeanPersonalDataSheetComponent implements OnInit {
-  pds = signal<PersonalDataSheet>({
+  pds: PersonalDataSheet = {
     surname: '',
     first_name: '',
     middle_name: '',
@@ -48,7 +48,7 @@ export class DeanPersonalDataSheetComponent implements OnInit {
     trainings: [],
     other_info: [],
     references: [],
-  });
+  };
 
   currentTab = signal<number>(1);
   loading = signal(false);
@@ -102,7 +102,7 @@ export class DeanPersonalDataSheetComponent implements OnInit {
 
   constructor(
     private pdsService: DeanPDSService,
-    private http: HttpClient,
+    private pdfService: PdsPdfService,
     private router: Router,
   ) {}
 
@@ -114,7 +114,7 @@ export class DeanPersonalDataSheetComponent implements OnInit {
     this.loading.set(true);
     this.pdsService.getPDS().subscribe({
       next: (data) => {
-        this.pds.set(data);
+        this.pds = data;
         if (data.photo_path) {
           this.photoPreview.set(`${environment.apiUrl}/../${data.photo_path}`);
         }
@@ -122,14 +122,9 @@ export class DeanPersonalDataSheetComponent implements OnInit {
           this.signaturePreview.set(`${environment.apiUrl}/../${data.signature_path}`);
         }
         this.loading.set(false);
-
-        // Auto-sync disabled to prevent infinite loading
-        // Use the "Import from My Profile" button to sync manually
       },
       error: (error) => {
         if (error.status === 404) {
-          // PDS doesn't exist yet, auto-import from profile
-          console.log('No PDS found, importing from profile...');
           this.autoImportFromProfile();
         } else {
           console.error('Error loading PDS:', error);
@@ -139,27 +134,10 @@ export class DeanPersonalDataSheetComponent implements OnInit {
     });
   }
 
-  syncWithProfile() {
-    // Silently sync PDS with My Profile data in the background
-    // This ensures PDS always has the latest data from My Profile
-    this.pdsService.importFromProfile().subscribe({
-      next: (data) => {
-        this.pds.set(data);
-        console.log('✓ PDS synced with My Profile - all data is up to date');
-      },
-      error: (error) => {
-        console.error('Sync error:', error);
-        // Don't show error to user, just log it
-        // PDS will still show the previously loaded data
-      },
-    });
-  }
-
   autoImportFromProfile() {
     this.pdsService.importFromProfile().subscribe({
       next: (data) => {
-        this.pds.set(data);
-        console.log('Profile data imported successfully');
+        this.pds = data;
         this.loading.set(false);
       },
       error: (error) => {
@@ -213,7 +191,7 @@ export class DeanPersonalDataSheetComponent implements OnInit {
         this.loading.set(true);
         this.pdsService.importFromProfile().subscribe({
           next: (data) => {
-            this.pds.set(data);
+            this.pds = data;
             Swal.fire({
               icon: 'success',
               title: 'Imported!',
@@ -279,7 +257,7 @@ export class DeanPersonalDataSheetComponent implements OnInit {
 
   savePDS() {
     this.loading.set(true);
-    this.pdsService.savePDS(this.pds()).subscribe({
+    this.pdsService.savePDS(this.pds).subscribe({
       next: () => {
         Swal.fire({
           icon: 'success',
@@ -419,7 +397,7 @@ export class DeanPersonalDataSheetComponent implements OnInit {
   submitPDS() {
     Swal.fire({
       title: 'Submit Personal Data Sheet?',
-      text: 'Once submitted, you cannot edit the form until it is returned. Make sure all information is accurate.',
+      text: 'Your current data will be saved and submitted for approval. Make sure all information is accurate.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#2563eb',
@@ -428,23 +406,38 @@ export class DeanPersonalDataSheetComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         this.loading.set(true);
-        this.pdsService.submitPDS().subscribe({
+        // Save current form data first, then submit
+        this.pdsService.savePDS(this.pds).subscribe({
           next: () => {
-            Swal.fire({
-              icon: 'success',
-              title: 'Submitted!',
-              text: 'Personal Data Sheet submitted for approval',
-              confirmButtonColor: '#2563eb',
+            this.pdsService.submitPDS().subscribe({
+              next: () => {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Submitted!',
+                  text: 'Personal Data Sheet submitted for approval',
+                  confirmButtonColor: '#2563eb',
+                });
+                this.loadPDS();
+                this.loading.set(false);
+              },
+              error: (error) => {
+                console.error('Submit error:', error);
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Submission Failed',
+                  text: error.error?.message || 'Failed to submit Personal Data Sheet',
+                  confirmButtonColor: '#dc2626',
+                });
+                this.loading.set(false);
+              },
             });
-            this.loadPDS();
-            this.loading.set(false);
           },
           error: (error) => {
-            console.error('Submit error:', error);
+            console.error('Save before submit error:', error);
             Swal.fire({
               icon: 'error',
-              title: 'Submission Failed',
-              text: error.error?.message || 'Failed to submit Personal Data Sheet',
+              title: 'Save Failed',
+              text: 'Could not save your data before submitting. Please try again.',
               confirmButtonColor: '#dc2626',
             });
             this.loading.set(false);
@@ -457,7 +450,7 @@ export class DeanPersonalDataSheetComponent implements OnInit {
   // Toggle methods for optional sections
   toggleSpouseFields() {
     if (this.hasNoSpouse) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.spouse_surname = 'N/A';
       currentPDS.spouse_first_name = 'N/A';
       currentPDS.spouse_middle_name = 'N/A';
@@ -465,9 +458,9 @@ export class DeanPersonalDataSheetComponent implements OnInit {
       currentPDS.spouse_employer = 'N/A';
       currentPDS.spouse_business_address = 'N/A';
       currentPDS.spouse_telephone = 'N/A';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     } else {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.spouse_surname = '';
       currentPDS.spouse_first_name = '';
       currentPDS.spouse_middle_name = '';
@@ -475,63 +468,63 @@ export class DeanPersonalDataSheetComponent implements OnInit {
       currentPDS.spouse_employer = '';
       currentPDS.spouse_business_address = '';
       currentPDS.spouse_telephone = '';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     }
   }
 
   toggleFatherInfo() {
     if (this.fatherInfoNA) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.father_surname = 'N/A';
       currentPDS.father_first_name = 'N/A';
       currentPDS.father_middle_name = 'N/A';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     } else {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.father_surname = '';
       currentPDS.father_first_name = '';
       currentPDS.father_middle_name = '';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     }
   }
 
   toggleMotherInfo() {
     if (this.motherInfoNA) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.mother_surname = 'N/A';
       currentPDS.mother_first_name = 'N/A';
       currentPDS.mother_middle_name = 'N/A';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     } else {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.mother_surname = '';
       currentPDS.mother_first_name = '';
       currentPDS.mother_middle_name = '';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     }
   }
 
   // Helper methods for managing arrays
   addChild() {
     if (this.newChild.child_name && this.newChild.date_of_birth) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.children = [...(currentPDS.children || []), { ...this.newChild }];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newChild = { child_name: '', date_of_birth: '' };
     }
   }
 
   removeChild(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.children = currentPDS.children?.filter((_: any, i: number) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addEducation() {
     if (this.newEducation.school_name) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.education = [...(currentPDS.education || []), { ...this.newEducation }];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newEducation = {
         level: 'ELEMENTARY',
         school_name: '',
@@ -544,34 +537,34 @@ export class DeanPersonalDataSheetComponent implements OnInit {
   }
 
   removeEducation(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.education = currentPDS.education?.filter((_: any, i: number) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addEligibility() {
     if (this.newEligibility.career_service) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.eligibilities = [...(currentPDS.eligibilities || []), { ...this.newEligibility }];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newEligibility = { career_service: '', license_validity: '' };
     }
   }
 
   removeEligibility(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.eligibilities = currentPDS.eligibilities?.filter((_: any, i: number) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addWorkExperience() {
     if (this.newWorkExperience.position_title && this.newWorkExperience.date_from) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.work_experiences = [
         ...(currentPDS.work_experiences || []),
         { ...this.newWorkExperience },
       ];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newWorkExperience = {
         date_from: '',
         position_title: '',
@@ -582,19 +575,19 @@ export class DeanPersonalDataSheetComponent implements OnInit {
   }
 
   removeWorkExperience(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.work_experiences = currentPDS.work_experiences?.filter((_: any, i: number) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addVoluntaryWork() {
     if (this.newVoluntaryWork.organization_name) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.voluntary_works = [
         ...(currentPDS.voluntary_works || []),
         { ...this.newVoluntaryWork },
       ];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newVoluntaryWork = {
         organization_name: '',
         date_from: '',
@@ -605,16 +598,16 @@ export class DeanPersonalDataSheetComponent implements OnInit {
   }
 
   removeVoluntaryWork(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.voluntary_works = currentPDS.voluntary_works?.filter((_: any, i: number) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addTraining() {
     if (this.newTraining.title) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.trainings = [...(currentPDS.trainings || []), { ...this.newTraining }];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newTraining = {
         title: '',
         date_from: '',
@@ -625,70 +618,70 @@ export class DeanPersonalDataSheetComponent implements OnInit {
   }
 
   removeTraining(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.trainings = currentPDS.trainings?.filter((_: any, i: number) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addSkill() {
     if (this.newSkill) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.other_info = [
         ...(currentPDS.other_info || []),
         { info_type: 'SKILL', details: this.newSkill },
       ];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newSkill = '';
     }
   }
 
   addRecognition() {
     if (this.newRecognition) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.other_info = [
         ...(currentPDS.other_info || []),
         { info_type: 'RECOGNITION', details: this.newRecognition },
       ];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newRecognition = '';
     }
   }
 
   addMembership() {
     if (this.newMembership) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.other_info = [
         ...(currentPDS.other_info || []),
         { info_type: 'MEMBERSHIP', details: this.newMembership },
       ];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newMembership = '';
     }
   }
 
   removeOtherInfo(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.other_info = currentPDS.other_info?.filter((_: any, i: number) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addReference() {
     if (this.newReference.name && this.newReference.address) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.references = [...(currentPDS.references || []), { ...this.newReference }];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newReference = { name: '', address: '', telephone_number: '' };
     }
   }
 
   removeReference(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.references = currentPDS.references?.filter((_: any, i: number) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   copyResidentialToPermanent() {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.permanent_house_no = currentPDS.residential_house_no;
     currentPDS.permanent_street = currentPDS.residential_street;
     currentPDS.permanent_subdivision = currentPDS.residential_subdivision;
@@ -696,7 +689,7 @@ export class DeanPersonalDataSheetComponent implements OnInit {
     currentPDS.permanent_city = currentPDS.residential_city;
     currentPDS.permanent_province = currentPDS.residential_province;
     currentPDS.permanent_zip_code = currentPDS.residential_zip_code;
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   selectTab(tab: number) {
@@ -718,11 +711,11 @@ export class DeanPersonalDataSheetComponent implements OnInit {
   }
 
   isFormReadonly(): boolean {
-    return this.pds().status === 'submitted' || this.pds().status === 'approved';
+    return this.pds.status === 'submitted' || this.pds.status === 'approved';
   }
 
   getStatusBadgeClass(): string {
-    switch (this.pds().status) {
+    switch (this.pds.status) {
       case 'approved':
         return 'bg-green-100 text-green-800 border-green-300';
       case 'submitted':
@@ -735,7 +728,7 @@ export class DeanPersonalDataSheetComponent implements OnInit {
   }
 
   getStatusText(): string {
-    switch (this.pds().status) {
+    switch (this.pds.status) {
       case 'approved':
         return 'APPROVED';
       case 'submitted':
@@ -749,55 +742,36 @@ export class DeanPersonalDataSheetComponent implements OnInit {
 
   // Helper methods for filtering other_info by type
   hasSkills(): boolean {
-    return (this.pds().other_info || []).some((info: any) => info.info_type === 'SKILL');
+    return (this.pds.other_info || []).some((info: any) => info.info_type === 'SKILL');
   }
 
   hasRecognitions(): boolean {
-    return (this.pds().other_info || []).some((info: any) => info.info_type === 'RECOGNITION');
+    return (this.pds.other_info || []).some((info: any) => info.info_type === 'RECOGNITION');
   }
 
   hasMemberships(): boolean {
-    return (this.pds().other_info || []).some((info: any) => info.info_type === 'MEMBERSHIP');
+    return (this.pds.other_info || []).some((info: any) => info.info_type === 'MEMBERSHIP');
   }
 
-  exportToExcel() {
+  async downloadPDF() {
     this.loading.set(true);
-    const url = `${environment.apiUrl}/dean-pds/export/excel`;
-
-    this.http.get(url, { responseType: 'blob' }).subscribe({
-      next: (blob) => {
-        this.loading.set(false);
-        // Create download link
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-        const pdsData = this.pds();
-        link.download = `PDS_${pdsData.surname}_${pdsData.first_name}_${dateStr}.xlsx`;
-        link.click();
-        window.URL.revokeObjectURL(downloadUrl);
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Exported!',
-          text: 'PDS exported to Excel successfully',
-          confirmButtonColor: '#2563eb',
-        });
-      },
-      error: (error) => {
-        this.loading.set(false);
-        console.error('Export error:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Export Failed',
-          text: 'Failed to export PDS to Excel',
-          confirmButtonColor: '#dc2626',
-        });
-      },
-    });
+    try {
+      await this.pdfService.generateAndDownload(this.pds);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Download Failed',
+        text: 'Failed to generate PDS PDF.',
+        confirmButtonColor: '#dc2626',
+      });
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   goBack() {
     this.router.navigate(['/dean']);
   }
 }
+
