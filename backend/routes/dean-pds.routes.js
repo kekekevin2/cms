@@ -1,6 +1,5 @@
 const router = require("express").Router();
 const controller = require("../controllers/dean-pds.controller");
-const excelController = require("../controllers/pds-excel-export.controller");
 const verifyToken = require("../middleware/auth.middleware");
 
 // All routes require authentication
@@ -24,13 +23,7 @@ router.post("/submit", controller.submitPDS);
 // POST: Import data from My Profile
 router.post("/import-from-profile", controller.importFromProfile);
 
-// GET: Export PDS to Excel
-router.get("/export/excel", excelController.exportDeanPDSToExcel);
-
-// GET: Export Faculty PDS to Excel (Dean downloads faculty PDS)
-router.get(
-  "/export/faculty/:faculty_id",
-  excelController.exportFacultyPDSByDean,
-);
+// GET: Retrieve a faculty member's PDS as JSON (for client-side PDF generation)
+router.get("/faculty/:faculty_id", controller.getFacultyPDS);
 
 module.exports = router;

@@ -60,34 +60,42 @@ exports.getPDS = async (req, res) => {
         {
           model: db.PDSChild,
           as: "children",
+          separate: true,
         },
         {
           model: db.PDSEducation,
           as: "education",
+          separate: true,
         },
         {
           model: db.PDSEligibility,
           as: "eligibilities",
+          separate: true,
         },
         {
           model: db.PDSWorkExperience,
           as: "work_experiences",
+          separate: true,
         },
         {
           model: db.PDSVoluntaryWork,
           as: "voluntary_works",
+          separate: true,
         },
         {
           model: db.PDSTraining,
           as: "trainings",
+          separate: true,
         },
         {
           model: db.PDSOtherInfo,
           as: "other_info",
+          separate: true,
         },
         {
           model: db.PDSReference,
           as: "references",
+          separate: true,
         },
       ],
     });
@@ -700,6 +708,7 @@ exports.importFromProfile = async (req, res) => {
       pdsData.surname = personalProfile.last_name || "N/A";
       pdsData.first_name = personalProfile.first_name || "N/A";
       pdsData.middle_name = personalProfile.middle_name || "";
+      pdsData.name_extension = personalProfile.extension_name || null;
       pdsData.date_of_birth =
         personalProfile.date_of_birth || new Date("1900-01-01");
       pdsData.place_of_birth = personalProfile.place_of_birth || "N/A";
@@ -707,7 +716,10 @@ exports.importFromProfile = async (req, res) => {
       pdsData.civil_status = personalProfile.civil_status || "Single";
       pdsData.mobile_no = personalProfile.mobile_number_primary || "N/A";
       pdsData.email_address = personalProfile.email_primary || "N/A";
-      pdsData.citizenship_type = personalProfile.citizenship || "Filipino";
+      const validCitizenshipTypes = ["Filipino", "Dual Citizenship", "By Naturalization"];
+      pdsData.citizenship_type = validCitizenshipTypes.includes(personalProfile.citizenship)
+        ? personalProfile.citizenship
+        : "Filipino";
       // Faculty profile uses home_* prefix for address fields
       pdsData.residential_barangay = personalProfile.home_barangay || "";
       pdsData.residential_city =
@@ -715,14 +727,16 @@ exports.importFromProfile = async (req, res) => {
       pdsData.residential_province = personalProfile.home_province || "N/A";
       pdsData.residential_zip_code = personalProfile.home_zip_code || null;
       pdsData.residential_street =
-        personalProfile.home_street_subdivision || null;
+        personalProfile.home_street || personalProfile.home_street_subdivision || null;
+      pdsData.residential_subdivision = personalProfile.home_subdivision || null;
       pdsData.permanent_barangay = personalProfile.home_barangay || "";
       pdsData.permanent_city =
         personalProfile.home_barangay || personalProfile.home_province || "N/A";
       pdsData.permanent_province = personalProfile.home_province || "N/A";
       pdsData.permanent_zip_code = personalProfile.home_zip_code || null;
       pdsData.permanent_street =
-        personalProfile.home_street_subdivision || null;
+        personalProfile.home_street || personalProfile.home_street_subdivision || null;
+      pdsData.permanent_subdivision = personalProfile.home_subdivision || null;
       pdsData.telephone_no = personalProfile.mobile_number_secondary || null;
     }
 
@@ -906,5 +920,148 @@ exports.importFromProfile = async (req, res) => {
   } catch (error) {
     console.error("Import from profile error:", error);
     res.status(500).json({ message: "Error importing profile data" });
+  }
+};
+
+// GET: Return profile data mapped to PDS shape (read-only, no DB writes)
+exports.getProfileAsPDS = async (req, res) => {
+  try {
+    const facultyUserId = req.user.user_id;
+
+    const faculty = await db.Faculty.findOne({ where: { user_id: facultyUserId } });
+    if (!faculty) {
+      return res.status(404).json({ message: "Faculty profile not found" });
+    }
+
+    const [
+      personalProfile,
+      academicProfiles,
+      employmentProfiles,
+      seminars,
+      memberships,
+      awards,
+      researchActivities,
+      extensionActivities,
+    ] = await Promise.all([
+      db.FacultyPersonalProfile.findOne({ where: { faculty_id: faculty.faculty_id } }),
+      db.FacultyAcademicProfile.findAll({ where: { faculty_id: faculty.faculty_id }, order: [["year_graduated", "ASC"]] }),
+      db.FacultyEmploymentProfile.findAll({ where: { faculty_id: faculty.faculty_id }, order: [["date_from", "DESC"]] }),
+      db.FacultySeminarsTrainings.findAll({ where: { faculty_id: faculty.faculty_id }, order: [["date", "DESC"]] }),
+      db.FacultyProfessionalMembership.findAll({ where: { faculty_id: faculty.faculty_id } }),
+      db.FacultyAwards.findAll({ where: { faculty_id: faculty.faculty_id }, order: [["date_received", "DESC"]] }),
+      db.FacultyResearchActivities.findAll({ where: { faculty_id: faculty.faculty_id }, order: [["date", "DESC"]] }),
+      db.FacultyExtensionActivities.findAll({ where: { faculty_id: faculty.faculty_id }, order: [["date_of_implementation", "DESC"]] }),
+    ]);
+
+    // Map personal profile → PDS personal info
+    const personal = personalProfile || {};
+    const pds = {
+      surname: personal.last_name || "",
+      first_name: personal.first_name || "",
+      middle_name: personal.middle_name || "",
+      name_extension: personal.extension_name || "",
+      date_of_birth: personal.date_of_birth || "",
+      place_of_birth: personal.place_of_birth || "",
+      sex: personal.sex || "Male",
+      civil_status: personal.civil_status || "Single",
+      citizenship_type: ["Filipino", "Dual Citizenship", "By Naturalization"].includes(personal.citizenship)
+        ? personal.citizenship
+        : "Filipino",
+      // Address — profile stores home_province and home_barangay (no separate city)
+      residential_street: personal.home_street || personal.home_street_subdivision || "",
+      residential_subdivision: personal.home_subdivision || "",
+      residential_barangay: personal.home_barangay || "",
+      residential_city: personal.home_region || "",
+      residential_province: personal.home_province || "",
+      residential_zip_code: personal.home_zip_code || "",
+      // Mirror to permanent address
+      permanent_street: personal.home_street || personal.home_street_subdivision || "",
+      permanent_subdivision: personal.home_subdivision || "",
+      permanent_barangay: personal.home_barangay || "",
+      permanent_city: personal.home_region || "",
+      permanent_province: personal.home_province || "",
+      permanent_zip_code: personal.home_zip_code || "",
+      // Contact
+      telephone_no: personal.mobile_number_secondary || "",
+      mobile_no: personal.mobile_number_primary || "",
+      email_address: personal.email_primary || "",
+
+      // Education
+      education: academicProfiles
+        .filter((a) => a.school_name)
+        .map((a) => ({
+          level: a.level || "COLLEGE",
+          school_name: a.school_name,
+          degree_course: a.degree_course || "",
+          period_from: a.year_attended_from || null,
+          period_to: a.year_attended_to || null,
+          year_graduated: a.year_graduated || null,
+          scholarship_honors: a.honors_received || "",
+        })),
+
+      // Work experience
+      work_experiences: employmentProfiles
+        .filter((e) => e.position_title && e.company_name && e.date_from)
+        .map((e) => ({
+          date_from: e.date_from,
+          date_to: e.date_to || null,
+          position_title: e.position_title,
+          department_agency: e.company_name,
+          monthly_salary: e.monthly_salary || null,
+          salary_grade: e.salary_grade || null,
+          status_of_appointment: e.appointment_status || e.employment_status || "",
+          is_government_service: e.government_service ?? null,
+        })),
+
+      // Trainings / L&D
+      trainings: seminars.map((s) => ({
+        title: s.title || "",
+        date_from: s.date || "",
+        date_to: s.date || "",
+        number_of_hours: null,
+        type_of_ld: s.category || "",
+        conducted_by: s.training_provider || s.sponsoring_agency || "",
+      })),
+
+      // Other info
+      other_info: [
+        ...memberships.map((m) => ({
+          info_type: "MEMBERSHIP",
+          details: `${m.organization_name} - ${m.position || "Member"}`,
+        })),
+        ...awards.map((a) => ({
+          info_type: "RECOGNITION",
+          details: `${a.award_title} - ${a.awarding_body} (${a.date_received || "N/A"})`,
+        })),
+      ],
+
+      // Voluntary work (research + extension activities)
+      voluntary_works: [
+        ...researchActivities.map((r) => ({
+          organization_name: r.sponsoring_agency || "",
+          date_from: r.date || "",
+          date_to: r.date || "",
+          number_of_hours: null,
+          position_nature_of_work: `Research: ${r.research_title}`,
+        })),
+        ...extensionActivities.map((e) => ({
+          organization_name: e.beneficiary || "",
+          date_from: e.date_of_implementation || "",
+          date_to: e.date_of_implementation || "",
+          number_of_hours: null,
+          position_nature_of_work: `Extension: ${e.extension_title} (${e.location})`,
+        })),
+      ],
+
+      // Empty arrays for PDS-only sections
+      children: [],
+      eligibilities: [],
+      references: [],
+    };
+
+    res.json(pds);
+  } catch (error) {
+    console.error("Get profile as PDS error:", error);
+    res.status(500).json({ message: "Error reading profile data" });
   }
 };

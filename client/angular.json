@@ -64,6 +64,11 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "prebundle": {
+              "exclude": ["pdfjs-dist"]
+            }
+          },
           "configurations": {
             "production": {
               "buildTarget": "client:build:production"

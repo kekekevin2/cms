@@ -15,6 +15,7 @@ import {
 import { DeanAnalyticsService } from '../../../services/dean/dean-analytics.service';
 import { DeanPDSService } from '../../../services/dean/dean-pds.service';
 import { DeanFacultyProfileService } from '../../../services/dean/dean-faculty-profile.service';
+import { PdsPdfService } from '../../../services/core/pds-pdf.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -77,6 +78,7 @@ export class DeanFacultyManagement implements OnInit {
     private analyticsService: DeanAnalyticsService,
     private pdsService: DeanPDSService,
     private facultyProfileService: DeanFacultyProfileService,
+    private pdfService: PdsPdfService,
   ) {}
 
   generateAllActivitiesPDF(faculty: Faculty) {
@@ -811,25 +813,28 @@ export class DeanFacultyManagement implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         this.loading.set(true);
-        this.pdsService.downloadFacultyPDS(faculty.faculty_id).subscribe({
-          next: (blob) => {
-            this.loading.set(false);
-            // Create download link
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-            link.download = `PDS_${faculty.last_name}_${faculty.first_name}_${dateStr}.xlsx`;
-            link.click();
-            window.URL.revokeObjectURL(url);
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Download Complete',
-              text: 'PDS file has been downloaded successfully.',
-              timer: 2000,
-              showConfirmButton: false,
-            });
+        this.pdsService.getFacultyPDS(faculty.faculty_id).subscribe({
+          next: async (pds) => {
+            try {
+              await this.pdfService.generateAndDownload(pds);
+              Swal.fire({
+                icon: 'success',
+                title: 'Download Complete',
+                text: 'PDS PDF has been downloaded successfully.',
+                timer: 2000,
+                showConfirmButton: false,
+              });
+            } catch (err) {
+              console.error('PDF generation error:', err);
+              Swal.fire({
+                icon: 'error',
+                title: 'Download Failed',
+                text: 'Failed to generate PDS PDF.',
+                confirmButtonColor: '#2563eb',
+              });
+            } finally {
+              this.loading.set(false);
+            }
           },
           error: (error) => {
             this.loading.set(false);
@@ -837,7 +842,7 @@ export class DeanFacultyManagement implements OnInit {
             Swal.fire({
               icon: 'error',
               title: 'Download Failed',
-              text: error.error?.message || 'Failed to download PDS file.',
+              text: error.error?.message || 'Failed to download PDS.',
               confirmButtonColor: '#2563eb',
             });
           },

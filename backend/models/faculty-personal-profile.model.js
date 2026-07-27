@@ -103,6 +103,14 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING(300),
         allowNull: true,
       },
+      home_street: {
+        type: Sequelize.STRING(150),
+        allowNull: true,
+      },
+      home_subdivision: {
+        type: Sequelize.STRING(150),
+        allowNull: true,
+      },
       home_zip_code: {
         type: Sequelize.STRING(20),
         allowNull: true,

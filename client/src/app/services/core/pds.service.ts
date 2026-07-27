@@ -240,7 +240,12 @@ export class PDSService {
     return this.http.post(`${this.apiUrl}/submit`, {});
   }
 
-  // Import data from My Profile
+  // Get My Profile data mapped to PDS shape (read-only, no DB writes)
+  getProfileAsPDS(): Observable<PersonalDataSheet> {
+    return this.http.get<PersonalDataSheet>(`${this.apiUrl}/from-profile`);
+  }
+
+  // Overwrite PDS with My Profile data (saves to DB)
   importFromProfile(): Observable<PersonalDataSheet> {
     return this.http.post<PersonalDataSheet>(`${this.apiUrl}/import-from-profile`, {});
   }

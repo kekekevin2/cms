@@ -1,0 +1,17 @@
+{
+  "name": "pds-locator-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone dev-only server storing PDS overlay field positions in its own SQLite database. Not part of the main backend/ or client/ apps.",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}

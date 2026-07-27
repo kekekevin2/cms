@@ -1,7 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
+﻿import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   PDSService,
   PersonalDataSheet,
@@ -14,6 +14,7 @@ import {
   PDSOtherInfo,
   PDSReference,
 } from '../../../services/core/pds.service';
+import { PdsPdfService } from '../../../services/core/pds-pdf.service';
 import { environment } from '../../../environments/environment';
 import Swal from 'sweetalert2';
 
@@ -24,7 +25,7 @@ import Swal from 'sweetalert2';
   styleUrl: './personal-data-sheet.css',
 })
 export class PersonalDataSheetComponent implements OnInit {
-  pds = signal<PersonalDataSheet>({
+  pds: PersonalDataSheet = {
     surname: '',
     first_name: '',
     middle_name: '',
@@ -47,7 +48,7 @@ export class PersonalDataSheetComponent implements OnInit {
     trainings: [],
     other_info: [],
     references: [],
-  });
+  };
 
   currentTab = signal<number>(1);
   loading = signal(false);
@@ -56,6 +57,9 @@ export class PersonalDataSheetComponent implements OnInit {
   signatureFile: File | null = null;
   photoPreview = signal<string>('');
   signaturePreview = signal<string>('');
+  showPdfPreview = signal(false);
+  pdfPreviewUrl = signal<SafeResourceUrl | null>(null);
+  private pdfPreviewObjectUrl: string | null = null;
 
   // Checkbox states for optional sections
   hasNoSpouse = false;
@@ -111,7 +115,8 @@ export class PersonalDataSheetComponent implements OnInit {
 
   constructor(
     private pdsService: PDSService,
-    private http: HttpClient,
+    private pdfService: PdsPdfService,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
@@ -119,7 +124,22 @@ export class PersonalDataSheetComponent implements OnInit {
   }
 
   setPdsField(field: keyof PersonalDataSheet, value: any) {
-    this.pds.update((p) => ({ ...p, [field]: value }));
+    this.pds = { ...this.pds, [field]: value };
+  }
+
+  private static readonly VALID_CITIZENSHIP_TYPES = ['Filipino', 'Dual Citizenship', 'By Naturalization'];
+
+  /**
+   * Native <input type="date"> requires a bare yyyy-MM-dd value; the API returns full ISO timestamps.
+   * Also defaults citizenship_type when a previously-corrupted record has it blank/invalid,
+   * so the required-field check on submit doesn't silently block the user.
+   */
+  private normalizePds(pds: PersonalDataSheet): PersonalDataSheet {
+    const date_of_birth = pds.date_of_birth ? String(pds.date_of_birth).slice(0, 10) : pds.date_of_birth;
+    const citizenship_type = PersonalDataSheetComponent.VALID_CITIZENSHIP_TYPES.includes(pds.citizenship_type as string)
+      ? pds.citizenship_type
+      : 'Filipino';
+    return { ...pds, date_of_birth, citizenship_type };
   }
 
   scrollTo(id: string) {
@@ -129,24 +149,36 @@ export class PersonalDataSheetComponent implements OnInit {
   loadPDS() {
     this.loading.set(true);
     this.pdsService.getPDS().subscribe({
-      next: (data) => {
-        this.pds.set(data);
-        if (data.photo_path) {
-          this.photoPreview.set(`${environment.apiUrl}/../${data.photo_path}`);
+      next: (pdsData) => {
+        // Merge: fill empty PDS fields from profile, keep existing PDS values
+        this.pdsService.getProfileAsPDS().subscribe({
+          next: (profileData) => {
+            this.pds = this.normalizePds(mergeWithProfile(pdsData, profileData));
+          },
+          error: () => {
+            this.pds = this.normalizePds(pdsData);
+          },
+        });
+        if (pdsData.photo_path) {
+          this.photoPreview.set(`${environment.apiUrl}/../${pdsData.photo_path}`);
         }
-        if (data.signature_path) {
-          this.signaturePreview.set(`${environment.apiUrl}/../${data.signature_path}`);
+        if (pdsData.signature_path) {
+          this.signaturePreview.set(`${environment.apiUrl}/../${pdsData.signature_path}`);
         }
         this.loading.set(false);
-
-        // Auto-sync disabled to prevent infinite loading
-        // Use the "Import from My Profile" button to sync manually
       },
       error: (error) => {
         if (error.status === 404) {
-          // PDS doesn't exist yet, auto-import from profile
-          console.log('No PDS found, importing from profile...');
-          this.autoImportFromProfile();
+          // No PDS yet — pre-populate form from profile (no DB write)
+          this.pdsService.getProfileAsPDS().subscribe({
+            next: (profileData) => {
+              this.pds = this.normalizePds(profileData);
+              this.loading.set(false);
+            },
+            error: () => {
+              this.loading.set(false);
+            },
+          });
         } else {
           console.error('Error loading PDS:', error);
           this.loading.set(false);
@@ -155,32 +187,15 @@ export class PersonalDataSheetComponent implements OnInit {
     });
   }
 
-  syncWithProfile() {
-    // Silently sync PDS with My Profile data in the background
-    // This ensures PDS always has the latest data from My Profile
-    this.pdsService.importFromProfile().subscribe({
-      next: (data) => {
-        this.pds.set(data);
-        console.log('✓ PDS synced with My Profile - all data is up to date');
-      },
-      error: (error) => {
-        console.error('Sync error:', error);
-        // Don't show error to user, just log it
-        // PDS will still show the previously loaded data
-      },
-    });
-  }
-
   autoImportFromProfile() {
+    // Full overwrite of PDS from profile (saves to DB)
     this.pdsService.importFromProfile().subscribe({
       next: (data) => {
-        this.pds.set(data);
-        console.log('Profile data imported successfully');
+        this.pds = this.normalizePds(data);
         this.loading.set(false);
       },
       error: (error) => {
         console.error('Import error:', error);
-        // If import fails, just start with empty PDS
         this.loading.set(false);
       },
     });
@@ -201,7 +216,7 @@ export class PersonalDataSheetComponent implements OnInit {
         this.loading.set(true);
         this.pdsService.importFromProfile().subscribe({
           next: (data) => {
-            this.pds.set(data);
+            this.pds = this.normalizePds(data);
             Swal.fire({
               icon: 'success',
               title: 'Imported!',
@@ -227,7 +242,7 @@ export class PersonalDataSheetComponent implements OnInit {
 
   savePDS() {
     this.loading.set(true);
-    this.pdsService.savePDS(this.pds()).subscribe({
+    this.pdsService.savePDS(this.pds).subscribe({
       next: () => {
         Swal.fire({
           icon: 'success',
@@ -353,7 +368,7 @@ export class PersonalDataSheetComponent implements OnInit {
   submitPDS() {
     Swal.fire({
       title: 'Submit Personal Data Sheet?',
-      text: 'Your PDS will be submitted for approval. You can still edit it later if needed.',
+      text: 'Your current data will be saved and submitted for approval.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#2563eb',
@@ -362,25 +377,39 @@ export class PersonalDataSheetComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         this.loading.set(true);
-        this.pdsService.submitPDS().subscribe({
+        // Save current form data first, then submit
+        this.pdsService.savePDS(this.pds).subscribe({
           next: () => {
-            // Disable edit mode after successful submission
-            this.isEditMode.set(false);
-            Swal.fire({
-              icon: 'success',
-              title: 'Submitted!',
-              text: 'Personal Data Sheet submitted for approval',
-              confirmButtonColor: '#2563eb',
+            this.pdsService.submitPDS().subscribe({
+              next: () => {
+                this.isEditMode.set(false);
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Submitted!',
+                  text: 'Personal Data Sheet submitted for approval',
+                  confirmButtonColor: '#2563eb',
+                });
+                this.loadPDS();
+                this.loading.set(false);
+              },
+              error: (error) => {
+                console.error('Submit error:', error);
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Submission Failed',
+                  text: error.error?.message || 'Failed to submit Personal Data Sheet',
+                  confirmButtonColor: '#dc2626',
+                });
+                this.loading.set(false);
+              },
             });
-            this.loadPDS();
-            this.loading.set(false);
           },
           error: (error) => {
-            console.error('Submit error:', error);
+            console.error('Save before submit error:', error);
             Swal.fire({
               icon: 'error',
-              title: 'Submission Failed',
-              text: error.error?.message || 'Failed to submit Personal Data Sheet',
+              title: 'Save Failed',
+              text: 'Could not save your data before submitting. Please try again.',
               confirmButtonColor: '#dc2626',
             });
             this.loading.set(false);
@@ -393,7 +422,7 @@ export class PersonalDataSheetComponent implements OnInit {
   // Toggle methods for optional sections
   toggleSpouseFields() {
     if (this.hasNoSpouse) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.spouse_surname = 'N/A';
       currentPDS.spouse_first_name = 'N/A';
       currentPDS.spouse_middle_name = 'N/A';
@@ -401,9 +430,9 @@ export class PersonalDataSheetComponent implements OnInit {
       currentPDS.spouse_employer = 'N/A';
       currentPDS.spouse_business_address = 'N/A';
       currentPDS.spouse_telephone = 'N/A';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     } else {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.spouse_surname = '';
       currentPDS.spouse_first_name = '';
       currentPDS.spouse_middle_name = '';
@@ -411,63 +440,63 @@ export class PersonalDataSheetComponent implements OnInit {
       currentPDS.spouse_employer = '';
       currentPDS.spouse_business_address = '';
       currentPDS.spouse_telephone = '';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     }
   }
 
   toggleFatherInfo() {
     if (this.fatherInfoNA) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.father_surname = 'N/A';
       currentPDS.father_first_name = 'N/A';
       currentPDS.father_middle_name = 'N/A';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     } else {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.father_surname = '';
       currentPDS.father_first_name = '';
       currentPDS.father_middle_name = '';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     }
   }
 
   toggleMotherInfo() {
     if (this.motherInfoNA) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.mother_surname = 'N/A';
       currentPDS.mother_first_name = 'N/A';
       currentPDS.mother_middle_name = 'N/A';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     } else {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.mother_surname = '';
       currentPDS.mother_first_name = '';
       currentPDS.mother_middle_name = '';
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
     }
   }
 
   // Helper methods for managing arrays
   addChild() {
     if (this.newChild.child_name && this.newChild.date_of_birth) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.children = [...(currentPDS.children || []), { ...this.newChild }];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newChild = { child_name: '', date_of_birth: '' };
     }
   }
 
   removeChild(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.children = currentPDS.children?.filter((_, i) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addEducation() {
     if (this.newEducation.school_name) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.education = [...(currentPDS.education || []), { ...this.newEducation }];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newEducation = {
         level: 'ELEMENTARY',
         school_name: '',
@@ -480,34 +509,34 @@ export class PersonalDataSheetComponent implements OnInit {
   }
 
   removeEducation(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.education = currentPDS.education?.filter((_, i) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addEligibility() {
     if (this.newEligibility.career_service) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.eligibilities = [...(currentPDS.eligibilities || []), { ...this.newEligibility }];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newEligibility = { career_service: '', license_validity: '' };
     }
   }
 
   removeEligibility(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.eligibilities = currentPDS.eligibilities?.filter((_, i) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addWorkExperience() {
     if (this.newWorkExperience.position_title && this.newWorkExperience.date_from) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.work_experiences = [
         ...(currentPDS.work_experiences || []),
         { ...this.newWorkExperience },
       ];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newWorkExperience = {
         date_from: '',
         position_title: '',
@@ -518,19 +547,19 @@ export class PersonalDataSheetComponent implements OnInit {
   }
 
   removeWorkExperience(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.work_experiences = currentPDS.work_experiences?.filter((_, i) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addVoluntaryWork() {
     if (this.newVoluntaryWork.organization_name) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.voluntary_works = [
         ...(currentPDS.voluntary_works || []),
         { ...this.newVoluntaryWork },
       ];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newVoluntaryWork = {
         organization_name: '',
         date_from: '',
@@ -541,16 +570,16 @@ export class PersonalDataSheetComponent implements OnInit {
   }
 
   removeVoluntaryWork(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.voluntary_works = currentPDS.voluntary_works?.filter((_, i) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addTraining() {
     if (this.newTraining.title) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.trainings = [...(currentPDS.trainings || []), { ...this.newTraining }];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newTraining = {
         title: '',
         date_from: '',
@@ -561,70 +590,70 @@ export class PersonalDataSheetComponent implements OnInit {
   }
 
   removeTraining(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.trainings = currentPDS.trainings?.filter((_, i) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addSkill() {
     if (this.newSkill) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.other_info = [
         ...(currentPDS.other_info || []),
         { info_type: 'SKILL', details: this.newSkill },
       ];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newSkill = '';
     }
   }
 
   addRecognition() {
     if (this.newRecognition) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.other_info = [
         ...(currentPDS.other_info || []),
         { info_type: 'RECOGNITION', details: this.newRecognition },
       ];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newRecognition = '';
     }
   }
 
   addMembership() {
     if (this.newMembership) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.other_info = [
         ...(currentPDS.other_info || []),
         { info_type: 'MEMBERSHIP', details: this.newMembership },
       ];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newMembership = '';
     }
   }
 
   removeOtherInfo(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.other_info = currentPDS.other_info?.filter((_, i) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   addReference() {
     if (this.newReference.name && this.newReference.address) {
-      const currentPDS = this.pds();
+      const currentPDS = this.pds;
       currentPDS.references = [...(currentPDS.references || []), { ...this.newReference }];
-      this.pds.set(currentPDS);
+      this.pds = currentPDS;
       this.newReference = { name: '', address: '', telephone_number: '' };
     }
   }
 
   removeReference(index: number) {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.references = currentPDS.references?.filter((_, i) => i !== index);
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   copyResidentialToPermanent() {
-    const currentPDS = this.pds();
+    const currentPDS = this.pds;
     currentPDS.permanent_house_no = currentPDS.residential_house_no;
     currentPDS.permanent_street = currentPDS.residential_street;
     currentPDS.permanent_subdivision = currentPDS.residential_subdivision;
@@ -632,7 +661,7 @@ export class PersonalDataSheetComponent implements OnInit {
     currentPDS.permanent_city = currentPDS.residential_city;
     currentPDS.permanent_province = currentPDS.residential_province;
     currentPDS.permanent_zip_code = currentPDS.residential_zip_code;
-    this.pds.set(currentPDS);
+    this.pds = currentPDS;
   }
 
   selectTab(tab: number) {
@@ -654,7 +683,7 @@ export class PersonalDataSheetComponent implements OnInit {
   }
 
   isFormReadonly(): boolean {
-    const status = this.pds().status;
+    const status = this.pds.status;
     const isSubmittedOrApproved = status === 'submitted' || status === 'approved';
     // Allow editing if edit mode is enabled, otherwise check status
     return isSubmittedOrApproved && !this.isEditMode();
@@ -671,7 +700,7 @@ export class PersonalDataSheetComponent implements OnInit {
   }
 
   getStatusBadgeClass(): string {
-    switch (this.pds().status) {
+    switch (this.pds.status) {
       case 'approved':
         return 'bg-green-100 text-green-800 border-green-300';
       case 'submitted':
@@ -684,7 +713,7 @@ export class PersonalDataSheetComponent implements OnInit {
   }
 
   getStatusText(): string {
-    switch (this.pds().status) {
+    switch (this.pds.status) {
       case 'approved':
         return 'APPROVED';
       case 'submitted':
@@ -698,51 +727,96 @@ export class PersonalDataSheetComponent implements OnInit {
 
   // Helper methods for filtering other_info by type
   hasSkills(): boolean {
-    return (this.pds().other_info || []).some((info) => info.info_type === 'SKILL');
+    return (this.pds.other_info || []).some((info) => info.info_type === 'SKILL');
   }
 
   hasRecognitions(): boolean {
-    return (this.pds().other_info || []).some((info) => info.info_type === 'RECOGNITION');
+    return (this.pds.other_info || []).some((info) => info.info_type === 'RECOGNITION');
   }
 
   hasMemberships(): boolean {
-    return (this.pds().other_info || []).some((info) => info.info_type === 'MEMBERSHIP');
+    return (this.pds.other_info || []).some((info) => info.info_type === 'MEMBERSHIP');
   }
 
-  exportToExcel() {
+  async previewPDF() {
     this.loading.set(true);
-    const url = `${environment.apiUrl}/pds/export/excel`;
+    try {
+      const url = await this.pdfService.generatePreviewUrl(this.pds);
+      if (!url) throw new Error('PDF generation returned no output');
+      this.pdfPreviewObjectUrl = url;
+      this.pdfPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+      this.showPdfPreview.set(true);
+    } catch (error) {
+      console.error('PDF preview error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Preview Failed',
+        text: 'Failed to generate PDS PDF preview.',
+        confirmButtonColor: '#dc2626',
+      });
+    } finally {
+      this.loading.set(false);
+    }
+  }
 
-    this.http.get(url, { responseType: 'blob' }).subscribe({
-      next: (blob) => {
-        this.loading.set(false);
-        // Create download link
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-        const pdsData = this.pds();
-        link.download = `PDS_${pdsData.surname}_${pdsData.first_name}_${dateStr}.xlsx`;
-        link.click();
-        window.URL.revokeObjectURL(downloadUrl);
+  closePdfPreview() {
+    this.showPdfPreview.set(false);
+    this.pdfPreviewUrl.set(null);
+    if (this.pdfPreviewObjectUrl) {
+      URL.revokeObjectURL(this.pdfPreviewObjectUrl);
+      this.pdfPreviewObjectUrl = null;
+    }
+  }
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Exported!',
-          text: 'PDS exported to Excel successfully',
-          confirmButtonColor: '#2563eb',
-        });
-      },
-      error: (error) => {
-        this.loading.set(false);
-        console.error('Export error:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Export Failed',
-          text: 'Failed to export PDS to Excel',
-          confirmButtonColor: '#dc2626',
-        });
-      },
-    });
+  async downloadPDF() {
+    this.loading.set(true);
+    try {
+      await this.pdfService.generateAndDownload(this.pds);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Download Failed',
+        text: 'Failed to generate PDS PDF.',
+        confirmButtonColor: '#dc2626',
+      });
+    } finally {
+      this.loading.set(false);
+    }
   }
 }
+
+/**
+ * Merges existing PDS with profile data.
+ * Profile values only fill in fields that are blank/null/empty in the PDS.
+ * Existing PDS entries for arrays (education, work_experiences, etc.) are kept as-is.
+ */
+function mergeWithProfile(pds: PersonalDataSheet, profile: PersonalDataSheet): PersonalDataSheet {
+  const merged = { ...pds };
+  const scalarFields: (keyof PersonalDataSheet)[] = [
+    'surname', 'first_name', 'middle_name', 'name_extension',
+    'date_of_birth', 'place_of_birth', 'sex', 'civil_status', 'citizenship_type',
+    'residential_street', 'residential_subdivision', 'residential_barangay', 'residential_city',
+    'residential_province', 'residential_zip_code',
+    'permanent_street', 'permanent_subdivision', 'permanent_barangay', 'permanent_city',
+    'permanent_province', 'permanent_zip_code',
+    'telephone_no', 'mobile_no', 'email_address',
+  ];
+  for (const field of scalarFields) {
+    const existing = pds[field];
+    const isEmpty = existing === null || existing === undefined || existing === '' || existing === 'N/A';
+    if (isEmpty && profile[field]) {
+      (merged as any)[field] = profile[field];
+    }
+  }
+  // Fill array sections only if PDS has none saved yet
+  if (!pds.education?.length && profile.education?.length) merged.education = profile.education;
+  if (!pds.work_experiences?.length && profile.work_experiences?.length) merged.work_experiences = profile.work_experiences;
+  if (!pds.trainings?.length && profile.trainings?.length) merged.trainings = profile.trainings;
+  if (!pds.other_info?.length && profile.other_info?.length) merged.other_info = profile.other_info;
+  if (!pds.voluntary_works?.length && profile.voluntary_works?.length) merged.voluntary_works = profile.voluntary_works;
+  return merged;
+}
+
+
+

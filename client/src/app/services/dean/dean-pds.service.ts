@@ -55,10 +55,9 @@ export class DeanPDSService {
     return this.http.post<PersonalDataSheet>(`${this.apiUrl}/import-from-profile`, {});
   }
 
-  // Download Faculty PDS (for Dean)
-  downloadFacultyPDS(facultyId: number): Observable<Blob> {
-    const url = `${this.apiUrl}/export/faculty/${facultyId}`;
-    return this.http.get(url, { responseType: 'blob' });
+  // Get faculty PDS as JSON (for client-side PDF generation)
+  getFacultyPDS(facultyId: number): Observable<PersonalDataSheet> {
+    return this.http.get<PersonalDataSheet>(`${this.apiUrl}/faculty/${facultyId}`);
   }
 }
 

@@ -1,6 +1,5 @@
 const router = require("express").Router();
 const controller = require("../controllers/pds.controller");
-const excelController = require("../controllers/pds-excel-export.controller");
 const verifyToken = require("../middleware/auth.middleware");
 
 // All routes require authentication
@@ -8,6 +7,9 @@ router.use(verifyToken);
 
 // GET: Retrieve faculty's PDS
 router.get("/", controller.getPDS);
+
+// GET: Return My Profile data mapped to PDS shape (read-only)
+router.get("/from-profile", controller.getProfileAsPDS);
 
 // POST: Create or update PDS
 router.post("/", controller.savePDS);
@@ -21,10 +23,7 @@ router.post("/upload-signature", controller.uploadSignature);
 // POST: Submit PDS for approval
 router.post("/submit", controller.submitPDS);
 
-// POST: Import data from My Profile
+// POST: Overwrite PDS with My Profile data (saves to DB)
 router.post("/import-from-profile", controller.importFromProfile);
-
-// GET: Export PDS to Excel
-router.get("/export/excel", excelController.exportFacultyPDSToExcel);
 
 module.exports = router;

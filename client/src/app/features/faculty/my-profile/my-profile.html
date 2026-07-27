@@ -1,4 +1,4 @@
-<div class="p-3">
+﻿<div class="p-3">
   @if (loading()) {
     <div class="flex justify-center py-16 text-gray-300">
       <i class="pi pi-spin pi-spinner text-3xl"></i>
@@ -29,7 +29,7 @@
             }}{{ personalProfile().first_name || '' }}
             {{ personalProfile().middle_name ? personalProfile().middle_name + ' ' : ''
             }}{{ personalProfile().last_name || ''
-            }}{{ personalProfile().extension ? ', ' + personalProfile().extension : '' }}
+            }}{{ personalProfile().extension_name ? ', ' + personalProfile().extension_name : '' }}
           </h2>
           <p class="text-xs text-gray-400">Faculty</p>
         </div>
@@ -143,79 +143,79 @@
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Title</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().title || '—' }}
+                      {{ personalProfile().title || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Last Name</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().last_name || '—' }}
+                      {{ personalProfile().last_name || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">First Name</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().first_name || '—' }}
+                      {{ personalProfile().first_name || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Middle Name</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().middle_name || '—' }}
+                      {{ personalProfile().middle_name || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Extension</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().extension || '—' }}
+                      {{ personalProfile().extension_name || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Date of Birth</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().date_of_birth || '—' }}
+                      {{ personalProfile().date_of_birth || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Civil Status</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().civil_status || '—' }}
+                      {{ personalProfile().civil_status || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Sex</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().sex || '—' }}
+                      {{ personalProfile().sex || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Citizenship</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().citizenship || '—' }}
+                      {{ personalProfile().citizenship || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Primary Mobile</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().mobile_primary || '—' }}
+                      {{ personalProfile().mobile_number_primary || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Secondary Mobile</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().mobile_secondary || '—' }}
+                      {{ personalProfile().mobile_number_secondary || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Primary Email</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().email_primary || '—' }}
+                      {{ personalProfile().email_primary || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Secondary Email</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().email_secondary || '—' }}
+                      {{ personalProfile().email_secondary || 'â€”' }}
                     </p>
                   </div>
                 </div>
@@ -227,37 +227,43 @@
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Country</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().home_country || '—' }}
+                      {{ personalProfile().home_country || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Region</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().home_region || '—' }}
+                      {{ personalProfile().home_region || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Province</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().home_province || '—' }}
+                      {{ personalProfile().home_province || 'â€”' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Barangay</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().home_barangay || '—' }}
+                      {{ personalProfile().home_barangay || 'â€”' }}
                     </p>
                   </div>
                   <div>
-                    <p class="text-xs text-gray-400 mb-0.5">Street/Subdivision</p>
+                    <p class="text-xs text-gray-400 mb-0.5">Street</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().home_street_subdivision || '—' }}
+                      {{ personalProfile().home_street || '—' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Subdivision</p>
+                    <p class="text-xs text-gray-700 font-medium">
+                      {{ personalProfile().home_subdivision || '—' }}
                     </p>
                   </div>
                   <div>
                     <p class="text-xs text-gray-400 mb-0.5">Zip Code</p>
                     <p class="text-xs text-gray-700 font-medium">
-                      {{ personalProfile().home_zip_code || '—' }}
+                      {{ personalProfile().home_zip_code || 'â€”' }}
                     </p>
                   </div>
                 </div>
@@ -341,8 +347,8 @@
                     <label class="block text-xs font-medium text-gray-500 mb-1">Extension</label>
                     <input
                       type="text"
-                      [(ngModel)]="personalForm().extension"
-                      name="extension"
+                      [(ngModel)]="personalForm().extension_name"
+                      name="extension_name"
                       placeholder="Jr., Sr., III"
                       class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                     />
@@ -398,12 +404,15 @@
                   </div>
                   <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">Citizenship</label>
-                    <input
-                      type="text"
+                    <select
                       [(ngModel)]="personalForm().citizenship"
                       name="citizenship"
                       class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
-                    />
+                    >
+                      <option value="Filipino">Filipino</option>
+                      <option value="Dual Citizenship">Dual Citizenship</option>
+                      <option value="By Naturalization">By Naturalization</option>
+                    </select>
                   </div>
                   <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1"
@@ -411,8 +420,8 @@
                     >
                     <input
                       type="tel"
-                      [(ngModel)]="personalForm().mobile_primary"
-                      name="mobile_primary"
+                      [(ngModel)]="personalForm().mobile_number_primary"
+                      name="mobile_number_primary"
                       class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                     />
                   </div>
@@ -422,8 +431,8 @@
                     >
                     <input
                       type="tel"
-                      [(ngModel)]="personalForm().mobile_secondary"
-                      name="mobile_secondary"
+                      [(ngModel)]="personalForm().mobile_number_secondary"
+                      name="mobile_number_secondary"
                       class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                     />
                   </div>
@@ -493,12 +502,23 @@
                     </div>
                     <div>
                       <label class="block text-xs font-medium text-gray-500 mb-1"
-                        >Street/Subdivision</label
+                        >Street</label
                       >
                       <input
                         type="text"
-                        [(ngModel)]="personalForm().home_street_subdivision"
-                        name="home_street_subdivision"
+                        [(ngModel)]="personalForm().home_street"
+                        name="home_street"
+                        class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1"
+                        >Subdivision</label
+                      >
+                      <input
+                        type="text"
+                        [(ngModel)]="personalForm().home_subdivision"
+                        name="home_subdivision"
                         class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                       />
                     </div>
@@ -612,8 +632,8 @@
                         </p>
                         <p class="text-xs text-gray-500">{{ profile.company_name }}</p>
                         <p class="text-xs text-gray-400">
-                          {{ profile.employment_status }} · {{ profile.date_from }} –
-                          {{ profile.date_to || 'Present' }}
+                          {{ profile.employment_status }} · {{ profile.date_from | date:'MM/dd/yyyy' }} –
+                          {{ profile.date_to ? (profile.date_to | date:'MM/dd/yyyy') : 'Present' }}
                         </p>
                         @if (profile.is_current) {
                           <span
@@ -679,7 +699,7 @@
                         <p class="text-xs text-gray-400">
                           {{ membership.membership_type }}
                           @if (membership.date_joined) {
-                            · Joined: {{ membership.date_joined }}
+                            · Joined: {{ membership.date_joined | date:'MM/dd/yyyy' }}
                           }
                         </p>
                       </div>
@@ -733,7 +753,7 @@
                         <p class="text-xs font-semibold text-gray-800">{{ award.award_title }}</p>
                         <p class="text-xs text-gray-500">{{ award.awarding_body }}</p>
                         <p class="text-xs text-gray-400">
-                          {{ award.date_received }} · {{ award.level }}
+                          {{ award.date_received | date:'MM/dd/yyyy' }} · {{ award.level }}
                         </p>
                       </div>
                       <div class="flex gap-1 shrink-0">
@@ -790,7 +810,7 @@
                         <p class="text-xs text-gray-500">
                           {{ seminar.category }} · {{ seminar.sponsoring_agency }}
                         </p>
-                        <p class="text-xs text-gray-400">{{ seminar.date }}</p>
+                        <p class="text-xs text-gray-400">{{ seminar.date | date:'MM/dd/yyyy' }}</p>
                       </div>
                       <div class="flex gap-1 shrink-0">
                         <button
@@ -848,7 +868,7 @@
                         <p class="text-xs text-gray-500">
                           {{ activity.category }} · {{ activity.sponsoring_agency }}
                         </p>
-                        <p class="text-xs text-gray-400">{{ activity.date }}</p>
+                        <p class="text-xs text-gray-400">{{ activity.date | date:'MM/dd/yyyy' }}</p>
                       </div>
                       <div class="flex gap-1 shrink-0">
                         <button
@@ -906,7 +926,7 @@
                         <p class="text-xs text-gray-500">
                           {{ activity.beneficiary }} · {{ activity.location }}
                         </p>
-                        <p class="text-xs text-gray-400">{{ activity.date_of_implementation }}</p>
+                        <p class="text-xs text-gray-400">{{ activity.date_of_implementation | date:'MM/dd/yyyy' }}</p>
                       </div>
                       <div class="flex gap-1 shrink-0">
                         <button
@@ -1610,3 +1630,4 @@
     </div>
   </div>
 }
+

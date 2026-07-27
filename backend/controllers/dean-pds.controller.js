@@ -68,14 +68,14 @@ exports.getPDS = async (req, res) => {
     const pds = await db.PersonalDataSheet.findOne({
       where: { dean_id: dean.dean_id },
       include: [
-        { model: db.PDSChild, as: "children" },
-        { model: db.PDSEducation, as: "education" },
-        { model: db.PDSEligibility, as: "eligibilities" },
-        { model: db.PDSWorkExperience, as: "work_experiences" },
-        { model: db.PDSVoluntaryWork, as: "voluntary_works" },
-        { model: db.PDSTraining, as: "trainings" },
-        { model: db.PDSOtherInfo, as: "other_info" },
-        { model: db.PDSReference, as: "references" },
+        { model: db.PDSChild, as: "children", separate: true },
+        { model: db.PDSEducation, as: "education", separate: true },
+        { model: db.PDSEligibility, as: "eligibilities", separate: true },
+        { model: db.PDSWorkExperience, as: "work_experiences", separate: true },
+        { model: db.PDSVoluntaryWork, as: "voluntary_works", separate: true },
+        { model: db.PDSTraining, as: "trainings", separate: true },
+        { model: db.PDSOtherInfo, as: "other_info", separate: true },
+        { model: db.PDSReference, as: "references", separate: true },
       ],
     });
 
@@ -896,14 +896,14 @@ exports.importFromProfile = async (req, res) => {
     const completePDS = await db.PersonalDataSheet.findOne({
       where: { pds_id: pds.pds_id },
       include: [
-        { model: db.PDSChild, as: "children" },
-        { model: db.PDSEducation, as: "education" },
-        { model: db.PDSEligibility, as: "eligibilities" },
-        { model: db.PDSWorkExperience, as: "work_experiences" },
-        { model: db.PDSVoluntaryWork, as: "voluntary_works" },
-        { model: db.PDSTraining, as: "trainings" },
-        { model: db.PDSOtherInfo, as: "other_info" },
-        { model: db.PDSReference, as: "references" },
+        { model: db.PDSChild, as: "children", separate: true },
+        { model: db.PDSEducation, as: "education", separate: true },
+        { model: db.PDSEligibility, as: "eligibilities", separate: true },
+        { model: db.PDSWorkExperience, as: "work_experiences", separate: true },
+        { model: db.PDSVoluntaryWork, as: "voluntary_works", separate: true },
+        { model: db.PDSTraining, as: "trainings", separate: true },
+        { model: db.PDSOtherInfo, as: "other_info", separate: true },
+        { model: db.PDSReference, as: "references", separate: true },
       ],
     });
 
@@ -911,5 +911,39 @@ exports.importFromProfile = async (req, res) => {
   } catch (error) {
     console.error("Import from profile error:", error);
     res.status(500).json({ message: "Error importing profile data" });
+  }
+};
+
+// GET: Retrieve a faculty member's PDS as JSON (for client-side PDF generation)
+exports.getFacultyPDS = async (req, res) => {
+  try {
+    const { faculty_id } = req.params;
+
+    if (!faculty_id) {
+      return res.status(400).json({ message: "Faculty ID is required" });
+    }
+
+    const pds = await db.PersonalDataSheet.findOne({
+      where: { faculty_id },
+      include: [
+        { model: db.PDSChild, as: "children", separate: true },
+        { model: db.PDSEducation, as: "education", separate: true },
+        { model: db.PDSEligibility, as: "eligibilities", separate: true },
+        { model: db.PDSWorkExperience, as: "work_experiences", separate: true },
+        { model: db.PDSVoluntaryWork, as: "voluntary_works", separate: true },
+        { model: db.PDSTraining, as: "trainings", separate: true },
+        { model: db.PDSOtherInfo, as: "other_info", separate: true },
+        { model: db.PDSReference, as: "references", separate: true },
+      ],
+    });
+
+    if (!pds) {
+      return res.status(404).json({ message: "Personal Data Sheet not found for this faculty" });
+    }
+
+    res.json(pds);
+  } catch (error) {
+    console.error("Get faculty PDS error:", error);
+    res.status(500).json({ message: "Error retrieving faculty Personal Data Sheet" });
   }
 };
