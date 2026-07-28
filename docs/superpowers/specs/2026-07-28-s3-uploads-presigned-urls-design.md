@@ -45,8 +45,9 @@ One new module, `backend/utils/storage.js`. Its backend is chosen once at requir
 put(buffer, { folder, originalname, mimetype }) → Promise<string>   // returns a storage key
 getUrl(key, { download?, filename? })           → Promise<string>   // presigned URL, or /uploads/<key> on disk
 remove(key)                                     → Promise<void>
-getStream(key)                                  → Promise<Readable>
 ```
+
+No `getStream`: a codebase scan found no server-side reads of uploaded file bytes — no `createReadStream`, no `fs.readFile`, no `readFileSync` in any controller. (`pds-excel-export.controller.js:319` reads the *template* from `public/templates/`, not an uploaded file.) Adding a streaming method now would be speculative.
 
 `put` owns filename generation — the `Date.now() + '-' + Math.round(Math.random()*1e9)` convention currently copy-pasted into all nine multer configs lives here alone.
 
@@ -122,9 +123,15 @@ await presignFields(rows, ['photo_url', 'signature_url'])   // replaces key with
 
 The client's `${environment.serverUrl}${photoUrl}` concatenation at `client/src/app/features/organization/members/organization-members.ts:1418` is removed; the field is now an absolute URL.
 
-### (c) Server-side byte reads
+### (c) CVL multi-file download
 
-`controllers/cvl-attachment.controller.js` zips multiple files with `archiver`, and `controllers/pds-excel-export.controller.js` embeds the PDS photo into the spreadsheet. Neither can use a URL; both switch to `storage.getStream(key)`.
+`cvl-attachment.controller.js:292` behaves differently depending on file count: one file gets `res.download()`, several get a JSON list. That list currently includes `path: att.document_path` — **the raw server filesystem path, sent to the browser**. Under the new scheme both branches return presigned URLs and the `path` field is dropped:
+
+```js
+res.json({ files: [{ id, filename, size, url }] })
+```
+
+The client then triggers one download per URL. (`archiver` is in `package.json` but is not imported anywhere — no zipping happens today. This design does not add any.)
 
 ### Static mount
 
