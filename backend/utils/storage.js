@@ -11,6 +11,12 @@ const DISK_ROOT = path.join(__dirname, "..", "uploads");
  * No leading slash, no "uploads/" prefix, forward slashes only.
  */
 function buildKey(folder, originalname) {
+	if (!folder || typeof folder !== "string") {
+		throw new Error("Folder must be a non-empty string");
+	}
+	if (folder.startsWith("/") || folder.includes("..") || folder.includes("\\") || /^[a-zA-Z]:/.test(folder)) {
+		throw new Error(`Unsafe folder: ${folder}`);
+	}
 	const ext = path.extname(originalname || "");
 	const base = path
 		.basename(originalname || "file", ext)
@@ -35,6 +41,7 @@ function assertSafeKey(key) {
 const diskDriver = {
 	async put(buffer, { folder, originalname }) {
 		const key = buildKey(folder, originalname);
+		assertSafeKey(key);
 		const dest = path.join(DISK_ROOT, key);
 		await fs.mkdir(path.dirname(dest), { recursive: true });
 		await fs.writeFile(dest, buffer);
@@ -48,7 +55,9 @@ const diskDriver = {
 
 	async remove(key) {
 		assertSafeKey(key);
-		await fs.unlink(path.join(DISK_ROOT, key)).catch(() => {});
+		await fs.unlink(path.join(DISK_ROOT, key)).catch(err => {
+			if (err.code !== 'ENOENT') throw err;
+		});
 	},
 };
 
@@ -72,6 +81,7 @@ function makeS3Driver() {
 	return {
 		async put(buffer, { folder, originalname, mimetype }) {
 			const key = buildKey(folder, originalname);
+			assertSafeKey(key);
 			await client.send(
 				new PutObjectCommand({
 					Bucket,

@@ -34,6 +34,39 @@ async function main() {
 		console.log("traversal rejected → ok");
 	}
 
+	try {
+		await storage.put(Buffer.from("bad"), {
+			folder: "../../escape",
+			originalname: "x.txt",
+		});
+		throw new Error("FAIL: traversal folder was accepted");
+	} catch (err) {
+		if (!err.message.startsWith("Unsafe folder")) throw err;
+		console.log("put with traversal folder rejected → ok");
+	}
+
+	try {
+		await storage.put(Buffer.from("bad"), {
+			folder: undefined,
+			originalname: "x.txt",
+		});
+		throw new Error("FAIL: undefined folder was accepted");
+	} catch (err) {
+		if (!err.message.startsWith("Folder must be")) throw err;
+		console.log("put with undefined folder rejected → ok");
+	}
+
+	try {
+		await storage.put(Buffer.from("bad"), {
+			folder: "",
+			originalname: "x.txt",
+		});
+		throw new Error("FAIL: empty folder was accepted");
+	} catch (err) {
+		if (!err.message.startsWith("Folder must be")) throw err;
+		console.log("put with empty folder rejected → ok");
+	}
+
 	console.log("\nALL CHECKS PASSED");
 }
 
