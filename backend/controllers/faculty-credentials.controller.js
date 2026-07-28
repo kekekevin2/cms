@@ -129,7 +129,14 @@ exports.createOrUpdateCredentials = async (req, res) => {
 			const oldPdsPath = credential.pds_file_path;
 			const oldDiplomaPath = credential.diploma_file_path;
 
-			await credential.update(credentialData);
+			try {
+				await credential.update(credentialData);
+			} catch (dbError) {
+				await Promise.all(
+					newlyUploaded.map((key) => storage.remove(key).catch(() => {})),
+				);
+				throw dbError;
+			}
 
 			if (torFile && oldTorPath) {
 				await storage.remove(oldTorPath).catch(() => {});
@@ -142,7 +149,14 @@ exports.createOrUpdateCredentials = async (req, res) => {
 			}
 		} else {
 			// Create new credentials
-			credential = await FacultyCredential.create(credentialData);
+			try {
+				credential = await FacultyCredential.create(credentialData);
+			} catch (dbError) {
+				await Promise.all(
+					newlyUploaded.map((key) => storage.remove(key).catch(() => {})),
+				);
+				throw dbError;
+			}
 		}
 
 		// Handle certificates
@@ -181,7 +195,13 @@ exports.createOrUpdateCredentials = async (req, res) => {
 									console.error("Error uploading certificate file:", uploadError);
 									return res.status(500).json({ message: "Failed to upload certificate file" });
 								}
-								await existingCert.update({ file_path: certPath });
+
+								try {
+									await existingCert.update({ file_path: certPath });
+								} catch (dbError) {
+									await storage.remove(certPath).catch(() => {});
+									throw dbError;
+								}
 
 								if (oldCertPath) {
 									await storage.remove(oldCertPath).catch(() => {});
