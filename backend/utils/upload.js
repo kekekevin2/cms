@@ -1,59 +1,51 @@
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, "../uploads/requirements");
-if (!fs.existsSync(uploadsDir)) {
-	fs.mkdirSync(uploadsDir, { recursive: true });
+const MB = 1024 * 1024;
+const MAX_ALLOWED = 25 * MB;
+
+/**
+ * Builds a multer instance that keeps files in memory. Controllers hand the
+ * resulting buffer to utils/storage.js, which owns naming and placement.
+ *
+ * maxSize is capped at 25MB: memoryStorage buffers whole files in RAM, and
+ * several routes accept up to 10 files per request.
+ */
+function makeUpload({ folder, allowedTypes, maxSize }) {
+	if (!folder) throw new Error("makeUpload requires a folder");
+	if (!Array.isArray(allowedTypes) || allowedTypes.length === 0) {
+		throw new Error("makeUpload requires a non-empty allowedTypes array");
+	}
+
+	const instance = multer({
+		storage: multer.memoryStorage(),
+		limits: { fileSize: Math.min(maxSize || MAX_ALLOWED, MAX_ALLOWED) },
+		fileFilter: (req, file, cb) => {
+			if (allowedTypes.includes(file.mimetype)) return cb(null, true);
+			cb(new Error(`Invalid file type: ${file.mimetype}. Allowed: ${allowedTypes.join(", ")}`), false);
+		},
+	});
+
+	instance.folder = folder;
+	return instance;
 }
 
-// Configure storage
-const storage = multer.diskStorage({
-	destination: function (req, file, cb) {
-		cb(null, uploadsDir);
-	},
-	filename: function (req, file, cb) {
-		// Generate unique filename: timestamp-originalname
-		const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-		const ext = path.extname(file.originalname);
-		const nameWithoutExt = path.basename(file.originalname, ext);
-		cb(null, nameWithoutExt + "-" + uniqueSuffix + ext);
-	},
-});
+const DOCUMENT_TYPES = [
+	"application/pdf",
+	"application/msword",
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+	"application/vnd.ms-excel",
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+	"image/jpeg",
+	"image/jpg",
+	"image/png",
+];
 
-// File filter - allow only PDF files
-const fileFilter = (req, file, cb) => {
-	const allowedTypes = [
-		"application/pdf",
-		"application/msword",
-		"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-		"application/vnd.ms-excel",
-		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-		"image/jpeg",
-		"image/jpg",
-		"image/png",
-	];
+const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 
-	if (allowedTypes.includes(file.mimetype)) {
-		cb(null, true);
-	} else {
-		cb(
-			new Error(
-				"Invalid file type. Only PDF, Word, Excel, and image files are allowed.",
-			),
-			false,
-		);
-	}
-};
+const SPREADSHEET_TYPES = [
+	"text/csv",
+	"application/vnd.ms-excel",
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+];
 
-// Configure multer
-const upload = multer({
-	storage: storage,
-	fileFilter: fileFilter,
-	limits: {
-		fileSize: 200 * 1024 * 1024, // 200MB limit
-	},
-});
-
-module.exports = upload;
+module.exports = { makeUpload, MB, DOCUMENT_TYPES, IMAGE_TYPES, SPREADSHEET_TYPES };
