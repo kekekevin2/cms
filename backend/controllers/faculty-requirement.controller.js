@@ -175,25 +175,31 @@ exports.submitRequirement = async (req, res) => {
 			return res.status(500).json({ message: "Error uploading files" });
 		}
 
-		const first = uploaded[0];
-		const newSubmission = await db.RequirementSubmission.create({
-			faculty_id: faculty.faculty_id,
-			academic_year_id,
-			semester,
-			requirement_name,
-			file_path: first.key,
-			file_name: first.name,
-			file_size: first.size,
-		});
+		let newSubmission;
+		try {
+			const first = uploaded[0];
+			newSubmission = await db.RequirementSubmission.create({
+				faculty_id: faculty.faculty_id,
+				academic_year_id,
+				semester,
+				requirement_name,
+				file_path: first.key,
+				file_name: first.name,
+				file_size: first.size,
+			});
 
-		const fileRecords = uploaded.map((u) => ({
-			submission_id: newSubmission.submission_id,
-			file_path: u.key,
-			file_name: u.name,
-			file_size: u.size,
-		}));
+			const fileRecords = uploaded.map((u) => ({
+				submission_id: newSubmission.submission_id,
+				file_path: u.key,
+				file_name: u.name,
+				file_size: u.size,
+			}));
 
-		await db.RequirementFile.bulkCreate(fileRecords);
+			await db.RequirementFile.bulkCreate(fileRecords);
+		} catch (dbError) {
+			await Promise.all(uploaded.map((u) => storage.remove(u.key).catch(() => {})));
+			throw dbError;
+		}
 
 		// Fetch the created submission with associations
 		const submission = await db.RequirementSubmission.findOne({
@@ -223,14 +229,6 @@ exports.submitRequirement = async (req, res) => {
 		});
 	} catch (error) {
 		console.error("Submit requirement error:", error);
-		
-		// Handle multer file size error
-		if (error.code === 'LIMIT_FILE_SIZE') {
-			return res.status(400).json({ 
-				message: "File size exceeds the 200MB limit. Please upload smaller files." 
-			});
-		}
-		
 		res.status(500).json({ message: "Error submitting requirement" });
 	}
 };
@@ -297,15 +295,21 @@ exports.addFiles = async (req, res) => {
 			file_size: u.size,
 		}));
 
-		const newFiles = await db.RequirementFile.bulkCreate(fileRecords);
+		let newFiles;
+		try {
+			newFiles = await db.RequirementFile.bulkCreate(fileRecords);
 
-		// Reset status to pending
-		submission.status = "pending";
-		submission.dean_remarks = null;
-		submission.validated_by = null;
-		submission.validated_date = null;
-		submission.submission_date = new Date();
-		await submission.save();
+			// Reset status to pending
+			submission.status = "pending";
+			submission.dean_remarks = null;
+			submission.validated_by = null;
+			submission.validated_date = null;
+			submission.submission_date = new Date();
+			await submission.save();
+		} catch (dbError) {
+			await Promise.all(uploaded.map((u) => storage.remove(u.key).catch(() => {})));
+			throw dbError;
+		}
 
 		res.json({
 			message: "Files added successfully",

@@ -48,4 +48,37 @@ const SPREADSHEET_TYPES = [
 	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ];
 
-module.exports = { makeUpload, MB, DOCUMENT_TYPES, IMAGE_TYPES, SPREADSHEET_TYPES };
+const MAX_UPLOAD_MB = MAX_ALLOWED / MB;
+
+/**
+ * Converts multer's own errors into the JSON shape this API returns everywhere
+ * else. Multer runs as route middleware and calls next(err), which bypasses the
+ * controller entirely — without this, oversized uploads reach Express's default
+ * handler and the client gets unparseable HTML instead of { message }.
+ */
+function handleUploadError(err, req, res, next) {
+	if (!err) return next();
+	if (err instanceof multer.MulterError) {
+		const message =
+			err.code === "LIMIT_FILE_SIZE"
+				? `File too large. Maximum size is ${MAX_UPLOAD_MB}MB.`
+				: err.code === "LIMIT_FILE_COUNT" || err.code === "LIMIT_UNEXPECTED_FILE"
+					? "Too many files uploaded."
+					: `Upload error: ${err.message}`;
+		return res.status(400).json({ message });
+	}
+	if (err.message && err.message.startsWith("Invalid file type")) {
+		return res.status(400).json({ message: err.message });
+	}
+	return next(err);
+}
+
+module.exports = {
+	makeUpload,
+	MB,
+	DOCUMENT_TYPES,
+	IMAGE_TYPES,
+	SPREADSHEET_TYPES,
+	handleUploadError,
+	MAX_UPLOAD_MB,
+};

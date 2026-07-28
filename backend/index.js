@@ -148,6 +148,11 @@ app.get("/api/hello", (req, res) => {
 	res.json({ message: "Hello from the backend!" });
 });
 
+// Global multer error handler — must be mounted after all route mounts so
+// next(err) from any upload middleware reaches it, and before app.listen.
+const { handleUploadError } = require("./utils/upload");
+app.use(handleUploadError);
+
 const PORT = process.env.PORT;
 
 // Test database connection and sync models
