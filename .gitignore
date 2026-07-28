@@ -71,3 +71,6 @@ backend/logs/
 # Windows reserved device names
 nul
 **/nul
+
+# Superpowers SDD scratch (ledger, briefs, review packages)
+.superpowers/
