@@ -2,8 +2,7 @@ const db = require("../models");
 const FacultyCredential = db.FacultyCredential;
 const CredentialCertificate = db.CredentialCertificate;
 const Faculty = db.Faculty;
-const path = require("path");
-const fs = require("fs").promises;
+const storage = require("../utils/storage");
 
 // Create or update faculty credentials
 exports.createOrUpdateCredentials = async (req, res) => {
@@ -44,9 +43,6 @@ exports.createOrUpdateCredentials = async (req, res) => {
 		}
 
 		// Handle file uploads
-		const uploadDir = path.join(__dirname, "../uploads/credentials");
-		await fs.mkdir(uploadDir, { recursive: true });
-
 		const torFile = req.files?.tor?.[0];
 		const pdsFile = req.files?.pds?.[0];
 		const diplomaFile = req.files?.diploma?.[0];
@@ -70,31 +66,44 @@ exports.createOrUpdateCredentials = async (req, res) => {
 			return res.status(400).json({ message: "TOR must be a PDF file" });
 		}
 
-		// Save new files if provided
+		// Upload new files to storage BEFORE writing any DB row/column, so a
+		// storage failure can never leave a row pointing at a nonexistent object.
 		let torPath = credential?.tor_file_path;
 		let pdsPath = credential?.pds_file_path;
 		let diplomaPath = credential?.diploma_file_path;
+		const newlyUploaded = [];
 
-		if (torFile) {
-			torPath = path.join(
-				uploadDir,
-				`${faculty.faculty_id}_tor_${Date.now()}${path.extname(torFile.originalname)}`,
+		try {
+			if (torFile) {
+				torPath = await storage.put(torFile.buffer, {
+					folder: "credentials",
+					originalname: torFile.originalname,
+					mimetype: torFile.mimetype,
+				});
+				newlyUploaded.push(torPath);
+			}
+			if (pdsFile) {
+				pdsPath = await storage.put(pdsFile.buffer, {
+					folder: "credentials",
+					originalname: pdsFile.originalname,
+					mimetype: pdsFile.mimetype,
+				});
+				newlyUploaded.push(pdsPath);
+			}
+			if (diplomaFile) {
+				diplomaPath = await storage.put(diplomaFile.buffer, {
+					folder: "credentials",
+					originalname: diplomaFile.originalname,
+					mimetype: diplomaFile.mimetype,
+				});
+				newlyUploaded.push(diplomaPath);
+			}
+		} catch (uploadError) {
+			await Promise.all(
+				newlyUploaded.map((key) => storage.remove(key).catch(() => {})),
 			);
-			await fs.writeFile(torPath, torFile.buffer);
-		}
-		if (pdsFile) {
-			pdsPath = path.join(
-				uploadDir,
-				`${faculty.faculty_id}_pds_${Date.now()}${path.extname(pdsFile.originalname)}`,
-			);
-			await fs.writeFile(pdsPath, pdsFile.buffer);
-		}
-		if (diplomaFile) {
-			diplomaPath = path.join(
-				uploadDir,
-				`${faculty.faculty_id}_diploma_${Date.now()}${path.extname(diplomaFile.originalname)}`,
-			);
-			await fs.writeFile(diplomaPath, diplomaFile.buffer);
+			console.error("Error uploading credential files:", uploadError);
+			return res.status(500).json({ message: "Failed to upload files" });
 		}
 
 		const credentialData = {
@@ -113,19 +122,24 @@ exports.createOrUpdateCredentials = async (req, res) => {
 		};
 
 		if (credential) {
-			// Update existing credentials
-			// Delete old files only if new files were uploaded
-			if (torFile && credential.tor_file_path) {
-				await fs.unlink(credential.tor_file_path).catch(() => {});
-			}
-			if (pdsFile && credential.pds_file_path) {
-				await fs.unlink(credential.pds_file_path).catch(() => {});
-			}
-			if (diplomaFile && credential.diploma_file_path) {
-				await fs.unlink(credential.diploma_file_path).catch(() => {});
-			}
+			// Update existing credentials: the row already points at the new
+			// keys (torPath/pdsPath/diplomaPath) uploaded above, so update the
+			// row first, then delete the old files only if new ones replaced them.
+			const oldTorPath = credential.tor_file_path;
+			const oldPdsPath = credential.pds_file_path;
+			const oldDiplomaPath = credential.diploma_file_path;
 
 			await credential.update(credentialData);
+
+			if (torFile && oldTorPath) {
+				await storage.remove(oldTorPath).catch(() => {});
+			}
+			if (pdsFile && oldPdsPath) {
+				await storage.remove(oldPdsPath).catch(() => {});
+			}
+			if (diplomaFile && oldDiplomaPath) {
+				await storage.remove(oldDiplomaPath).catch(() => {});
+			}
 		} else {
 			// Create new credentials
 			credential = await FacultyCredential.create(credentialData);
@@ -153,36 +167,51 @@ exports.createOrUpdateCredentials = async (req, res) => {
 							// Update certificate name
 							await existingCert.update({ certificate_name: certName });
 
-							// If new file provided, replace the old one
+							// If new file provided, replace the old one: upload new -> update row -> delete old
 							if (certFile) {
-								// Delete old file
-								if (existingCert.file_path) {
-									await fs.unlink(existingCert.file_path).catch(() => {});
+								const oldCertPath = existingCert.file_path;
+								let certPath;
+								try {
+									certPath = await storage.put(certFile.buffer, {
+										folder: "credentials",
+										originalname: certFile.originalname,
+										mimetype: certFile.mimetype,
+									});
+								} catch (uploadError) {
+									console.error("Error uploading certificate file:", uploadError);
+									return res.status(500).json({ message: "Failed to upload certificate file" });
 								}
-
-								// Save new file
-								const certPath = path.join(
-									uploadDir,
-									`${faculty.faculty_id}_cert_${certId}_${Date.now()}${path.extname(certFile.originalname)}`,
-								);
-								await fs.writeFile(certPath, certFile.buffer);
 								await existingCert.update({ file_path: certPath });
+
+								if (oldCertPath) {
+									await storage.remove(oldCertPath).catch(() => {});
+								}
 							}
 						}
 					} else if (certFile) {
-						// New certificate - create it
-						const certPath = path.join(
-							uploadDir,
-							`${faculty.faculty_id}_cert_${i}_${Date.now()}${path.extname(certFile.originalname)}`,
-						);
+						// New certificate - upload the file first, then create the row
+						let certPath;
+						try {
+							certPath = await storage.put(certFile.buffer, {
+								folder: "credentials",
+								originalname: certFile.originalname,
+								mimetype: certFile.mimetype,
+							});
+						} catch (uploadError) {
+							console.error("Error uploading certificate file:", uploadError);
+							return res.status(500).json({ message: "Failed to upload certificate file" });
+						}
 
-						await fs.writeFile(certPath, certFile.buffer);
-
-						await CredentialCertificate.create({
-							credential_id: credential.id,
-							certificate_name: certName,
-							file_path: certPath,
-						});
+						try {
+							await CredentialCertificate.create({
+								credential_id: credential.id,
+								certificate_name: certName,
+								file_path: certPath,
+							});
+						} catch (dbError) {
+							await storage.remove(certPath).catch(() => {});
+							throw dbError;
+						}
 					}
 				}
 			}
@@ -196,7 +225,7 @@ exports.createOrUpdateCredentials = async (req, res) => {
 				if (!existingCertIds.includes(cert.id.toString())) {
 					// Delete file
 					if (cert.file_path) {
-						await fs.unlink(cert.file_path).catch(() => {});
+						await storage.remove(cert.file_path).catch(() => {});
 					}
 					// Delete record
 					await cert.destroy();
@@ -210,7 +239,7 @@ exports.createOrUpdateCredentials = async (req, res) => {
 
 			for (const oldCert of oldCertificates) {
 				if (oldCert.file_path) {
-					await fs.unlink(oldCert.file_path).catch(() => {});
+					await storage.remove(oldCert.file_path).catch(() => {});
 				}
 				await oldCert.destroy();
 			}
@@ -301,7 +330,11 @@ exports.downloadFile = async (req, res) => {
 			return res.status(404).json({ message: "File not found" });
 		}
 
-		res.download(filePath);
+		const url = await storage.getUrl(filePath, {
+			download: true,
+			filename: `${fileType}${require("node:path").extname(filePath)}`,
+		});
+		res.json({ url });
 	} catch (error) {
 		console.error("Error downloading file:", error);
 		res
@@ -339,7 +372,11 @@ exports.downloadCertificate = async (req, res) => {
 			return res.status(404).json({ message: "Certificate file not found" });
 		}
 
-		res.download(certificate.file_path);
+		const url = await storage.getUrl(certificate.file_path, {
+			download: true,
+			filename: `${certificate.certificate_name}${require("node:path").extname(certificate.file_path)}`,
+		});
+		res.json({ url });
 	} catch (error) {
 		console.error("Error downloading certificate:", error);
 		res
