@@ -20,7 +20,15 @@ async function presignFields(input, fieldNames) {
 		fieldNames.map(async (field) => {
 			const key = plain[field];
 			if (!key || typeof key !== "string") return;
-			plain[field] = await storage.getUrl(key);
+			try {
+				plain[field] = await storage.getUrl(key);
+			} catch (err) {
+				// Legacy or unmigrated value that isn't a valid storage key.
+				// Null the field rather than failing the whole response: one bad
+				// row must not take down an entire list endpoint.
+				console.warn(`presignFields: unusable storage key in "${field}": ${key} (${err.message})`);
+				plain[field] = null;
+			}
 		}),
 	);
 
