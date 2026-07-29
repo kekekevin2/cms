@@ -11,6 +11,7 @@ import {
   AcademicYearService,
   AcademicYearsResponse,
 } from '../../../services/core/academic-year.service';
+import { downloadFromUrl } from '../../../shared/utils/download.util';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -410,16 +411,7 @@ export class OrganizationDocumentsComponent implements OnInit {
 
   downloadDocument(documentId: number, filename: string) {
     this.organizationService.downloadDocument(documentId).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      },
+      next: ({ url }) => downloadFromUrl(url, filename),
       error: (error) => {
         this.errorMessage.set('Failed to download document');
         setTimeout(() => this.errorMessage.set(''), 3000);

@@ -69,18 +69,18 @@ export class CVLAttachmentService {
     return this.http.delete<{ message: string }>(`${this.apiUrl}/cvl-attachments/file/${fileId}`);
   }
 
-  // Download CVL attachment files
-  downloadCVLAttachment(attachmentType: string): Observable<Blob> {
+  // Download CVL attachment files (all files under an attachment type)
+  downloadCVLAttachment(
+    attachmentType: string,
+  ): Observable<{ files: { id: number; filename: string; size: number; url: string }[] }> {
     const encodedType = encodeURIComponent(attachmentType);
-    return this.http.get(`${this.apiUrl}/cvl-attachments/${encodedType}/download`, {
-      responseType: 'blob'
-    });
+    return this.http.get<{ files: { id: number; filename: string; size: number; url: string }[] }>(
+      `${this.apiUrl}/cvl-attachments/${encodedType}/download`,
+    );
   }
 
   // Download single file by ID
-  downloadCVLFile(fileId: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/cvl-attachments/file/${fileId}/download`, {
-      responseType: 'blob'
-    });
+  downloadCVLFile(fileId: number): Observable<{ url: string }> {
+    return this.http.get<{ url: string }>(`${this.apiUrl}/cvl-attachments/file/${fileId}/download`);
   }
 }

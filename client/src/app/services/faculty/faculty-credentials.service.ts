@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { downloadFromUrl } from '../../shared/utils/download.util';
 
 export interface FacultyCredential {
   id: number;
@@ -51,38 +52,16 @@ export class FacultyCredentialsService {
   }
 
   async downloadFile(fileType: 'tor' | 'pds' | 'diploma', fileName: string): Promise<void> {
-    const blob = await firstValueFrom(
-      this.http.get(`${this.apiUrl}/download/${fileType}`, {
-        responseType: 'blob',
-      }),
+    const { url } = await firstValueFrom(
+      this.http.get<{ url: string }>(`${this.apiUrl}/download/${fileType}`),
     );
-
-    // Create download link
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    downloadFromUrl(url, fileName);
   }
 
   async downloadCertificate(certificateId: string, fileName: string): Promise<void> {
-    const blob = await firstValueFrom(
-      this.http.get(`${this.apiUrl}/download/certificate/${certificateId}`, {
-        responseType: 'blob',
-      }),
+    const { url } = await firstValueFrom(
+      this.http.get<{ url: string }>(`${this.apiUrl}/download/certificate/${certificateId}`),
     );
-
-    // Create download link
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    downloadFromUrl(url, fileName);
   }
 }

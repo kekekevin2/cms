@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DeanOrganizationManagementService } from '../../../services/organization/organization.service';
 import { DeanService } from '../../../services/dean/dean.service';
+import { downloadFromUrl } from '../../../shared/utils/download.util';
 
 @Component({
   selector: 'app-dean-organization-documents',
@@ -144,14 +145,7 @@ export class DeanOrganizationDocumentsComponent implements OnInit {
 
   downloadDocument(documentId: number, filename: string) {
     this.deanOrgService.downloadDocument(documentId).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: ({ url }) => downloadFromUrl(url, filename),
       error: (error) => {
         console.error('Failed to download document:', error);
         this.showError('Failed to download document');

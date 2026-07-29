@@ -267,10 +267,8 @@ export class OrganizationService {
   }
 
   // Bulk upload
-  downloadMembersTemplate(): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/members/template/download`, {
-      responseType: 'blob',
-    });
+  downloadMembersTemplate(): Observable<{ url: string }> {
+    return this.http.get<{ url: string }>(`${this.apiUrl}/members/template/download`);
   }
 
   bulkUploadMembers(formData: FormData): Observable<{ message: string; results: any }> {
@@ -346,10 +344,8 @@ export class OrganizationService {
     return this.http.delete<{ message: string }>(`${this.apiUrl}/documents/${documentId}`);
   }
 
-  downloadDocument(documentId: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/documents/${documentId}/download`, {
-      responseType: 'blob',
-    });
+  downloadDocument(documentId: number): Observable<{ url: string }> {
+    return this.http.get<{ url: string }>(`${this.apiUrl}/documents/${documentId}/download`);
   }
 
   // Adviser Management
@@ -383,10 +379,10 @@ export class OrganizationService {
     return this.http.delete<{ message: string }>(`${this.apiUrl}/members/bulk-upload/${uploadId}`);
   }
 
-  downloadBulkUpload(uploadId: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/members/bulk-upload/${uploadId}/download`, {
-      responseType: 'blob',
-    });
+  downloadBulkUpload(uploadId: number): Observable<{ url: string }> {
+    return this.http.get<{ url: string }>(
+      `${this.apiUrl}/members/bulk-upload/${uploadId}/download`,
+    );
   }
 
   previewBulkUpload(uploadId: number): Observable<any> {
@@ -449,9 +445,7 @@ export class DeanOrganizationManagementService {
     );
   }
 
-  downloadDocument(documentId: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/documents/${documentId}/download`, {
-      responseType: 'blob',
-    });
+  downloadDocument(documentId: number): Observable<{ url: string }> {
+    return this.http.get<{ url: string }>(`${this.apiUrl}/documents/${documentId}/download`);
   }
 }
