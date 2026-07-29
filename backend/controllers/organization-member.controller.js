@@ -1,5 +1,6 @@
 const db = require("../models");
 const { Op } = require("sequelize");
+const storage = require("../utils/storage");
 
 // Get all members for the organization
 exports.getMembers = async (req, res) => {
@@ -632,9 +633,8 @@ exports.downloadTemplate = async (req, res) => {
 // Behavior: persist the uploaded file, create ONE upload record, and parse rows
 // in the background only for analytics (members are linked to the upload record).
 exports.bulkUploadMembers = async (req, res) => {
-  const fs = require("fs");
-  const path = require("path");
   const XLSX = require("xlsx");
+  let fileKey;
 
   try {
     const userId = req.user.user_id;
@@ -644,7 +644,6 @@ exports.bulkUploadMembers = async (req, res) => {
     });
 
     if (!organization) {
-      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res
         .status(404)
         .json({ message: "Organization profile not found" });
@@ -657,7 +656,6 @@ exports.bulkUploadMembers = async (req, res) => {
     const { academic_year_id, section, year_level, department, semester } = req.body;
 
     if (!academic_year_id || !section || !year_level || !department || !semester) {
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(400).json({
         message:
           "Academic year, section, year level, department, and semester are required",
@@ -667,7 +665,6 @@ exports.bulkUploadMembers = async (req, res) => {
     // Get academic year to use its start date
     const academicYear = await db.AcademicYear.findByPk(academic_year_id);
     if (!academicYear) {
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(404).json({ message: "Academic year not found" });
     }
 
@@ -677,21 +674,32 @@ exports.bulkUploadMembers = async (req, res) => {
     // Parse the uploaded file (supports .csv, .xls, .xlsx) into rows
     let rows = [];
     try {
-      const workbook = XLSX.readFile(req.file.path);
+      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
     } catch (parseError) {
       console.error("File parsing error:", parseError);
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(500).json({ message: "Error parsing uploaded file" });
+    }
+
+    // Persist the file for later download/preview
+    try {
+      fileKey = await storage.put(req.file.buffer, {
+        folder: "organization-population",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+    } catch (uploadError) {
+      console.error("File upload error:", uploadError);
+      return res.status(500).json({ message: "Error uploading file" });
     }
 
     // Create the single upload record FIRST (file management module)
     const uploadRecord = await db.OrganizationBulkUpload.create({
       organization_id: organization.organization_id,
       file_name: req.file.originalname,
-      file_path: req.file.path,
+      file_path: fileKey,
       department: department,
       section: section,
       year_level: year_level,
@@ -807,12 +815,8 @@ exports.bulkUploadMembers = async (req, res) => {
     });
   } catch (error) {
     console.error("Bulk upload error:", error);
-    if (req.file && fs.existsSync(req.file.path)) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (e) {
-        console.error("Cleanup error:", e);
-      }
+    if (fileKey) {
+      await storage.remove(fileKey).catch(() => {});
     }
     res.status(500).json({ message: "Error uploading members" });
   }
@@ -923,7 +927,7 @@ exports.getBulkUploadHistory = async (req, res) => {
 // Only updates the record itself; existing members previously inserted from
 // this upload are left untouched (same behaviour as CVL attachment update).
 exports.updateBulkUpload = async (req, res) => {
-  const fs = require("fs");
+  let newFileKey;
   try {
     const userId = req.user.user_id;
     const { upload_id } = req.params;
@@ -966,21 +970,26 @@ exports.updateBulkUpload = async (req, res) => {
       upload.academic_year_id = parseInt(academic_year_id, 10);
     }
 
-    // Optional file replacement
+    // Optional file replacement: upload new -> save row -> delete old
+    let oldFileKey;
     if (req.file) {
-      // Remove old file from disk if present
-      if (upload.file_path && fs.existsSync(upload.file_path)) {
-        try {
-          fs.unlinkSync(upload.file_path);
-        } catch (e) {
-          console.error("Error deleting old upload file:", e);
-        }
-      }
+      oldFileKey = upload.file_path;
+      newFileKey = await storage.put(req.file.buffer, {
+        folder: "organization-population",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
       upload.file_name = req.file.originalname;
-      upload.file_path = req.file.path;
+      upload.file_path = newFileKey;
     }
 
     await upload.save();
+
+    if (oldFileKey) {
+      await storage.remove(oldFileKey).catch((e) => {
+        console.error("Error deleting old upload file:", e);
+      });
+    }
 
     res.json({
       message: "Upload record updated successfully",
@@ -988,6 +997,9 @@ exports.updateBulkUpload = async (req, res) => {
     });
   } catch (error) {
     console.error("Update bulk upload error:", error);
+    if (newFileKey) {
+      await storage.remove(newFileKey).catch(() => {});
+    }
     res
       .status(500)
       .json({ message: "Error updating upload record", error: error.message });
@@ -996,7 +1008,6 @@ exports.updateBulkUpload = async (req, res) => {
 
 // Delete bulk upload record
 exports.deleteBulkUpload = async (req, res) => {
-  const fs = require("fs");
   try {
     const userId = req.user.user_id;
     const { upload_id } = req.params;
@@ -1031,12 +1042,10 @@ exports.deleteBulkUpload = async (req, res) => {
     });
 
     // Delete the stored Excel/CSV file
-    if (upload.file_path && fs.existsSync(upload.file_path)) {
-      try {
-        fs.unlinkSync(upload.file_path);
-      } catch (e) {
+    if (upload.file_path) {
+      await storage.remove(upload.file_path).catch((e) => {
         console.error("Error deleting file:", e);
-      }
+      });
     }
 
     await upload.destroy();
@@ -1075,17 +1084,29 @@ exports.downloadBulkUpload = async (req, res) => {
       return res.status(404).json({ message: "File not found" });
     }
 
-    return res.download(upload.file_path, upload.file_name);
+    const url = await storage.getUrl(upload.file_path, {
+      download: true,
+      filename: upload.file_name,
+    });
+    res.json({ url });
   } catch (error) {
     console.error("Download bulk upload error:", error);
     res.status(500).json({ message: "Error downloading file" });
   }
 };
 
-// Preview the uploaded file contents (parsed rows as JSON for in-app viewing)
+// Preview the uploaded file contents (parsed rows as JSON for in-app viewing).
+//
+// NOTE: the storage adapter has no read-back/streaming method (`getStream`
+// was deliberately not implemented — see utils/storage.js), so the original
+// file can no longer be re-read and re-parsed here, especially under the S3
+// driver. Instead this renders a table from the OrganizationMember rows that
+// were persisted (and linked via upload_id) when the file was first parsed
+// in bulkUploadMembers. Rows that bulkUploadMembers skipped (missing sr_code
+// and student name) are not persisted and therefore cannot appear here, and
+// only the fields bulkUploadMembers actually extracts are shown as columns
+// -- this is not a byte-for-byte reproduction of the original spreadsheet.
 exports.previewBulkUpload = async (req, res) => {
-  const XLSX = require("xlsx");
-  const fs = require("fs");
   try {
     const userId = req.user.user_id;
     const { upload_id } = req.params;
@@ -1107,26 +1128,54 @@ exports.previewBulkUpload = async (req, res) => {
       },
     });
 
-    if (!upload || !upload.file_path || !fs.existsSync(upload.file_path)) {
-      return res.status(404).json({ message: "File not found" });
+    if (!upload) {
+      return res.status(404).json({ message: "Upload record not found" });
     }
 
-    const workbook = XLSX.readFile(upload.file_path);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    // Array-of-arrays so the frontend can render a generic table
-    const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+    const members = await db.OrganizationMember.findAll({
+      where: {
+        organization_id: organization.organization_id,
+        upload_id: upload.upload_id,
+      },
+      order: [["member_id", "ASC"]],
+    });
 
-    const headers = data.length > 0 ? data[0] : [];
-    const dataRows = data.length > 1 ? data.slice(1) : [];
+    const headers = [
+      "SR Code",
+      "First Name",
+      "Middle Name",
+      "Last Name",
+      "Email",
+      "Gender",
+      "Program",
+      "Position",
+    ];
+
+    // No members were persisted from this upload (e.g. every row was
+    // skipped) -- fall back to the summary counts recorded on the upload
+    // record itself at upload time, since there is no per-row data left.
+    const rows = members.map((m) => [
+      m.sr_code || "",
+      m.first_name || "",
+      m.middle_name || "",
+      m.last_name || "",
+      m.email || "",
+      m.gender || "",
+      m.program || "",
+      m.position || "",
+    ]);
 
     res.json({
       file_name: upload.file_name,
       department: upload.department,
       section: upload.section,
       year_level: upload.year_level,
+      semester: upload.semester,
+      total_records: upload.total_records,
+      inserted_count: upload.inserted_count,
+      skipped_count: upload.skipped_count,
       headers,
-      rows: dataRows,
+      rows,
     });
   } catch (error) {
     console.error("Preview bulk upload error:", error);

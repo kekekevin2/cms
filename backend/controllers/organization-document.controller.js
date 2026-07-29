@@ -13,8 +13,7 @@ async function getDepartmentForUser(userId) {
 }
 
 const { Op } = require("sequelize");
-const path = require("path");
-const fs = require("fs").promises;
+const storage = require("../utils/storage");
 
 // Get all documents for organization
 exports.getDocuments = async (req, res) => {
@@ -98,6 +97,7 @@ exports.getDocuments = async (req, res) => {
 
 // Submit a new document
 exports.submitDocument = async (req, res) => {
+	let documentKey;
 	try {
 		const userId = req.user.user_id;
 
@@ -147,6 +147,17 @@ exports.submitDocument = async (req, res) => {
 			finalDocumentTitle = `Activity Report - ${activityDateStr}${venueStr}`.substring(0, 255);
 		}
 
+		try {
+			documentKey = await storage.put(req.file.buffer, {
+				folder: "organization-documents",
+				originalname: req.file.originalname,
+				mimetype: req.file.mimetype,
+			});
+		} catch (uploadError) {
+			console.error("Document upload error:", uploadError);
+			return res.status(500).json({ message: "Error uploading document" });
+		}
+
 		// Create document record
 		const document = await db.OrganizationDocument.create({
 			organization_id: organization.organization_id,
@@ -158,7 +169,7 @@ exports.submitDocument = async (req, res) => {
 			venue: venue || null,
 			participants: participants || null,
 			sdgs: parsedSDGs,
-			document_path: req.file.path,
+			document_path: documentKey,
 			original_filename: req.file.originalname,
 			file_size: req.file.size,
 			mime_type: req.file.mimetype,
@@ -172,13 +183,8 @@ exports.submitDocument = async (req, res) => {
 		});
 	} catch (error) {
 		console.error("Submit report error:", error);
-		// Delete uploaded file if database operation fails
-		if (req.file) {
-			try {
-				await fs.unlink(req.file.path);
-			} catch (unlinkError) {
-				console.error("Error deleting file:", unlinkError);
-			}
+		if (documentKey) {
+			await storage.remove(documentKey).catch(() => {});
 		}
 		res.status(500).json({ message: "Error submitting document" });
 	}
@@ -215,14 +221,12 @@ exports.updateDocument = async (req, res) => {
 
 		// If new file is uploaded, replace the old one
 		if (req.file) {
-			// Delete old file
-			try {
-				await fs.unlink(document.document_path);
-			} catch (error) {
-				console.error("Error deleting old file:", error);
-			}
-
-			updateData.document_path = req.file.path;
+			const oldKey = document.document_path;
+			updateData.document_path = await storage.put(req.file.buffer, {
+				folder: "organization-documents",
+				originalname: req.file.originalname,
+				mimetype: req.file.mimetype,
+			});
 			updateData.original_filename = req.file.originalname;
 			updateData.file_size = req.file.size;
 			updateData.mime_type = req.file.mimetype;
@@ -231,6 +235,7 @@ exports.updateDocument = async (req, res) => {
 			updateData.reviewed_by = null;
 			updateData.review_date = null;
 			updateData.review_comments = null;
+			document._oldStorageKey = oldKey;
 		}
 
 		// Update all editable fields if provided
@@ -264,6 +269,10 @@ exports.updateDocument = async (req, res) => {
 		}
 
 		await document.update(updateData);
+
+		if (document._oldStorageKey) {
+			await storage.remove(document._oldStorageKey).catch(() => {});
+		}
 
 		res.json({
 			message: "Document updated successfully",
@@ -302,12 +311,10 @@ exports.deleteDocument = async (req, res) => {
 			return res.status(404).json({ message: "Document not found" });
 		}
 
-		// Delete file from filesystem
-		try {
-			await fs.unlink(document.document_path);
-		} catch (error) {
+		// Delete file from storage
+		await storage.remove(document.document_path).catch((error) => {
 			console.error("Error deleting file:", error);
-		}
+		});
 
 		await document.destroy();
 
@@ -345,7 +352,11 @@ exports.downloadDocument = async (req, res) => {
 			return res.status(404).json({ message: "Document not found" });
 		}
 
-		res.download(document.document_path, document.original_filename);
+		const url = await storage.getUrl(document.document_path, {
+			download: true,
+			filename: document.original_filename,
+		});
+		res.json({ url });
 	} catch (error) {
 		console.error("Download document error:", error);
 		res.status(500).json({ message: "Error downloading document" });
@@ -587,7 +598,11 @@ exports.deanDownloadDocument = async (req, res) => {
 			});
 		}
 
-		res.download(document.document_path, document.original_filename);
+		const url = await storage.getUrl(document.document_path, {
+			download: true,
+			filename: document.original_filename,
+		});
+		res.json({ url });
 	} catch (error) {
 		console.error("Dean download document error:", error);
 		res.status(500).json({ message: "Error downloading document" });

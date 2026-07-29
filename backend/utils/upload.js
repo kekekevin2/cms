@@ -44,6 +44,8 @@ const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 
 const SPREADSHEET_TYPES = [
 	"text/csv",
+	"application/csv",
+	"text/plain",
 	"application/vnd.ms-excel",
 	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ];
