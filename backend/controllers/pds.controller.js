@@ -1,42 +1,12 @@
 const db = require("../models");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const { makeUpload, MB, IMAGE_TYPES } = require("../utils/upload");
+const storage = require("../utils/storage");
+const { presignFields } = require("../utils/presign");
 
-// Configure multer for photo and signature uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, "../uploads/pds");
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(
-      null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
-    );
-  },
-});
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: function (req, file, cb) {
-    const allowedTypes = /jpeg|jpg|png/;
-    const extname = allowedTypes.test(
-      path.extname(file.originalname).toLowerCase(),
-    );
-    const mimetype = allowedTypes.test(file.mimetype);
-
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error("Only image files (jpeg, jpg, png) are allowed!"));
-    }
-  },
+const upload = makeUpload({
+  folder: "pds",
+  allowedTypes: IMAGE_TYPES,
+  maxSize: 5 * MB,
 });
 
 // GET: Retrieve faculty's Personal Data Sheet
@@ -104,7 +74,8 @@ exports.getPDS = async (req, res) => {
       return res.status(404).json({ message: "Personal Data Sheet not found" });
     }
 
-    res.json(pds);
+    const presignedPds = await presignFields(pds, ["photo_path", "signature_path"]);
+    res.json(presignedPds);
   } catch (error) {
     console.error("Get PDS error:", error);
     res.status(500).json({ message: "Error retrieving Personal Data Sheet" });
@@ -502,21 +473,25 @@ exports.uploadPhoto = [
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      // Delete old photo if exists
-      if (pds.photo_path) {
-        const oldPhotoPath = path.join(__dirname, "../", pds.photo_path);
-        if (fs.existsSync(oldPhotoPath)) {
-          fs.unlinkSync(oldPhotoPath);
-        }
+      const oldPhotoPath = pds.photo_path;
+      const key = await storage.put(req.file.buffer, {
+        folder: "pds",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+
+      try {
+        await pds.update({ photo_path: key });
+      } catch (dbError) {
+        await storage.remove(key).catch(() => {});
+        throw dbError;
       }
 
-      // Update PDS with new photo path
-      const photoPath = `uploads/pds/${req.file.filename}`;
-      await pds.update({ photo_path: photoPath });
+      if (oldPhotoPath) await storage.remove(oldPhotoPath).catch(() => {});
 
       res.json({
         message: "Photo uploaded successfully",
-        photo_path: photoPath,
+        photo_path: await storage.getUrl(key),
       });
     } catch (error) {
       console.error("Upload photo error:", error);
@@ -555,25 +530,25 @@ exports.uploadSignature = [
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      // Delete old signature if exists
-      if (pds.signature_path) {
-        const oldSignaturePath = path.join(
-          __dirname,
-          "../",
-          pds.signature_path,
-        );
-        if (fs.existsSync(oldSignaturePath)) {
-          fs.unlinkSync(oldSignaturePath);
-        }
+      const oldSignaturePath = pds.signature_path;
+      const key = await storage.put(req.file.buffer, {
+        folder: "pds",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+
+      try {
+        await pds.update({ signature_path: key });
+      } catch (dbError) {
+        await storage.remove(key).catch(() => {});
+        throw dbError;
       }
 
-      // Update PDS with new signature path
-      const signaturePath = `uploads/pds/${req.file.filename}`;
-      await pds.update({ signature_path: signaturePath });
+      if (oldSignaturePath) await storage.remove(oldSignaturePath).catch(() => {});
 
       res.json({
         message: "Signature uploaded successfully",
-        signature_path: signaturePath,
+        signature_path: await storage.getUrl(key),
       });
     } catch (error) {
       console.error("Upload signature error:", error);
@@ -916,7 +891,8 @@ exports.importFromProfile = async (req, res) => {
       ],
     });
 
-    res.json(completePDS);
+    const presignedPds = await presignFields(completePDS, ["photo_path", "signature_path"]);
+    res.json(presignedPds);
   } catch (error) {
     console.error("Import from profile error:", error);
     res.status(500).json({ message: "Error importing profile data" });
