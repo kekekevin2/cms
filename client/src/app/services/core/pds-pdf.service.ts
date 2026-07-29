@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { jsPDF } from 'jspdf';
-import { environment } from '../../environments/environment';
 import { PersonalDataSheet, PDSEducation } from './pds.service';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -126,7 +125,7 @@ export class PdsPdfService {
       img.crossOrigin = 'anonymous';
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
-      img.src = `${environment.apiUrl}/../${path}`;
+      img.src = path;
     });
   }
 }

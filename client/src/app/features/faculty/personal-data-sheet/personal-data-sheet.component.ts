@@ -15,7 +15,6 @@ import {
   PDSReference,
 } from '../../../services/core/pds.service';
 import { PdsPdfService } from '../../../services/core/pds-pdf.service';
-import { environment } from '../../../environments/environment';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -160,10 +159,10 @@ export class PersonalDataSheetComponent implements OnInit {
           },
         });
         if (pdsData.photo_path) {
-          this.photoPreview.set(`${environment.apiUrl}/../${pdsData.photo_path}`);
+          this.photoPreview.set(pdsData.photo_path);
         }
         if (pdsData.signature_path) {
-          this.signaturePreview.set(`${environment.apiUrl}/../${pdsData.signature_path}`);
+          this.signaturePreview.set(pdsData.signature_path);
         }
         this.loading.set(false);
       },
