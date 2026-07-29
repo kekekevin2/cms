@@ -1,38 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../models");
-const path = require("path");
-const fs = require("fs");
-const multer = require("multer");
 const verifyToken = require("../middleware/auth.middleware");
 const checkRole = require("../middleware/role.middleware");
+const { makeUpload, MB } = require("../utils/upload");
+const storage = require("../utils/storage");
+const { presignFields } = require("../utils/presign");
 const Campus = db.Campus;
 const Department = db.Department;
 
-// Profile picture storage
-const profilePicDir = path.join(__dirname, "../uploads/profile-pictures");
-if (!fs.existsSync(profilePicDir))
-  fs.mkdirSync(profilePicDir, { recursive: true });
-
-const profilePicStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, profilePicDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `dept-${req.user.user_id}-${Date.now()}${ext}`);
-  },
-});
-const uploadProfilePic = multer({
-  storage: profilePicStorage,
-  fileFilter: (req, file, cb) => {
-    if (
-      ["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(
-        file.mimetype,
-      )
-    )
-      cb(null, true);
-    else cb(new Error("Only image files are allowed"), false);
-  },
-  limits: { fileSize: 5 * 1024 * 1024 },
+const uploadProfilePic = makeUpload({
+  folder: "profile-pictures",
+  allowedTypes: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
+  maxSize: 5 * MB,
 });
 
 router.use(verifyToken);
@@ -63,7 +43,7 @@ router.get("/profile", async (req, res) => {
         .json({ message: "College department profile not found" });
     }
 
-    res.json({ record });
+    res.json({ record: await presignFields(record, ["profile_picture"]) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to load profile" });
@@ -138,18 +118,23 @@ router.post(
       if (!record)
         return res.status(404).json({ message: "Profile not found" });
 
-      // Delete old picture if exists
-      if (record.profile_picture) {
-        const oldPath = path.join(__dirname, "..", record.profile_picture);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      const oldKey = record.profile_picture;
+      const key = await storage.put(req.file.buffer, {
+        folder: "profile-pictures",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+      try {
+        await record.update({ profile_picture: key });
+      } catch (dbError) {
+        await storage.remove(key).catch(() => {});
+        throw dbError;
       }
-
-      const relativePath = `/uploads/profile-pictures/${req.file.filename}`;
-      await record.update({ profile_picture: relativePath });
+      if (oldKey) await storage.remove(oldKey).catch(() => {});
 
       res.json({
         message: "Profile picture updated",
-        profile_picture: relativePath,
+        profile_picture: await storage.getUrl(key),
       });
     } catch (err) {
       console.error(err);

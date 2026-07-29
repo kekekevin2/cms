@@ -1,6 +1,7 @@
 const db = require("../models");
 const { Op } = require("sequelize");
 const storage = require("../utils/storage");
+const { presignFields } = require("../utils/presign");
 
 // Get all members for the organization
 exports.getMembers = async (req, res) => {
@@ -76,7 +77,7 @@ exports.getMembers = async (req, res) => {
     });
 
     res.json({
-      members: rows,
+      members: await presignFields(rows, ["photo_url", "signature_url"]),
       currentPage: page,
       totalPages: Math.ceil(count / limit),
       totalItems: count,
@@ -138,7 +139,7 @@ exports.searchMemberHistory = async (req, res) => {
       return res.status(404).json({ message: "No previous record found" });
     }
 
-    res.json({ member });
+    res.json({ member: await presignFields(member, ["photo_url", "signature_url"]) });
   } catch (error) {
     console.error("Search member history error:", error);
     res.status(500).json({ message: "Error searching member history" });
@@ -247,44 +248,61 @@ exports.createMember = async (req, res) => {
 
     // Handle photo upload
     let photo_url = null;
-    if (req.files && req.files.photo) {
-      photo_url = `/uploads/member-photos/${req.files.photo[0].filename}`;
+    if (req.files?.photo?.[0]) {
+      const f = req.files.photo[0];
+      photo_url = await storage.put(f.buffer, {
+        folder: "member-photos",
+        originalname: f.originalname,
+        mimetype: f.mimetype,
+      });
     }
-    
+
     // Handle signature upload
     let signature_url = null;
-    if (req.files && req.files.signature) {
-      signature_url = `/uploads/member-signatures/${req.files.signature[0].filename}`;
+    if (req.files?.signature?.[0]) {
+      const f = req.files.signature[0];
+      signature_url = await storage.put(f.buffer, {
+        folder: "member-signatures",
+        originalname: f.originalname,
+        mimetype: f.mimetype,
+      });
     }
 
     // Create member
-    const member = await db.OrganizationMember.create({
-      organization_id: organization.organization_id,
-      sr_code: sr_code || null,
-      first_name: first_name || null,
-      middle_name: middle_name || null,
-      last_name: last_name || null,
-      email: email || null,
-      contact_number: contact_number || null,
-      year_level: year_level || null,
-      position: normalizedPosition, // Use normalized position
-      parent_member_id: cleanedParentMemberId,
-      academic_year_id: cleanedAcademicYearId,
-      semester: cleanedSemester,
-      term_start_date: cleanedTermStartDate,
-      term_end_date: cleanedTermEndDate,
-      photo_url,
-      signature_url,
-      course: course || null,
-      gwa: gwa || null,
-      campus: campus || null,
-      telephone_number: telephone_number || null,
-      birth_date: cleanedBirthDate,
-      age: age || null,
-      civil_status: civil_status || null,
-      home_address: home_address || null,
-      is_active: true,
-    });
+    let member;
+    try {
+      member = await db.OrganizationMember.create({
+        organization_id: organization.organization_id,
+        sr_code: sr_code || null,
+        first_name: first_name || null,
+        middle_name: middle_name || null,
+        last_name: last_name || null,
+        email: email || null,
+        contact_number: contact_number || null,
+        year_level: year_level || null,
+        position: normalizedPosition, // Use normalized position
+        parent_member_id: cleanedParentMemberId,
+        academic_year_id: cleanedAcademicYearId,
+        semester: cleanedSemester,
+        term_start_date: cleanedTermStartDate,
+        term_end_date: cleanedTermEndDate,
+        photo_url,
+        signature_url,
+        course: course || null,
+        gwa: gwa || null,
+        campus: campus || null,
+        telephone_number: telephone_number || null,
+        birth_date: cleanedBirthDate,
+        age: age || null,
+        civil_status: civil_status || null,
+        home_address: home_address || null,
+        is_active: true,
+      });
+    } catch (dbError) {
+      if (photo_url) await storage.remove(photo_url).catch(() => {});
+      if (signature_url) await storage.remove(signature_url).catch(() => {});
+      throw dbError;
+    }
 
     console.log("✅ Member created successfully!");
     console.log("Member ID:", member.member_id);
@@ -370,40 +388,35 @@ exports.updateMember = async (req, res) => {
 
     // Handle photo upload
     let photo_url = member.photo_url; // Keep existing photo by default
-    if (req.files && req.files.photo) {
-      photo_url = `/uploads/member-photos/${req.files.photo[0].filename}`;
+    let newPhotoKey, oldPhotoKey;
+    if (req.files?.photo?.[0]) {
+      const f = req.files.photo[0];
+      oldPhotoKey = member.photo_url;
+      photo_url = await storage.put(f.buffer, {
+        folder: "member-photos",
+        originalname: f.originalname,
+        mimetype: f.mimetype,
+      });
+      newPhotoKey = photo_url;
       console.log("📷 New photo uploaded:", photo_url);
-      
-      // Delete old photo if it exists
-      if (member.photo_url) {
-        const fs = require("fs");
-        const path = require("path");
-        const oldPhotoPath = path.join(__dirname, "..", member.photo_url);
-        if (fs.existsSync(oldPhotoPath)) {
-          fs.unlinkSync(oldPhotoPath);
-          console.log("🗑️ Deleted old photo");
-        }
-      }
     }
-    
+
     // Handle signature upload
     let signature_url = member.signature_url; // Keep existing signature by default
-    if (req.files && req.files.signature) {
-      signature_url = `/uploads/member-signatures/${req.files.signature[0].filename}`;
+    let newSignatureKey, oldSignatureKey;
+    if (req.files?.signature?.[0]) {
+      const f = req.files.signature[0];
+      oldSignatureKey = member.signature_url;
+      signature_url = await storage.put(f.buffer, {
+        folder: "member-signatures",
+        originalname: f.originalname,
+        mimetype: f.mimetype,
+      });
+      newSignatureKey = signature_url;
       console.log("✍️ New signature uploaded:", signature_url);
-      
-      // Delete old signature if it exists
-      if (member.signature_url) {
-        const fs = require("fs");
-        const path = require("path");
-        const oldSignaturePath = path.join(__dirname, "..", member.signature_url);
-        if (fs.existsSync(oldSignaturePath)) {
-          fs.unlinkSync(oldSignaturePath);
-          console.log("🗑️ Deleted old signature");
-        }
-      }
     }
-    
+
+
     const cleanedBirthDate = birth_date && birth_date !== '' ? birth_date : null;
 
     const updateData = {
@@ -450,8 +463,17 @@ exports.updateMember = async (req, res) => {
     }
 
     // Perform the save (which generates the actual SQL)
-    await member.save();
-    
+    try {
+      await member.save();
+    } catch (dbError) {
+      if (newPhotoKey) await storage.remove(newPhotoKey).catch(() => {});
+      if (newSignatureKey) await storage.remove(newSignatureKey).catch(() => {});
+      throw dbError;
+    }
+
+    if (oldPhotoKey) await storage.remove(oldPhotoKey).catch(() => {});
+    if (oldSignatureKey) await storage.remove(oldSignatureKey).catch(() => {});
+
     console.log("✅ Officer updated successfully!");
     console.log("  New position:", member.position);
     console.log("  New name:", member.first_name, member.last_name);
@@ -582,20 +604,26 @@ exports.getHierarchy = async (req, res) => {
       ],
     });
 
+    // Presign photo/signature URLs on the flat list before building the tree
+    const presignedMembers = await presignFields(
+      members.map((member) => member.toJSON()),
+      ["photo_url", "signature_url"],
+    );
+
     // Build hierarchy tree
     const memberMap = new Map();
     const rootMembers = [];
 
     // First pass: create map of all members
-    members.forEach((member) => {
+    presignedMembers.forEach((member) => {
       memberMap.set(member.member_id, {
-        ...member.toJSON(),
+        ...member,
         children: [],
       });
     });
 
     // Second pass: build tree structure
-    members.forEach((member) => {
+    presignedMembers.forEach((member) => {
       const memberData = memberMap.get(member.member_id);
       if (member.parent_member_id) {
         const parent = memberMap.get(member.parent_member_id);
