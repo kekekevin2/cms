@@ -1151,7 +1151,23 @@ exports.getDeanCompleteProfileByDean = async (req, res) => {
         .json({ message: "Dean not found or not in your department" });
     }
 
-    res.json({ profile: faculty });
+    const profile = faculty.toJSON();
+    profile.personal_profile = await presignFields(profile.personal_profile, [
+      "profile_picture",
+      "passport_photo",
+    ]);
+    profile.awards = await presignFields(profile.awards, ["certificate_file"]);
+    profile.seminars_trainings = await presignFields(profile.seminars_trainings, [
+      "certificate_file",
+    ]);
+    profile.research_activities = await presignFields(profile.research_activities, [
+      "certificate_file",
+    ]);
+    profile.extension_activities = await presignFields(profile.extension_activities, [
+      "documentation_file",
+    ]);
+
+    res.json({ profile });
   } catch (error) {
     console.error("Get faculty complete profile by dean error:", error);
     res
@@ -1199,7 +1215,17 @@ exports.getAllDeanProfilesByDean = async (req, res) => {
       ],
     });
 
-    res.json({ faculty });
+    const facultyList = await Promise.all(
+      faculty.map(async (f) => {
+        const plain = f.toJSON();
+        plain.personal_profile = await presignFields(plain.personal_profile, [
+          "profile_picture",
+        ]);
+        return plain;
+      }),
+    );
+
+    res.json({ faculty: facultyList });
   } catch (error) {
     console.error("Get all faculty profiles by dean error:", error);
     res.status(500).json({ message: "Error fetching faculty profiles" });
