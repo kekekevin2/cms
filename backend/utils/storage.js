@@ -59,6 +59,11 @@ const diskDriver = {
 			if (err.code !== 'ENOENT') throw err;
 		});
 	},
+
+	async getBuffer(key) {
+		assertSafeKey(key);
+		return fs.readFile(path.join(DISK_ROOT, key));
+	},
 };
 
 // ------------------------------------------------------------------ s3 driver
@@ -109,6 +114,13 @@ function makeS3Driver() {
 			assertSafeKey(key);
 			await client.send(new DeleteObjectCommand({ Bucket, Key: key }));
 		},
+
+		async getBuffer(key) {
+			assertSafeKey(key);
+			const response = await client.send(new GetObjectCommand({ Bucket, Key: key }));
+			const bytes = await response.Body.transformToByteArray();
+			return Buffer.from(bytes);
+		},
 	};
 }
 
@@ -120,4 +132,5 @@ module.exports = {
 	put: active.put,
 	getUrl: active.getUrl,
 	remove: active.remove,
+	getBuffer: active.getBuffer,
 };

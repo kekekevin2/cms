@@ -1097,16 +1097,15 @@ exports.downloadBulkUpload = async (req, res) => {
 
 // Preview the uploaded file contents (parsed rows as JSON for in-app viewing).
 //
-// NOTE: the storage adapter has no read-back/streaming method (`getStream`
-// was deliberately not implemented — see utils/storage.js), so the original
-// file can no longer be re-read and re-parsed here, especially under the S3
-// driver. Instead this renders a table from the OrganizationMember rows that
-// were persisted (and linked via upload_id) when the file was first parsed
-// in bulkUploadMembers. Rows that bulkUploadMembers skipped (missing sr_code
-// and student name) are not persisted and therefore cannot appear here, and
-// only the fields bulkUploadMembers actually extracts are shown as columns
-// -- this is not a byte-for-byte reproduction of the original spreadsheet.
+// Re-fetches the persisted spreadsheet via storage.getBuffer(...) and
+// re-parses it with xlsx, restoring the original behaviour: the file's real
+// column headers and every row, including rows bulkUploadMembers skipped
+// during import. If the stored object can't be read back (legacy path from
+// before the storage-adapter migration, or the object is genuinely gone),
+// this returns a clear error instead of silently substituting different
+// data or crashing with a 500.
 exports.previewBulkUpload = async (req, res) => {
+  const XLSX = require("xlsx");
   try {
     const userId = req.user.user_id;
     const { upload_id } = req.params;
@@ -1132,38 +1131,28 @@ exports.previewBulkUpload = async (req, res) => {
       return res.status(404).json({ message: "Upload record not found" });
     }
 
-    const members = await db.OrganizationMember.findAll({
-      where: {
-        organization_id: organization.organization_id,
-        upload_id: upload.upload_id,
-      },
-      order: [["member_id", "ASC"]],
-    });
+    if (!upload.file_path) {
+      return res.status(404).json({ message: "File not found" });
+    }
 
-    const headers = [
-      "SR Code",
-      "First Name",
-      "Middle Name",
-      "Last Name",
-      "Email",
-      "Gender",
-      "Program",
-      "Position",
-    ];
+    let buffer;
+    try {
+      buffer = await storage.getBuffer(upload.file_path);
+    } catch (readError) {
+      console.error("Preview bulk upload read error:", readError);
+      return res.status(422).json({
+        message: "The original file is no longer available and can't be previewed",
+      });
+    }
 
-    // No members were persisted from this upload (e.g. every row was
-    // skipped) -- fall back to the summary counts recorded on the upload
-    // record itself at upload time, since there is no per-row data left.
-    const rows = members.map((m) => [
-      m.sr_code || "",
-      m.first_name || "",
-      m.middle_name || "",
-      m.last_name || "",
-      m.email || "",
-      m.gender || "",
-      m.program || "",
-      m.position || "",
-    ]);
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    // Array-of-arrays so the frontend can render a generic table
+    const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+    const headers = data.length > 0 ? data[0] : [];
+    const dataRows = data.length > 1 ? data.slice(1) : [];
 
     res.json({
       file_name: upload.file_name,
@@ -1175,7 +1164,7 @@ exports.previewBulkUpload = async (req, res) => {
       inserted_count: upload.inserted_count,
       skipped_count: upload.skipped_count,
       headers,
-      rows,
+      rows: dataRows,
     });
   } catch (error) {
     console.error("Preview bulk upload error:", error);

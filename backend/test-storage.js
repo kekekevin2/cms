@@ -20,6 +20,12 @@ async function main() {
 	console.log("getUrl (view)     →", await storage.getUrl(key));
 	console.log("getUrl (download) →", await storage.getUrl(key, { download: true, filename: "my report.txt" }));
 
+	const readBack = await storage.getBuffer(key);
+	if (!Buffer.isBuffer(readBack) || readBack.toString("utf8") !== "hello storage") {
+		throw new Error(`BAD getBuffer ROUND-TRIP: got ${JSON.stringify(readBack && readBack.toString())}`);
+	}
+	console.log("getBuffer round-trip → ok");
+
 	await storage.remove(key);
 	console.log("remove → ok");
 
@@ -32,6 +38,14 @@ async function main() {
 	} catch (err) {
 		if (!err.message.startsWith("Unsafe storage key")) throw err;
 		console.log("traversal rejected → ok");
+	}
+
+	try {
+		await storage.getBuffer("../../etc/passwd");
+		throw new Error("FAIL: getBuffer traversal key was accepted");
+	} catch (err) {
+		if (!err.message.startsWith("Unsafe storage key")) throw err;
+		console.log("getBuffer traversal rejected → ok");
 	}
 
 	try {

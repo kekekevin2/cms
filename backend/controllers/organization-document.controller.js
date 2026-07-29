@@ -192,6 +192,7 @@ exports.submitDocument = async (req, res) => {
 
 // Update document (resubmit)
 exports.updateDocument = async (req, res) => {
+	let newDocumentKey;
 	try {
 		const userId = req.user.user_id;
 		const { id } = req.params;
@@ -222,11 +223,12 @@ exports.updateDocument = async (req, res) => {
 		// If new file is uploaded, replace the old one
 		if (req.file) {
 			const oldKey = document.document_path;
-			updateData.document_path = await storage.put(req.file.buffer, {
+			newDocumentKey = await storage.put(req.file.buffer, {
 				folder: "organization-documents",
 				originalname: req.file.originalname,
 				mimetype: req.file.mimetype,
 			});
+			updateData.document_path = newDocumentKey;
 			updateData.original_filename = req.file.originalname;
 			updateData.file_size = req.file.size;
 			updateData.mime_type = req.file.mimetype;
@@ -280,6 +282,9 @@ exports.updateDocument = async (req, res) => {
 		});
 	} catch (error) {
 		console.error("Update document error:", error);
+		if (newDocumentKey) {
+			await storage.remove(newDocumentKey).catch(() => {});
+		}
 		res.status(500).json({ message: "Error updating document" });
 	}
 };

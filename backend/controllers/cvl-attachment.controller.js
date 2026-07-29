@@ -59,6 +59,7 @@ exports.getCVLAttachments = async (req, res) => {
 // Create new CVL attachment (upload)
 exports.createCVLAttachment = async (req, res) => {
 	const uploadedKeys = [];
+	const createdIds = [];
 	try {
 		const userId = req.user.user_id;
 
@@ -110,6 +111,7 @@ exports.createCVLAttachment = async (req, res) => {
 				file_size: file.size,
 				mime_type: file.mimetype,
 			});
+			createdIds.push(attachment.cvl_attachment_id);
 			attachments.push(attachment);
 		}
 
@@ -119,10 +121,12 @@ exports.createCVLAttachment = async (req, res) => {
 		});
 	} catch (error) {
 		console.error("Create CVL attachment error:", error);
-		// Remove newly-uploaded objects if database operation fails
-		for (const key of uploadedKeys) {
-			await storage.remove(key).catch(() => {});
+		// Roll back storage and DB together: destroy any rows that DID commit
+		// before the failure, then remove every newly-uploaded object.
+		if (createdIds.length > 0) {
+			await db.CVLAttachment.destroy({ where: { cvl_attachment_id: createdIds } }).catch(() => {});
 		}
+		await Promise.all(uploadedKeys.map((key) => storage.remove(key).catch(() => {})));
 		res.status(500).json({ message: "Error uploading CVL attachment" });
 	}
 };
@@ -130,6 +134,7 @@ exports.createCVLAttachment = async (req, res) => {
 // Update CVL attachment
 exports.updateCVLAttachment = async (req, res) => {
 	const uploadedKeys = [];
+	const createdIds = [];
 	try {
 		const userId = req.user.user_id;
 		const { attachment_type } = req.params;
@@ -184,15 +189,24 @@ exports.updateCVLAttachment = async (req, res) => {
 					file_size: file.size,
 					mime_type: file.mimetype,
 				});
+				createdIds.push(attachment.cvl_attachment_id);
 				newAttachments.push(attachment);
 			}
 
-			// Delete old files and records now that the new ones exist
+			// New rows are committed at this point. Deleting the old
+			// attachments is best-effort cleanup, not part of the
+			// upload/create transaction above -- a failure here must NOT
+			// trigger the catch block's rollback of the now-valid new rows,
+			// so it is isolated in its own try/catch.
 			for (const attachment of existingAttachments) {
-				await storage.remove(attachment.document_path).catch((error) => {
-					console.error("Error deleting old file:", error);
-				});
-				await attachment.destroy();
+				try {
+					await storage.remove(attachment.document_path).catch((error) => {
+						console.error("Error deleting old file:", error);
+					});
+					await attachment.destroy();
+				} catch (cleanupError) {
+					console.error("Error deleting old attachment record:", cleanupError);
+				}
 			}
 
 			res.json({
@@ -219,9 +233,12 @@ exports.updateCVLAttachment = async (req, res) => {
 		}
 	} catch (error) {
 		console.error("Update CVL attachment error:", error);
-		for (const key of uploadedKeys) {
-			await storage.remove(key).catch(() => {});
+		// Roll back storage and DB together: destroy any rows that DID commit
+		// before the failure, then remove every newly-uploaded object.
+		if (createdIds.length > 0) {
+			await db.CVLAttachment.destroy({ where: { cvl_attachment_id: createdIds } }).catch(() => {});
 		}
+		await Promise.all(uploadedKeys.map((key) => storage.remove(key).catch(() => {})));
 		res.status(500).json({ message: "Error updating CVL attachment" });
 	}
 };
