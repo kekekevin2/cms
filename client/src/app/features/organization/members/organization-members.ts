@@ -1451,8 +1451,17 @@ export class OrganizationMembersComponent implements OnInit {
   }
 
   downloadTemplate() {
+    // The template is a static backend asset streamed as bytes, not a stored
+    // upload behind a presigned URL — so this one keeps the blob pattern.
     this.organizationService.downloadMembersTemplate().subscribe({
-      next: ({ url }) => downloadFromUrl(url, 'organization-members-template.csv'),
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'organization-members-template.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
       error: (error) => {
         this.errorMessage.set('Failed to download template');
         setTimeout(() => this.errorMessage.set(''), 3000);

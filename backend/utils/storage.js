@@ -6,6 +6,15 @@ const DRIVER = process.env.STORAGE_DRIVER === "s3" ? "s3" : "disk";
 const PRESIGN_TTL = parseInt(process.env.S3_PRESIGN_TTL, 10) || 900;
 const DISK_ROOT = path.join(__dirname, "..", "uploads");
 
+// The client runs on a different origin than the API (dev: 7283 vs 3000; prod:
+// Vercel vs Render) and there is no dev proxy, so an origin-relative
+// "/uploads/..." would resolve against the FRONTEND and 404. The disk driver
+// therefore returns an absolute URL, exactly as the s3 driver does.
+const PUBLIC_BASE_URL = (
+	process.env.PUBLIC_BASE_URL ||
+	(process.env.PORT ? `http://localhost:${process.env.PORT}` : "")
+).replace(/\/+$/, "");
+
 /**
  * Builds a driver-neutral storage key: "<folder>/<base>-<ts>-<rand><ext>".
  * No leading slash, no "uploads/" prefix, forward slashes only.
@@ -50,7 +59,7 @@ const diskDriver = {
 
 	async getUrl(key) {
 		assertSafeKey(key);
-		return `/uploads/${key}`;
+		return `${PUBLIC_BASE_URL}/uploads/${key}`;
 	},
 
 	async remove(key) {

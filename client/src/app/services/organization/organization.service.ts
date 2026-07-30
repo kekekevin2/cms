@@ -267,8 +267,13 @@ export class OrganizationService {
   }
 
   // Bulk upload
-  downloadMembersTemplate(): Observable<{ url: string }> {
-    return this.http.get<{ url: string }>(`${this.apiUrl}/members/template/download`);
+  // NOTE: this endpoint streams a STATIC asset from backend/public/templates/ —
+  // it is not a stored upload, so it has no storage key and returns bytes, not
+  // a presigned { url }. Every other download in this service is key-backed.
+  downloadMembersTemplate(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/members/template/download`, {
+      responseType: 'blob',
+    });
   }
 
   bulkUploadMembers(formData: FormData): Observable<{ message: string; results: any }> {

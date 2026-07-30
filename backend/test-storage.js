@@ -17,8 +17,16 @@ async function main() {
 		throw new Error(`key missing folder prefix: ${key}`);
 	}
 
-	console.log("getUrl (view)     →", await storage.getUrl(key));
+	const viewUrl = await storage.getUrl(key);
+	console.log("getUrl (view)     →", viewUrl);
 	console.log("getUrl (download) →", await storage.getUrl(key, { download: true, filename: "my report.txt" }));
+
+	// Must be absolute under BOTH drivers: the client runs on a different origin
+	// than the API, so a relative "/uploads/..." would resolve against the
+	// frontend and 404. Requires PORT or PUBLIC_BASE_URL to be set for disk.
+	if (!/^https?:\/\//.test(viewUrl)) {
+		throw new Error(`getUrl must return an absolute URL, got: ${viewUrl}`);
+	}
 
 	const readBack = await storage.getBuffer(key);
 	if (!Buffer.isBuffer(readBack) || readBack.toString("utf8") !== "hello storage") {
