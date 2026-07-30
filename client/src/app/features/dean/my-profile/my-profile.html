@@ -11,7 +11,7 @@
         <div class="relative shrink-0">
           @if (profile().profile_picture) {
             <img
-              [src]="baseUrl + profile().profile_picture"
+              [src]="profile().profile_picture"
               alt="Profile"
               class="w-14 h-14 rounded-full object-cover border-2 border-gray-100"
             />

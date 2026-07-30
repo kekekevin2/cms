@@ -1,4 +1,5 @@
 const db = require("../models");
+const storage = require("../utils/storage");
 
 // Helper: resolve department for Dean or CollegeDepartment user
 async function getDepartmentForUser(userId) {
@@ -198,7 +199,8 @@ exports.downloadFacultyCredentialFile = async (req, res) => {
       return res.status(404).json({ message: "File not found" });
     }
 
-    res.download(filePath);
+    const url = await storage.getUrl(filePath, { download: true });
+    res.json({ url });
   } catch (error) {
     console.error("Error downloading file:", error);
     res.status(500).json({
@@ -256,7 +258,8 @@ exports.downloadFacultyCertificate = async (req, res) => {
       return res.status(404).json({ message: "Certificate file not found" });
     }
 
-    res.download(certificate.file_path);
+    const url = await storage.getUrl(certificate.file_path, { download: true });
+    res.json({ url });
   } catch (error) {
     console.error("Error downloading certificate:", error);
     res.status(500).json({

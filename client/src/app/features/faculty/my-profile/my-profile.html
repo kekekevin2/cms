@@ -11,7 +11,7 @@
         <div class="shrink-0">
           @if (personalProfile().passport_photo) {
             <img
-              [src]="baseUrl + personalProfile().passport_photo"
+              [src]="personalProfile().passport_photo"
               alt="Passport Photo"
               class="w-14 h-14 rounded-sm object-cover border-2 border-gray-100"
             />
@@ -133,7 +133,7 @@
                 @if (personalProfile().passport_photo) {
                   <div class="shrink-0">
                     <img
-                      [src]="baseUrl + personalProfile().passport_photo"
+                      [src]="personalProfile().passport_photo"
                       alt="Passport Photo"
                       class="w-24 h-32 object-cover border border-gray-200 rounded-sm"
                     />
@@ -278,7 +278,7 @@
                       <div>
                         <p class="text-xs text-gray-400 mb-1">Current Photo</p>
                         <img
-                          [src]="baseUrl + personalProfile().passport_photo"
+                          [src]="personalProfile().passport_photo"
                           alt="Passport Photo"
                           class="w-20 h-28 object-cover border border-gray-200 rounded-sm"
                         />
