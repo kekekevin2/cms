@@ -53,9 +53,10 @@ const TARGETS = [
   ['OrganizationEvent', 'file_path', 'event-files'],
 ];
 
-/** True if the value has already been converted to a driver-neutral key. */
+/** True if the value is already a driver-neutral key: "<folder>/<name>". */
 function isAlreadyKey(value) {
   return (
+    value.includes('/') &&
     !value.startsWith('/') &&
     !value.includes('\\') &&
     !/^[a-zA-Z]:/.test(value) &&
@@ -79,6 +80,12 @@ function resolveLegacyPath(value) {
   return path.join(BACKEND_ROOT, normalized);
 }
 
+/** True if the resolved absolute path is contained within backend/uploads. */
+function isWithinUploadsRoot(abs) {
+  const rel = path.relative(UPLOADS_ROOT, abs);
+  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
 async function migrateTarget(modelName, column, folder, report) {
   const model = db[modelName];
   if (!model) {
@@ -93,12 +100,23 @@ async function migrateTarget(modelName, column, folder, report) {
     const value = row[column];
     if (!value || typeof value !== 'string') continue;
 
+    if (!value.includes('/')) {
+      report.unrecognized.push(`${modelName}#${row[pk]} ${column} → ${value}`);
+      continue;
+    }
+
     if (isAlreadyKey(value)) {
       report.alreadyKey++;
       continue;
     }
 
     const abs = resolveLegacyPath(value);
+
+    if (!isWithinUploadsRoot(abs)) {
+      report.unrecognized.push(`${modelName}#${row[pk]} ${column} → ${abs} (outside uploads root)`);
+      continue;
+    }
+
     let buffer;
     try {
       buffer = await fs.readFile(abs);
@@ -117,7 +135,13 @@ async function migrateTarget(modelName, column, folder, report) {
       folder,
       originalname: path.basename(abs),
     });
-    await model.update({ [column]: key }, { where: { [pk]: row[pk] } });
+    try {
+      await model.update({ [column]: key }, { where: { [pk]: row[pk] } });
+    } catch (dbError) {
+      await storage.remove(key).catch(() => {});
+      report.failed.push(`${modelName}#${row[pk]} ${column} → ${dbError.message}`);
+      continue;
+    }
     report.migrated++;
     console.log(`  ${modelName}#${row[pk]} ${column} → ${key}`);
   }
@@ -131,6 +155,8 @@ async function main() {
     wouldMigrate: 0,
     alreadyKey: 0,
     missing: [],
+    unrecognized: [],
+    failed: [],
     skippedModels: [],
   };
 
@@ -145,6 +171,10 @@ async function main() {
   console.log(`already keys:  ${report.alreadyKey}`);
   console.log(`missing files: ${report.missing.length}`);
   report.missing.forEach((m) => console.log(`  MISSING ${m}`));
+  console.log(`unrecognized (no folder prefix — investigate manually): ${report.unrecognized.length}`);
+  report.unrecognized.forEach((m) => console.log(`  UNRECOGNIZED ${m}`));
+  console.log(`failed updates (uploaded, DB write failed, object rolled back): ${report.failed.length}`);
+  report.failed.forEach((m) => console.log(`  FAILED ${m}`));
   if (report.skippedModels.length) {
     console.log(`unknown models: ${[...new Set(report.skippedModels)].join(', ')}`);
   }
