@@ -37,8 +37,16 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Serve uploads from local disk only under the disk driver. Under STORAGE_DRIVER=s3
+// every file is reached through a short-lived presigned URL instead, so mounting
+// this would reopen an unauthenticated public read path alongside it.
+const storage = require("./utils/storage");
+if (storage.driver === "disk") {
+	app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+	console.log("Serving /uploads from local disk (STORAGE_DRIVER=disk)");
+} else {
+	console.log(`Storage driver: ${storage.driver} — /uploads static route disabled`);
+}
 
 // Routes
 const authRoutes = require("./routes/auth.routes");
