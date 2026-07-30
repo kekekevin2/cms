@@ -175,6 +175,11 @@ db.sequelize
 	})
 	.then(() => {
 		console.log("Database tables synced!");
+		// Seed the first superadmin when none exists. No-op unless
+		// SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD are set, and no-op once any
+		// superadmin exists — so a redeploy never overwrites or duplicates it.
+		const { bootstrapSuperadmin } = require("./utils/bootstrap-superadmin");
+		return bootstrapSuperadmin();
 	})
 	.catch((err) => {
 		console.error("Database error:", err.message);
