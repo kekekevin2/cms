@@ -481,6 +481,8 @@ function buildOverlays() {
 			w: opts.w,
 			h: opts.h,
 			image: opts.image,
+			maxWidth: opts.maxWidth,
+			overflow: opts.overflow,
 		});
 	};
 
@@ -1135,6 +1137,53 @@ function renderPage(num) {
 	});
 }
 
+// Decides how many lines `f.text` needs and at what font size, given an
+// optional `f.maxWidth` (PDF points) and `f.overflow` ("shrink" | "wrap").
+// Measures using 1 canvas px == 1 PDF point, so the result is scale-independent
+// — callers apply their own existing size-to-px and x/y-to-px scale factors.
+// Fields without `maxWidth` always get back a single line at `f.size`, unchanged.
+function layoutFieldText(ctx, f) {
+	const family = "'Times New Roman', Times, serif";
+	const baseSize = f.size || 11;
+	ctx.font = `${baseSize}px ${family}`;
+
+	if (!f.maxWidth || ctx.measureText(f.text).width <= f.maxWidth) {
+		return {
+			lines: [{ text: f.text, size: baseSize }],
+			lineHeight: baseSize * 1.15,
+		};
+	}
+
+	if (f.overflow === "wrap") {
+		const words = f.text.split(" ");
+		const lines = [];
+		let current = "";
+		words.forEach((word) => {
+			const candidate = current ? `${current} ${word}` : word;
+			if (!current || ctx.measureText(candidate).width <= f.maxWidth) {
+				current = candidate;
+			} else {
+				lines.push(current);
+				current = word;
+			}
+		});
+		if (current) lines.push(current);
+		return {
+			lines: lines.map((text) => ({ text, size: baseSize })),
+			lineHeight: baseSize * 1.15,
+		};
+	}
+
+	// Default: shrink. Step font size down until it fits, floor at 6pt.
+	let size = baseSize;
+	while (size > 6) {
+		ctx.font = `${size}px ${family}`;
+		if (ctx.measureText(f.text).width <= f.maxWidth) break;
+		size -= 1;
+	}
+	return { lines: [{ text: f.text, size }], lineHeight: size * 1.15 };
+}
+
 function drawOverlays(pageNum, viewport) {
 	oCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 	overlays
@@ -1143,10 +1192,13 @@ function drawOverlays(pageNum, viewport) {
 			const s = viewport.scale;
 			const cx = f.x * s;
 			const cy = viewport.height - f.y * s;
-			oCtx.font = `${((f.size || 11) * s) / 1.5}px 'Times New Roman', Times, serif`;
+			const { lines, lineHeight } = layoutFieldText(oCtx, f);
 			oCtx.fillStyle = f.color || "#000";
 			oCtx.textAlign = f.center ? "center" : "left";
-			oCtx.fillText(f.text, cx, cy);
+			lines.forEach((line, i) => {
+				oCtx.font = `${(line.size * s) / 1.5}px 'Times New Roman', Times, serif`;
+				oCtx.fillText(line.text, cx, cy + i * lineHeight * s);
+			});
 		});
 	oCtx.textAlign = "left";
 
