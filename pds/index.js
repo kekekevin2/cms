@@ -653,9 +653,9 @@ function buildOverlays() {
 			level === "COLLEGE" ||
 			level === "GRADUATE STUDIES"
 		) {
-			const degreeCourse = edu.degree_course || "";
-			field(`edu_${level}_degree`, 1, 190, y, degreeCourse, {
-				size: degreeCourse.length > 30 ? 10 : 11,
+			field(`edu_${level}_degree`, 1, 190, y, edu.degree_course || "", {
+				maxWidth: 105,
+				overflow: "shrink",
 			});
 		}
 		field(
