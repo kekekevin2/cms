@@ -1692,10 +1692,13 @@ async function downloadPDF() {
 				const s = viewport.scale;
 				const cx = f.x * s;
 				const cy = viewport.height - f.y * s;
-				ctx.font = `${((f.size || 11) * s) / 1.5}px Times New Roman`;
+				const { lines, lineHeight } = layoutFieldText(ctx, f);
 				ctx.fillStyle = "#000";
 				ctx.textAlign = f.center ? "center" : "left";
-				ctx.fillText(f.text, cx, cy);
+				lines.forEach((line, i) => {
+					ctx.font = `${(line.size * s) / 1.5}px Times New Roman`;
+					ctx.fillText(line.text, cx, cy + i * lineHeight * s);
+				});
 			});
 		ctx.textAlign = "left";
 		// Bake every image-backed overlay (photo, signature, ...) defined for this page
