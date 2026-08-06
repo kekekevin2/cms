@@ -1487,13 +1487,20 @@ function getFieldBox(f) {
 	if (f.type === "image") {
 		return { x0: f.x, y0: f.y, x1: f.x + f.w, y1: f.y + f.h };
 	}
-	oCtx.font = `${f.size || 11}px 'Times New Roman', Times, serif`;
-	const text = f.text && f.text.length ? f.text : "(empty)";
-	const w = Math.max(oCtx.measureText(text).width, 24);
-	const h = (f.size || 11) + 6;
-	const x0 = f.center ? f.x - w / 2 : f.x;
-	const y0 = f.y - 3;
-	return { x0, y0, x1: x0 + w, y1: y0 + h };
+	const textedField =
+		f.text && f.text.length ? f : { ...f, text: "(empty)" };
+	const { lines, lineHeight } = layoutFieldText(oCtx, textedField);
+	const widest = Math.max(
+		...lines.map((line) => {
+			oCtx.font = `${line.size}px 'Times New Roman', Times, serif`;
+			return oCtx.measureText(line.text).width;
+		}),
+		24,
+	);
+	const h = (lines.length - 1) * lineHeight + lines[0].size + 6;
+	const y0 = f.y - 3 - (lines.length - 1) * lineHeight;
+	const x0 = f.center ? f.x - widest / 2 : f.x;
+	return { x0, y0, x1: x0 + widest, y1: y0 + h };
 }
 
 let saveDebounceTimer = null;
