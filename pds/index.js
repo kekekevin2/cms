@@ -913,8 +913,8 @@ const DEFAULT_POSITIONS = new Map(
 			w: o.w,
 			h: o.h,
 			text: o.text,
-			maxWidth: o.maxWidth,
-			overflow: o.overflow,
+			maxWidth: o.maxWidth ?? null,
+			overflow: o.overflow ?? null,
 		},
 	]),
 );
@@ -938,8 +938,8 @@ function applyPositions(list) {
 			if (saved.w !== undefined) o.w = saved.w;
 			if (saved.h !== undefined) o.h = saved.h;
 			if (saved.text !== undefined) o.text = saved.text;
-			if (saved.maxWidth !== undefined) o.maxWidth = saved.maxWidth;
-			if (saved.overflow !== undefined) o.overflow = saved.overflow;
+			if (saved.maxWidth !== undefined) o.maxWidth = saved.maxWidth ?? undefined;
+			if (saved.overflow !== undefined) o.overflow = saved.overflow ?? undefined;
 		}
 	});
 }
@@ -963,8 +963,8 @@ function saveToLocalStorage() {
 			w: o.w,
 			h: o.h,
 			text: o.text,
-			maxWidth: o.maxWidth,
-			overflow: o.overflow,
+			maxWidth: o.maxWidth ?? null,
+			overflow: o.overflow ?? null,
 		}));
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
 	} catch {
@@ -1168,10 +1168,10 @@ function layoutFieldText(ctx, f) {
 	const baseSize = f.size || 11;
 	ctx.font = `${baseSize}px ${family}`;
 
-	if (!f.maxWidth || ctx.measureText(f.text).width <= f.maxWidth) {
+	if (!f.maxWidth || ctx.measureText(f.text).width / 1.5 <= f.maxWidth) {
 		return {
 			lines: [{ text: f.text, size: baseSize }],
-			lineHeight: baseSize * 1.15,
+			lineHeight: (baseSize * 1.15) / 1.5,
 		};
 	}
 
@@ -1181,7 +1181,7 @@ function layoutFieldText(ctx, f) {
 		let current = "";
 		words.forEach((word) => {
 			const candidate = current ? `${current} ${word}` : word;
-			if (!current || ctx.measureText(candidate).width <= f.maxWidth) {
+			if (!current || ctx.measureText(candidate).width / 1.5 <= f.maxWidth) {
 				current = candidate;
 			} else {
 				lines.push(current);
@@ -1189,9 +1189,10 @@ function layoutFieldText(ctx, f) {
 			}
 		});
 		if (current) lines.push(current);
+		if (!lines.length) lines.push("");
 		return {
 			lines: lines.map((text) => ({ text, size: baseSize })),
-			lineHeight: baseSize * 1.15,
+			lineHeight: (baseSize * 1.15) / 1.5,
 		};
 	}
 
@@ -1199,10 +1200,10 @@ function layoutFieldText(ctx, f) {
 	let size = baseSize;
 	while (size > 6) {
 		ctx.font = `${size}px ${family}`;
-		if (ctx.measureText(f.text).width <= f.maxWidth) break;
+		if (ctx.measureText(f.text).width / 1.5 <= f.maxWidth) break;
 		size -= 1;
 	}
-	return { lines: [{ text: f.text, size }], lineHeight: size * 1.15 };
+	return { lines: [{ text: f.text, size }], lineHeight: (size * 1.15) / 1.5 };
 }
 
 function drawOverlays(pageNum, viewport) {
@@ -1679,7 +1680,9 @@ function applyFieldEditLive() {
 			fieldEditorMaxWidth.value !== "" && Number.isFinite(maxWidth) && maxWidth > 0
 				? maxWidth
 				: undefined;
-		selectedField.overflow = fieldEditorOverflow.value;
+		selectedField.overflow = selectedField.maxWidth
+			? fieldEditorOverflow.value
+			: undefined;
 		fieldEditorOverflowRow.classList.toggle("hidden", !selectedField.maxWidth);
 	}
 

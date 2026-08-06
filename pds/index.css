@@ -183,6 +183,29 @@ header {
   box-sizing: border-box;
 }
 
+#field-editor-text-row,
+#field-editor-maxwidth-row,
+#field-editor-overflow-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+#field-editor-text-row input,
+#field-editor-maxwidth-row input,
+#field-editor-overflow-row select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: monospace;
+  box-sizing: border-box;
+}
+
 #field-editor-center-row.hidden,
 #field-editor-size-row.hidden,
 #field-editor-overflow-row.hidden,
