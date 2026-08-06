@@ -906,7 +906,16 @@ const overlays = buildOverlays();
 const DEFAULT_POSITIONS = new Map(
 	overlays.map((o) => [
 		o.key,
-		{ x: o.x, y: o.y, center: o.center, w: o.w, h: o.h },
+		{
+			x: o.x,
+			y: o.y,
+			center: o.center,
+			w: o.w,
+			h: o.h,
+			text: o.text,
+			maxWidth: o.maxWidth,
+			overflow: o.overflow,
+		},
 	]),
 );
 
@@ -928,6 +937,9 @@ function applyPositions(list) {
 			if (saved.center !== undefined) o.center = !!saved.center;
 			if (saved.w !== undefined) o.w = saved.w;
 			if (saved.h !== undefined) o.h = saved.h;
+			if (saved.text !== undefined) o.text = saved.text;
+			if (saved.maxWidth !== undefined) o.maxWidth = saved.maxWidth;
+			if (saved.overflow !== undefined) o.overflow = saved.overflow;
 		}
 	});
 }
@@ -950,6 +962,9 @@ function saveToLocalStorage() {
 			center: !!o.center,
 			w: o.w,
 			h: o.h,
+			text: o.text,
+			maxWidth: o.maxWidth,
+			overflow: o.overflow,
 		}));
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
 	} catch {
@@ -975,6 +990,9 @@ async function savePositionsToFile() {
 		center: !!o.center,
 		w: o.w,
 		h: o.h,
+		text: o.text,
+		maxWidth: o.maxWidth,
+		overflow: o.overflow,
 	}));
 	const json = JSON.stringify(snapshot, null, 2);
 
@@ -1024,6 +1042,9 @@ function resetPositions() {
 			o.center = def.center;
 			o.w = def.w;
 			o.h = def.h;
+			o.text = def.text;
+			o.maxWidth = def.maxWidth;
+			o.overflow = def.overflow;
 		}
 	});
 	localStorage.removeItem(STORAGE_KEY);
