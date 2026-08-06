@@ -1442,6 +1442,11 @@ function selectField(field) {
 		fieldEditorH.value = field.h;
 	}
 
+	fieldEditorText.value = field.text || "";
+	fieldEditorMaxWidth.value = field.maxWidth ?? "";
+	fieldEditorOverflow.value = field.overflow || "shrink";
+	fieldEditorOverflowRow.classList.toggle("hidden", !field.maxWidth);
+
 	fieldEditorX.focus();
 }
 
@@ -1479,6 +1484,12 @@ const fieldEditorCenterRow = document.getElementById("field-editor-center-row");
 const fieldEditorSizeRow = document.getElementById("field-editor-size-row");
 const fieldEditorW = document.getElementById("field-editor-w");
 const fieldEditorH = document.getElementById("field-editor-h");
+const fieldEditorText = document.getElementById("field-editor-text");
+const fieldEditorMaxWidth = document.getElementById("field-editor-maxwidth");
+const fieldEditorOverflow = document.getElementById("field-editor-overflow");
+const fieldEditorOverflowRow = document.getElementById(
+	"field-editor-overflow-row",
+);
 const fieldEditorApply = document.getElementById("field-editor-apply");
 let selectedField = null;
 
@@ -1635,6 +1646,14 @@ function applyFieldEditLive() {
 		if (Number.isFinite(h) && h > 0) selectedField.h = h;
 	} else {
 		selectedField.center = fieldEditorCenter.checked;
+		selectedField.text = fieldEditorText.value;
+		const maxWidth = Number(fieldEditorMaxWidth.value);
+		selectedField.maxWidth =
+			fieldEditorMaxWidth.value !== "" && Number.isFinite(maxWidth) && maxWidth > 0
+				? maxWidth
+				: undefined;
+		selectedField.overflow = fieldEditorOverflow.value;
+		fieldEditorOverflowRow.classList.toggle("hidden", !selectedField.maxWidth);
 	}
 
 	const grid = findRow0Grid(selectedField.key);
@@ -1652,6 +1671,9 @@ fieldEditorY.addEventListener("input", applyFieldEditLive);
 fieldEditorCenter.addEventListener("change", applyFieldEditLive);
 fieldEditorW.addEventListener("input", applyFieldEditLive);
 fieldEditorH.addEventListener("input", applyFieldEditLive);
+fieldEditorText.addEventListener("input", applyFieldEditLive);
+fieldEditorMaxWidth.addEventListener("input", applyFieldEditLive);
+fieldEditorOverflow.addEventListener("change", applyFieldEditLive);
 
 fieldEditorApply.addEventListener("click", () => {
 	if (!selectedField) return;

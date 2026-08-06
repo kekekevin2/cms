@@ -184,7 +184,8 @@ header {
 }
 
 #field-editor-center-row.hidden,
-#field-editor-size-row.hidden {
+#field-editor-size-row.hidden,
+#field-editor-overflow-row.hidden {
   display: none;
 }
 

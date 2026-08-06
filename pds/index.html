@@ -53,6 +53,10 @@
 
         <div id="field-editor" class="hidden">
           <div id="field-editor-key"></div>
+          <label id="field-editor-text-row">
+            Text
+            <input id="field-editor-text" type="text" />
+          </label>
           <div id="field-editor-row">
             <label>X <input id="field-editor-x" type="number" step="1" /></label>
             <label>Y <input id="field-editor-y" type="number" step="1" /></label>
@@ -64,6 +68,17 @@
             <label>W <input id="field-editor-w" type="number" step="1" /></label>
             <label>H <input id="field-editor-h" type="number" step="1" /></label>
           </div>
+          <label id="field-editor-maxwidth-row">
+            Max Width
+            <input id="field-editor-maxwidth" type="number" step="1" placeholder="none" />
+          </label>
+          <label id="field-editor-overflow-row" class="hidden">
+            Overflow
+            <select id="field-editor-overflow">
+              <option value="shrink">Shrink</option>
+              <option value="wrap">Wrap</option>
+            </select>
+          </label>
           <button id="field-editor-apply">✓ Apply</button>
         </div>
 
