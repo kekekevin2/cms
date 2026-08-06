@@ -316,9 +316,15 @@ const other_info = [
 	{ info_type: "MEMBERSHIP", details: "Philippine Society of IT Educators" },
 	{ info_type: "MEMBERSHIP", details: "Computing Society of the Philippines" },
 	{ info_type: "MEMBERSHIP", details: "Philippine Statistical Association" },
-	{ info_type: "MEMBERSHIP", details: "Batangas State University Alumni Association" },
+	{
+		info_type: "MEMBERSHIP",
+		details: "Batangas State University Alumni Association",
+	},
 	{ info_type: "MEMBERSHIP", details: "Data Privacy Officers Network" },
-	{ info_type: "MEMBERSHIP", details: "Junior Chamber International Philippines" },
+	{
+		info_type: "MEMBERSHIP",
+		details: "Junior Chamber International Philippines",
+	},
 ];
 
 const references = [
@@ -645,7 +651,10 @@ function buildOverlays() {
 			level === "COLLEGE" ||
 			level === "GRADUATE STUDIES"
 		) {
-			field(`edu_${level}_degree`, 1, 200, y, edu.degree_course || "");
+			const degreeCourse = edu.degree_course || "";
+			field(`edu_${level}_degree`, 1, 190, y, degreeCourse, {
+				size: degreeCourse.length > 30 ? 10 : 11,
+			});
 		}
 		field(
 			`edu_${level}_from`,
