@@ -1445,7 +1445,9 @@ function selectField(field) {
 	fieldEditorText.value = field.text || "";
 	fieldEditorMaxWidth.value = field.maxWidth ?? "";
 	fieldEditorOverflow.value = field.overflow || "shrink";
-	fieldEditorOverflowRow.classList.toggle("hidden", !field.maxWidth);
+	fieldEditorTextRow.classList.toggle("hidden", isImage);
+	fieldEditorMaxWidthRow.classList.toggle("hidden", isImage);
+	fieldEditorOverflowRow.classList.toggle("hidden", isImage || !field.maxWidth);
 
 	fieldEditorX.focus();
 }
@@ -1484,7 +1486,11 @@ const fieldEditorCenterRow = document.getElementById("field-editor-center-row");
 const fieldEditorSizeRow = document.getElementById("field-editor-size-row");
 const fieldEditorW = document.getElementById("field-editor-w");
 const fieldEditorH = document.getElementById("field-editor-h");
+const fieldEditorTextRow = document.getElementById("field-editor-text-row");
 const fieldEditorText = document.getElementById("field-editor-text");
+const fieldEditorMaxWidthRow = document.getElementById(
+	"field-editor-maxwidth-row",
+);
 const fieldEditorMaxWidth = document.getElementById("field-editor-maxwidth");
 const fieldEditorOverflow = document.getElementById("field-editor-overflow");
 const fieldEditorOverflowRow = document.getElementById(

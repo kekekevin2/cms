@@ -185,7 +185,9 @@ header {
 
 #field-editor-center-row.hidden,
 #field-editor-size-row.hidden,
-#field-editor-overflow-row.hidden {
+#field-editor-overflow-row.hidden,
+#field-editor-text-row.hidden,
+#field-editor-maxwidth-row.hidden {
   display: none;
 }
 
