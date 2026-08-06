@@ -991,8 +991,8 @@ async function savePositionsToFile() {
 		w: o.w,
 		h: o.h,
 		text: o.text,
-		maxWidth: o.maxWidth,
-		overflow: o.overflow,
+		maxWidth: o.maxWidth ?? null,
+		overflow: o.overflow ?? null,
 	}));
 	const json = JSON.stringify(snapshot, null, 2);
 
