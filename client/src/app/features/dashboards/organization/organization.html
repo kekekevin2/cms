@@ -189,7 +189,8 @@
 
       <!-- CVL Attachments List -->
     <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-      <table class="w-full text-xs table-fixed">
+      <div class="overflow-x-auto">
+      <table class="w-full min-w-[640px] text-xs table-fixed">
         <thead>
           <tr class="border-b border-gray-100 bg-gray-50">
             <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[12%]">
@@ -289,6 +290,7 @@
           }
         </tbody>
       </table>
+      </div>
     </div>
   </div>
   } @else if (activeTab() === 'dashboard') {
@@ -358,7 +360,7 @@
         </div>
 
         <!-- Status mini-cards row -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <div class="bg-white border border-gray-100 rounded-sm p-3">
             <div class="flex items-center gap-2 mb-1">
               <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
@@ -704,7 +706,7 @@
             </div>
             <div class="p-4">
               @if (stats().membersByYearLevel && stats().membersByYearLevel.length > 0) {
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   @for (yearLevel of stats().membersByYearLevel; track yearLevel.year) {
                     <div class="text-center p-3 bg-gray-50 rounded-sm border border-gray-100">
                       <p class="text-xs text-gray-500 mb-1">{{ yearLevel.year }}</p>
@@ -913,12 +915,12 @@
         </div>
 
         <!-- Footer -->
-        <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+        <div class="px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
           <button
             type="button"
             (click)="closeCVLAttachmentModal()"
             [disabled]="cvlLoading()"
-            class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+            class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
           >
             Cancel
           </button>
@@ -926,7 +928,7 @@
             type="button"
             (click)="saveCVLAttachment()"
             [disabled]="cvlLoading()"
-            class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
           >
             @if (cvlLoading()) {
               <i class="pi pi-spin pi-spinner text-xs"></i>
@@ -948,7 +950,7 @@
       </div>
       <div class="p-6 overflow-y-auto flex-1">
         <div class="space-y-4">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1">Attachment Type</label>
               <p class="text-xs text-gray-900 font-medium">{{ selectedCVLAttachment()!.attachment }}</p>
@@ -1005,18 +1007,18 @@
           </div>
         </div>
       </div>
-      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           type="button"
           (click)="closeCVLViewModal()"
-          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Close
         </button>
         <button
           type="button"
           (click)="downloadCVLAttachment(selectedCVLAttachment()!); closeCVLViewModal()"
-          class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-xs font-medium rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white text-xs font-medium rounded-sm hover:bg-green-700 transition"
         >
           <i class="pi pi-download text-xs"></i> Download
         </button>
