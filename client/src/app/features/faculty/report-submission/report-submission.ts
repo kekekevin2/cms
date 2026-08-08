@@ -301,7 +301,7 @@ interface FacultyDocument {
                   <label class="block text-sm font-medium text-gray-700 mb-2">
                     Sustainable Development Goals (SDGs)
                   </label>
-                  <div class="grid grid-cols-3 gap-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     @for (sdg of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]; track sdg) {
                       <label class="flex items-center space-x-2">
                         <input

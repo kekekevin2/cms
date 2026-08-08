@@ -43,7 +43,8 @@
 
   <!-- Table -->
   <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-    <table class="w-full text-xs">
+    <div class="overflow-x-auto">
+    <table class="w-full min-w-[720px] text-xs">
       <thead>
         <tr class="border-b border-gray-100 bg-gray-50">
           <th
@@ -192,6 +193,7 @@
         }
       </tbody>
     </table>
+    </div>
 
     @if (totalPages() > 1) {
       <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
