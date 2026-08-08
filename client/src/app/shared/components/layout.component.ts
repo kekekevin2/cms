@@ -350,6 +350,7 @@ import { ThemeService } from '../../services/theme/theme.service';
               <a
                 [routerLink]="['/' + authService.currentUser()?.role + '/dashboard']"
                 routerLinkActive="bg-green-50 text-green-600"
+                (click)="isSidebarOpen.set(false)"
                 class="flex items-center px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
               >
                 <i class="pi pi-chart-pie shrink-0 text-sm w-5 text-center"></i>
@@ -364,6 +365,7 @@ import { ThemeService } from '../../services/theme/theme.service';
                 <a
                   routerLink="/faculty/requirements"
                   routerLinkActive="bg-green-50 text-green-600"
+                  (click)="isSidebarOpen.set(false)"
                   class="flex items-center px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
                 >
                   <i class="fas fa-award shrink-0 text-sm w-5 text-center"></i>
@@ -374,6 +376,7 @@ import { ThemeService } from '../../services/theme/theme.service';
                 <a
                   routerLink="/faculty/announcements"
                   routerLinkActive="bg-green-50 text-green-600"
+                  (click)="isSidebarOpen.set(false)"
                   class="flex items-center px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
                 >
                   <i class="pi pi-bell shrink-0 text-sm w-5 text-center"></i>
@@ -384,6 +387,7 @@ import { ThemeService } from '../../services/theme/theme.service';
                 <a
                   routerLink="/faculty/personal-data-sheet"
                   routerLinkActive="bg-green-50 text-green-600"
+                  (click)="isSidebarOpen.set(false)"
                   class="flex items-center px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
                 >
                   <i class="pi pi-id-card shrink-0 text-sm w-5 text-center"></i>
@@ -447,6 +451,10 @@ import { ThemeService } from '../../services/theme/theme.service';
         }
       </div>
     </aside>
+
+    @if (isSidebarOpen()) {
+      <div class="fixed inset-0 z-30 bg-black/50 sm:hidden" (click)="toggleSidebar()"></div>
+    }
 
     <!-- Main Content -->
     <div class="p-4 sm:ml-64 bg-gray-50 min-h-screen">
