@@ -238,7 +238,7 @@
     </div>
     <div class="p-4">
       @if (stats().membersByYearLevel && stats().membersByYearLevel.length > 0) {
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           @for (yearLevel of stats().membersByYearLevel; track yearLevel.year) {
             <div class="text-center p-3 bg-gray-50 rounded-sm border border-gray-100">
               <p class="text-xs text-gray-500 mb-1">{{ yearLevel.year }}</p>

@@ -97,7 +97,8 @@
 
           <!-- Documents Table -->
           <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-            <table class="w-full text-xs">
+            <div class="overflow-x-auto">
+            <table class="w-full min-w-[640px] text-xs">
               <thead>
                 <tr class="border-b border-gray-100 bg-gray-50">
                   <th
@@ -193,6 +194,7 @@
                 }
               </tbody>
             </table>
+            </div>
 
             @if (totalPages() > 1) {
               <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
@@ -234,7 +236,7 @@
       </div>
       <div class="p-6 overflow-y-auto flex-1 space-y-4">
         <!-- Document Info -->
-        <div class="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-sm text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-sm text-xs">
           <div>
             <p class="text-gray-400 mb-0.5">Type</p>
             <p class="text-gray-700 font-medium">
@@ -262,7 +264,7 @@
           <label class="block text-xs font-medium text-gray-500 mb-2"
             >Review Decision <span class="text-red-500">*</span></label
           >
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <button
               (click)="reviewAction.set('approve')"
               class="px-3 py-2.5 border-2 rounded-sm text-xs font-medium transition text-center"
@@ -335,17 +337,17 @@
           </div>
         }
       </div>
-      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="closeReviewModal()"
-          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="submitReview()"
           [disabled]="reviewAction() !== 'approve' && !reviewComments().trim()"
-          class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
         >
           <i class="pi pi-send text-xs"></i> Submit Review
         </button>
