@@ -317,7 +317,7 @@ interface Assignment {
           </div>
 
           <!-- Status mini-cards row -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <div class="bg-white border border-gray-100 rounded-sm p-3">
               <div class="flex items-center gap-2 mb-1">
                 <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
@@ -407,7 +407,7 @@ interface Assignment {
                   </div>
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <p class="text-xs text-gray-600 flex items-center gap-1.5">
                   <span class="w-2.5 h-2.5 rounded-sm bg-green-500 shrink-0"></span
                   >{{ dashboardStats().cleared }} Cleared
