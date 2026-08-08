@@ -113,26 +113,6 @@ html, body {
 }
 
 /* ========================================
-   LANDSCAPE ORIENTATION
-   ======================================== */
-
-@media (max-width: 767px) and (orientation: landscape) {
-  /* Reduce header height in landscape */
-  .h-16 {
-    height: 3rem !important;
-  }
-
-  .pt-20 {
-    padding-top: 3.5rem !important;
-  }
-
-  /* Sidebar - smaller in landscape */
-  aside {
-    max-width: 240px;
-  }
-}
-
-/* ========================================
    PRINT STYLES
    ======================================== */
 
