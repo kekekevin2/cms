@@ -51,7 +51,7 @@ export class OrganizationDashboard implements OnInit {
 
   activeTab = signal<'dashboard' | 'members' | 'documents' | 'advisers' | 'events' | 'cvl-attachments'>('dashboard');
   dashboardTab = signal<'analytics' | 'demographics'>('analytics');
-  isSidebarOpen = signal(true);
+  isSidebarOpen = signal(false);
   isUserMenuOpen = signal(false);
   isChangePasswordOpen = signal(false);
 

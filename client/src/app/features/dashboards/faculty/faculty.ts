@@ -35,7 +35,7 @@ interface Assignment {
     <aside
       [class.translate-x-0]="isSidebarOpen()"
       [class.-translate-x-full]="!isSidebarOpen()"
-      class="fixed top-0 left-0 z-50 w-64 h-full transition-transform bg-white border-r border-gray-200"
+      class="fixed top-0 left-0 z-50 w-64 h-full transition-transform sm:translate-x-0 bg-white border-r border-gray-200"
     >
       <div class="h-full px-3 py-4 overflow-y-auto">
         <!-- Logo/Brand -->
@@ -105,12 +105,13 @@ interface Assignment {
       </div>
     </aside>
 
+    @if (isSidebarOpen()) {
+      <div class="fixed inset-0 z-30 bg-black/50 sm:hidden" (click)="toggleSidebar()"></div>
+    }
+
     <!-- Top Bar -->
     <div
-      class="fixed top-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300"
-      [class.left-64]="isSidebarOpen()"
-      [class.left-0]="!isSidebarOpen()"
-      [class.right-0]="true"
+      class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300 sm:left-64"
     >
       <div class="flex items-center gap-4">
         <button
@@ -177,7 +178,7 @@ interface Assignment {
     </div>
 
     <!-- Main Content -->
-    <div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300" [class.ml-64]="isSidebarOpen()">
+    <div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300 sm:ml-64">
       @if (activeTab() === 'dashboard') {
         <div class="space-y-4">
           <!-- Filters -->
@@ -518,7 +519,7 @@ interface Assignment {
   styles: [],
 })
 export class FacultyDashboard implements OnInit {
-  isSidebarOpen = signal(true);
+  isSidebarOpen = signal(false);
   activeTab = signal<string>('dashboard');
   isUserMenuOpen = signal(false);
   isChangePasswordOpen = signal(false);
