@@ -333,18 +333,18 @@ interface FacultyDocument {
                 </div>
               </div>
 
-              <div class="flex justify-end space-x-3 mt-6">
+              <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
                 <button
                   type="button"
                   (click)="showSubmitModal.set(false)"
-                  class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   [disabled]="submitting()"
-                  class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                  class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                 >
                   @if (submitting()) {
                     <i class="fas fa-spinner fa-spin mr-2"></i>
@@ -360,15 +360,15 @@ interface FacultyDocument {
       <!-- Comments Modal -->
       @if (showCommentsModal()) {
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div class="bg-white rounded-lg p-6 max-w-lg w-full">
+          <div class="bg-white rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold text-gray-900 mb-4">Review Comments</h3>
             <div class="bg-gray-50 p-4 rounded-lg">
               <p class="text-gray-700">{{ selectedDocument()?.review_comments }}</p>
             </div>
-            <div class="flex justify-end mt-6">
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
               <button
                 (click)="showCommentsModal.set(false)"
-                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                class="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
               >
                 Close
               </button>
