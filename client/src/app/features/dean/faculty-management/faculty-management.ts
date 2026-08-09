@@ -16,6 +16,7 @@ import { DeanAnalyticsService } from '../../../services/dean/dean-analytics.serv
 import { DeanPDSService } from '../../../services/dean/dean-pds.service';
 import { DeanFacultyProfileService } from '../../../services/dean/dean-faculty-profile.service';
 import { PdsPdfService } from '../../../services/core/pds-pdf.service';
+import { FacultyProfilePdfService } from '../../../services/core/faculty-profile-pdf.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -79,6 +80,7 @@ export class DeanFacultyManagement implements OnInit {
     private pdsService: DeanPDSService,
     private facultyProfileService: DeanFacultyProfileService,
     private pdfService: PdsPdfService,
+    private facultyProfilePdfService: FacultyProfilePdfService,
   ) {}
 
   generateAllActivitiesPDF(faculty: Faculty) {
@@ -862,7 +864,6 @@ export class DeanFacultyManagement implements OnInit {
       cancelButtonText: 'Cancel',
     }).then((result) => {
       if (result.isConfirmed) {
-        // Show loading
         Swal.fire({
           title: 'Generating PDF...',
           text: 'Please wait while we fetch the profile data',
@@ -872,11 +873,26 @@ export class DeanFacultyManagement implements OnInit {
           },
         });
 
-        // Fetch faculty profile data
         this.facultyProfileService.getFacultyFullProfile(faculty.faculty_id).subscribe({
-          next: (profileData) => {
-            Swal.close();
-            this.generateFacultyProfilePDF(faculty, profileData);
+          next: async (profileData) => {
+            try {
+              await this.facultyProfilePdfService.generateAndDownload({
+                faculty,
+                personal: profileData.personal,
+                academic: profileData.academic,
+                employment: profileData.employment,
+                coursesHandled: profileData.coursesHandled,
+              });
+              Swal.close();
+            } catch (error) {
+              console.error('Error generating faculty profile PDF:', error);
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to generate the profile PDF. Please try again.',
+                confirmButtonColor: '#2563eb',
+              });
+            }
           },
           error: (error) => {
             console.error('Error fetching faculty profile:', error);
@@ -890,468 +906,6 @@ export class DeanFacultyManagement implements OnInit {
         });
       }
     });
-  }
-
-  private generateFacultyProfilePDF(faculty: Faculty, profileData: any) {
-    // Helper function to format date
-    const formatDate = (dateStr: string | null | undefined): string => {
-      if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    };
-
-    // Helper function to calculate age
-    const calculateAge = (birthDate: string | null | undefined): number => {
-      if (!birthDate) return 0;
-      const today = new Date();
-      const birth = new Date(birthDate);
-      let age = today.getFullYear() - birth.getFullYear();
-      const monthDiff = today.getMonth() - birth.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-        age--;
-      }
-      return age;
-    };
-
-    // Extract data from profile
-    const personal = profileData.personal || {};
-    const academic = profileData.academic || [];
-    const employment = profileData.employment || [];
-    const eligibilities = profileData.eligibilities || [];
-    const coursesHandled = profileData.coursesHandled || [];
-
-    // Get education by level
-    const undergraduate = academic.find((edu: any) => edu.level === 'Undergraduate');
-    const masters = academic.find((edu: any) => edu.level === 'Masters');
-    const doctorate = academic.find((edu: any) => edu.level === 'Doctorate');
-
-    // Get current employment
-    const currentEmployment = employment.find((emp: any) => emp.is_current) || employment[0];
-
-    // Determine role (Research Coordinator or Instructor)
-    const role = currentEmployment?.position_title || 'Instructor';
-
-    // Format faculty name for header (FIRST MIDDLE-INITIAL. LAST)
-    const middleInitial = (faculty.middle_name || personal.middle_name || '').charAt(0);
-    const headerName = `${(faculty.first_name || personal.first_name || '').toUpperCase()} ${middleInitial ? middleInitial.toUpperCase() + '.' : ''} ${(faculty.last_name || personal.last_name || '').toUpperCase()}`.trim();
-
-    // Get birth date and age
-    const birthDate = personal.date_of_birth;
-    const age = calculateAge(birthDate);
-    const formattedBirthDate = formatDate(birthDate);
-
-    const facultyName = `${faculty.first_name} ${faculty.middle_name || ''} ${faculty.last_name}`.trim();
-    
-    // Create HTML template matching the exact design from the image
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Faculty Profile - ${facultyName}</title>
-        <style>
-          @page {
-            size: 8.5in 13in;
-            margin: 0;
-          }
-          
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-          
-          body {
-            font-family: 'Arial', sans-serif;
-            font-size: 11pt;
-            line-height: 1.3;
-            color: #000;
-            background: white;
-          }
-          
-          .page {
-            width: 8.5in;
-            height: 13in;
-            position: relative;
-            background: white;
-          }
-          
-          /* Top colored design */
-          .top-design {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 120px;
-            overflow: hidden;
-          }
-          
-          .orange-section {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 50%;
-            height: 120px;
-            background: #FF6B35;
-            clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
-          }
-          
-          .blue-section {
-            position: absolute;
-            top: 0;
-            left: 35%;
-            width: 40%;
-            height: 120px;
-            background: #1E88E5;
-            clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%);
-          }
-          
-          .red-section {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 35%;
-            height: 120px;
-            background: #E53935;
-            clip-path: polygon(15% 0, 100% 0, 100% 100%, 0 100%);
-          }
-          
-          /* Header content */
-          .header-content {
-            position: relative;
-            padding: 30px 40px;
-            display: flex;
-            align-items: flex-start;
-            gap: 25px;
-            z-index: 10;
-          }
-          
-          .photo-box {
-            width: 180px;
-            height: 220px;
-            background: #2C2C2C;
-            border: 3px solid white;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 60px;
-            font-weight: bold;
-          }
-          
-          .header-text {
-            flex: 1;
-            padding-top: 10px;
-          }
-          
-          .faculty-title {
-            font-size: 36px;
-            font-weight: bold;
-            color: #8B0000;
-            margin-bottom: 8px;
-            letter-spacing: 2px;
-          }
-          
-          .faculty-name {
-            font-size: 22px;
-            font-weight: bold;
-            color: #000;
-            margin-bottom: 4px;
-          }
-          
-          .faculty-position {
-            font-size: 14px;
-            color: #000;
-            margin-bottom: 10px;
-          }
-          
-          .faculty-role {
-            font-size: 13px;
-            font-weight: bold;
-            color: #000;
-            margin-bottom: 2px;
-          }
-          
-          .faculty-department {
-            font-size: 12px;
-            color: #000;
-            margin-bottom: 12px;
-          }
-          
-          .contact-info {
-            font-size: 11px;
-            color: #000;
-          }
-          
-          .contact-info div {
-            margin-bottom: 2px;
-          }
-          
-          .contact-label {
-            font-weight: bold;
-          }
-          
-          /* Divider line */
-          .divider {
-            margin: 0 40px;
-            height: 3px;
-            background: #8B0000;
-          }
-          
-          /* Content sections */
-          .content {
-            padding: 25px 40px;
-          }
-          
-          .section {
-            margin-bottom: 25px;
-          }
-          
-          .section-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #8B0000;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-          
-          .info-row {
-            display: flex;
-            margin-bottom: 8px;
-          }
-          
-          .info-label {
-            width: 200px;
-            font-weight: bold;
-            color: #000;
-            text-transform: uppercase;
-            font-size: 10pt;
-          }
-          
-          .info-value {
-            flex: 1;
-            color: #000;
-            font-size: 10pt;
-          }
-          
-          .education-item {
-            margin-bottom: 15px;
-          }
-          
-          .education-level {
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 11pt;
-            margin-bottom: 3px;
-          }
-          
-          .education-details {
-            font-size: 10pt;
-            color: #333;
-            line-height: 1.4;
-          }
-          
-          .list-item {
-            margin-bottom: 5px;
-            padding-left: 20px;
-            position: relative;
-            font-size: 10pt;
-          }
-          
-          .list-item:before {
-            content: "•";
-            position: absolute;
-            left: 5px;
-            font-weight: bold;
-          }
-          
-          /* Footer */
-          .footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 50px;
-            background: #1E88E5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12pt;
-            font-weight: bold;
-            letter-spacing: 2px;
-          }
-          
-          @media print {
-            body {
-              print-color-adjust: exact;
-              -webkit-print-color-adjust: exact;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="page">
-          <!-- Top colored design -->
-          <div class="top-design">
-            <div class="orange-section"></div>
-            <div class="blue-section"></div>
-            <div class="red-section"></div>
-          </div>
-          
-          <!-- Header with photo and info -->
-          <div class="header-content">
-            <div class="photo-box">
-              ${faculty.first_name.charAt(0)}${faculty.last_name.charAt(0)}
-            </div>
-            <div class="header-text">
-              <div class="faculty-title">FACULTY PROFILE</div>
-              <div class="faculty-name">${headerName}</div>
-              <div class="faculty-position">${faculty.position_level || 'Assistant Professor IV'}</div>
-              <div class="faculty-role">${role}</div>
-              <div class="faculty-department">College of Engineering Technology</div>
-              <div class="contact-info">
-                <div><span class="contact-label">Contact Number:</span> ${personal.mobile_primary || faculty.contact_number || 'N/A'}</div>
-                <div><span class="contact-label">Email Address:</span> ${personal.email_primary || faculty.email || 'N/A'}</div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Divider -->
-          <div class="divider"></div>
-          
-          <!-- Content -->
-          <div class="content">
-            <!-- Personal Information -->
-            <div class="section">
-              <div class="section-title">PERSONAL INFORMATION</div>
-              <div class="info-row">
-                <div class="info-label">FIRST NAME</div>
-                <div class="info-value">${personal.first_name || faculty.first_name || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">MIDDLE NAME</div>
-                <div class="info-value">${personal.middle_name || faculty.middle_name || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">LAST NAME</div>
-                <div class="info-value">${personal.last_name || faculty.last_name || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">ACADEMIC RANK</div>
-                <div class="info-value">${faculty.position_level || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">EMPLOYMENT STATUS</div>
-                <div class="info-value">${currentEmployment?.employment_status || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">BIRTH DATE</div>
-                <div class="info-value">${formattedBirthDate || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">AGE</div>
-                <div class="info-value">${age > 0 ? age + ' years old' : 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">CIVIL STATUS</div>
-                <div class="info-value">${personal.civil_status || 'N/A'}</div>
-              </div>
-            </div>
-            
-            <!-- Education -->
-            <div class="section">
-              <div class="section-title">EDUCATION</div>
-              ${undergraduate ? `
-              <div class="education-item">
-                <div class="education-level">UNDERGRADUATE</div>
-                <div class="education-details">
-                  <strong>${undergraduate.degree_course || 'N/A'}</strong><br>
-                  ${undergraduate.school_name || 'N/A'}<br>
-                  ${undergraduate.year_graduated || 'N/A'}
-                </div>
-              </div>
-              ` : '<div class="education-item"><div class="education-level">UNDERGRADUATE</div><div class="education-details">No data available</div></div>'}
-              
-              ${masters ? `
-              <div class="education-item">
-                <div class="education-level">MASTER\'S</div>
-                <div class="education-details">
-                  <strong>${masters.degree_course || 'N/A'}</strong><br>
-                  ${masters.school_name || 'N/A'}<br>
-                  ${masters.year_graduated || 'N/A'}
-                </div>
-              </div>
-              ` : '<div class="education-item"><div class="education-level">MASTER\'S</div><div class="education-details">No data available</div></div>'}
-              
-              ${doctorate ? `
-              <div class="education-item">
-                <div class="education-level">DOCTORATE</div>
-                <div class="education-details">
-                  <strong>${doctorate.degree_course || 'N/A'}</strong><br>
-                  ${doctorate.school_name || 'N/A'}<br>
-                  ${doctorate.year_graduated ? doctorate.year_graduated : '(Complete Academic Requirements)'}
-                </div>
-              </div>
-              ` : '<div class="education-item"><div class="education-level">DOCTORATE</div><div class="education-details">No data available</div></div>'}
-            </div>
-            
-            <!-- Eligibilities -->
-            <div class="section">
-              <div class="section-title">ELIGIBILITIES</div>
-              ${eligibilities.length > 0 
-                ? eligibilities.map((elig: any) => `<div class="list-item">${elig.career_service || elig.title || elig.name || 'N/A'}</div>`).join('')
-                : '<div class="list-item">No eligibilities recorded</div>'}
-            </div>
-            
-            <!-- Courses Handled -->
-            <div class="section">
-              <div class="section-title">COURSES HANDLED</div>
-              ${coursesHandled.length > 0 
-                ? coursesHandled.map((course: string) => `<div class="list-item">${course}</div>`).join('')
-                : '<div class="list-item">No courses recorded</div>'}
-            </div>
-          </div>
-          
-          <!-- Footer -->
-          <div class="footer">
-            FACULTY PROFILE
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    // Create a hidden iframe to print
-    const printFrame = document.createElement('iframe');
-    printFrame.style.position = 'fixed';
-    printFrame.style.right = '0';
-    printFrame.style.bottom = '0';
-    printFrame.style.width = '0';
-    printFrame.style.height = '0';
-    printFrame.style.border = 'none';
-    document.body.appendChild(printFrame);
-
-    const frameDoc = printFrame.contentWindow?.document;
-    if (frameDoc) {
-      frameDoc.open();
-      frameDoc.write(htmlContent);
-      frameDoc.close();
-
-      // Wait for content to load then print
-      printFrame.onload = () => {
-        setTimeout(() => {
-          printFrame.contentWindow?.print();
-          
-          // Remove iframe after printing
-          setTimeout(() => {
-            document.body.removeChild(printFrame);
-          }, 1000);
-        }, 500);
-      };
-    }
   }
 
   // Switch between active and disabled tabs
