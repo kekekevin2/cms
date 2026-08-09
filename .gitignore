@@ -8,6 +8,8 @@ node_modules/
 .env*.local
 **/.env
 **/.env.local
+.env.*
+**/.env.*
 
 # Build outputs
 dist/
