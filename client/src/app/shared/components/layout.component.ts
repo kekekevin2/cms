@@ -44,7 +44,7 @@ import { ThemeService } from '../../services/theme/theme.service';
       <div class="h-full px-3 py-4 overflow-y-auto">
         <!-- Logo/Brand -->
         <div class="mb-6 px-2 flex flex-col items-center">
-          <img src="/assets/logo.png" alt="Logo" class="h-16 sm:h-24 w-auto mb-3" />
+          <img src="/assets/logo.png" alt="Logo" class="h-10 sm:h-24 w-auto mb-2 sm:mb-3" />
           @if (authService.currentUser()?.role === 'admin') {
             <h2 class="text-xl font-bold text-gray-900 text-center">Admin Portal</h2>
           } @else {
