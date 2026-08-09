@@ -38,13 +38,13 @@ import { ThemeService } from '../../services/theme/theme.service';
     <aside
       [class.translate-x-0]="isSidebarOpen()"
       [class.-translate-x-full]="!isSidebarOpen()"
-      class="fixed top-0 left-0 z-40 w-64 h-full transition-transform sm:translate-x-0 bg-white border-r border-gray-200"
+      class="fixed top-0 left-0 z-40 w-64 max-w-[85vw] h-full transition-transform sm:translate-x-0 bg-white border-r border-gray-200"
       aria-label="Sidebar"
     >
       <div class="h-full px-3 py-4 overflow-y-auto">
         <!-- Logo/Brand -->
         <div class="mb-6 px-2 flex flex-col items-center">
-          <img src="/assets/logo.png" alt="Logo" class="h-24 mb-3" />
+          <img src="/assets/logo.png" alt="Logo" class="h-16 sm:h-24 w-auto mb-3" />
           @if (authService.currentUser()?.role === 'admin') {
             <h2 class="text-xl font-bold text-gray-900 text-center">Admin Portal</h2>
           } @else {
