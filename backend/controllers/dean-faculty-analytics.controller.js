@@ -671,7 +671,6 @@ exports.getExtensionActivitiesDetailsByFaculty = async (req, res) => {
       return res.status(404).json({ message: 'Department profile not found' });
     }
     const dean = { department: deanInfo.department };
-      return res.status(404).json({ message: "Dean profile not found" });
 
     const facultyId = req.query.faculty_id;
     if (!facultyId)
@@ -726,7 +725,6 @@ exports.getResearchActivitiesDetailsByFaculty = async (req, res) => {
       return res.status(404).json({ message: 'Department profile not found' });
     }
     const dean = { department: deanInfo.department };
-      return res.status(404).json({ message: "Dean profile not found" });
 
     const facultyId = req.query.faculty_id;
     if (!facultyId)
@@ -781,7 +779,6 @@ exports.getSeminarsTrainingsDetailsByFaculty = async (req, res) => {
       return res.status(404).json({ message: 'Department profile not found' });
     }
     const dean = { department: deanInfo.department };
-      return res.status(404).json({ message: "Dean profile not found" });
 
     const facultyId = req.query.faculty_id;
     if (!facultyId)

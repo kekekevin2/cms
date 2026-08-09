@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 const verifyToken = require("../middleware/auth.middleware");
 const checkRole = require("../middleware/role.middleware");
 const memberController = require("../controllers/organization-member.controller");
@@ -10,9 +11,16 @@ const adviserController = require("../controllers/organization-adviser.controlle
 const cvlAttachmentController = require("../controllers/cvl-attachment.controller");
 
 // Configure multer for document uploads
+const uploadDir = "uploads/organization-documents/";
+
+// Ensure upload directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/organization-documents/");
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -42,7 +50,6 @@ const upload = multer({
 });
 
 // Configure multer for Excel file uploads (persisted for download/preview)
-const fs = require("fs");
 const csvUpload = multer({
   storage: multer.diskStorage({
     destination: function (req, file, cb) {
