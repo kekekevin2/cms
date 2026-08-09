@@ -2092,7 +2092,7 @@
 <!-- Add Child Modal -->
 @if (showAddChildModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Child</p>
         <button (click)="showAddChildModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2118,16 +2118,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddChildModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addChild(); showAddChildModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Child
         </button>
@@ -2139,7 +2139,7 @@
 <!-- Add Education Modal -->
 @if (showAddEducationModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Education</p>
         <button (click)="showAddEducationModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2223,16 +2223,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddEducationModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addEducation(); showAddEducationModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Education
         </button>
@@ -2244,7 +2244,7 @@
 <!-- Add Eligibility Modal -->
 @if (showAddEligibilityModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Eligibility</p>
         <button (click)="showAddEligibilityModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2303,16 +2303,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddEligibilityModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addEligibility(); showAddEligibilityModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Eligibility
         </button>
@@ -2324,7 +2324,7 @@
 <!-- Add Work Experience Modal -->
 @if (showAddWorkExperienceModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Work Experience</p>
         <button (click)="showAddWorkExperienceModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2420,16 +2420,16 @@
           </div>
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddWorkExperienceModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addWorkExperience(); showAddWorkExperienceModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Work Experience
         </button>
@@ -2441,7 +2441,7 @@
 <!-- Add Voluntary Work Modal -->
 @if (showAddVoluntaryModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Voluntary Work</p>
         <button (click)="showAddVoluntaryModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2494,16 +2494,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddVoluntaryModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addVoluntaryWork(); showAddVoluntaryModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add
         </button>
@@ -2515,7 +2515,7 @@
 <!-- Add Training Modal -->
 @if (showAddTrainingModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Training / Seminar</p>
         <button (click)="showAddTrainingModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2573,16 +2573,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddTrainingModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addTraining(); showAddTrainingModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Training
         </button>
@@ -2594,7 +2594,7 @@
 <!-- Add Reference Modal -->
 @if (showAddReferenceModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Reference</p>
         <button (click)="showAddReferenceModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2627,16 +2627,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddReferenceModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addReference(); showAddReferenceModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Reference
         </button>
