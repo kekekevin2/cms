@@ -5,7 +5,7 @@
     </div>
   } @else {
     <!-- Top Header Bar -->
-    <div class="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-gray-100">
       <div class="flex items-center gap-3">
         <!-- Profile Picture -->
         <div class="relative shrink-0">
@@ -85,42 +85,44 @@
       </div>
     </div>
 
-    <div class="flex gap-5 items-start">
+    <div class="flex flex-col sm:flex-row gap-3 sm:gap-5 items-start">
       <!-- Left Nav -->
-      <div class="w-44 shrink-0 space-y-0.5 sticky top-20">
+      <div
+        class="w-full sm:w-44 shrink-0 flex sm:block gap-1 sm:gap-0 sm:space-y-0.5 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 sm:sticky sm:top-20"
+      >
         <button
           (click)="scrollTo('section-contact')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-phone text-xs text-gray-400 w-4 text-center"></i> Contact
         </button>
         <button
           (click)="scrollTo('section-about')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-info-circle text-xs text-gray-400 w-4 text-center"></i> About & Goal
         </button>
         <button
           (click)="scrollTo('section-peo')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-star text-xs text-gray-400 w-4 text-center"></i> Objectives
         </button>
         <button
           (click)="scrollTo('section-programs')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-book text-xs text-gray-400 w-4 text-center"></i> Programs
         </button>
         <button
           (click)="scrollTo('section-careers')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-briefcase text-xs text-gray-400 w-4 text-center"></i> Careers
         </button>
         <button
           (click)="scrollTo('section-outcomes')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-check-circle text-xs text-gray-400 w-4 text-center"></i> Outcomes
         </button>
