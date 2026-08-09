@@ -26,6 +26,8 @@ There is no automated test suite (`npm test` is a stub) and no lint script. The 
 
 Requires `backend/.env` (loaded via `dotenv` in `index.js`, `config/db.config.js`, and `utils/storage.js`): `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_DIALECT`, `DB_POOL_MAX/MIN/ACQUIRE/IDLE`, `PORT` (no default — server won't bind without it), `JWT_SECRET`, `SMTP_HOST/PORT/USER/PASS` (nodemailer), `FRONTEND_URL` (password-reset links), `RECAPTCHA_ENABLED` + `RECAPTCHA_SECRET_KEY`, `NODE_ENV`, plus file-storage vars: `STORAGE_DRIVER` (`disk` | `s3`, defaults to `disk`), `S3_BUCKET`, `S3_REGION`, `S3_PRESIGN_TTL` (seconds, default `900`), and the standard `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` read by the AWS SDK itself.
 
+`index.js` calls `bootstrapSuperadmin()` (`utils/bootstrap-superadmin.js`) on every boot, before the server starts listening. It exists because Render's filesystem is ephemeral with no shell step in a deploy, so the interactive `npm run create-superadmin` can't be used there — it's a no-op unless both `SUPERADMIN_EMAIL` and `SUPERADMIN_PASSWORD` are set, and even then only fires if zero superadmin accounts currently exist, so redeploys never overwrite or duplicate. Optional `SUPERADMIN_FIRST_NAME`/`SUPERADMIN_LAST_NAME`/`SUPERADMIN_CONTACT` fill in the paired `Admin` row. Bootstrap failures are caught and logged, never thrown — a missing seed account shouldn't block the server from starting.
+
 ### Client (`client/`)
 ```
 npm start    # ng serve --port 7283

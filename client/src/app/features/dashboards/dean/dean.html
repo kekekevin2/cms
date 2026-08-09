@@ -2,12 +2,12 @@
 <aside
   [class.translate-x-0]="isSidebarOpen()"
   [class.-translate-x-full]="!isSidebarOpen()"
-  class="fixed top-0 left-0 z-50 w-64 h-full transition-transform bg-white border-r border-gray-200"
+  class="fixed top-0 left-0 z-50 w-64 max-w-[85vw] h-full transition-transform sm:translate-x-0 bg-white border-r border-gray-200"
 >
   <div class="h-full px-3 py-4 overflow-y-auto">
     <!-- Logo/Brand -->
     <div class="mb-6 px-2 flex flex-col items-center">
-      <img src="/assets/logo.png" alt="Logo" class="h-24 mb-3" />
+      <img src="/assets/logo.png" alt="Logo" class="h-10 sm:h-24 w-auto mb-2 sm:mb-3" />
       <h2 class="text-lg font-bold text-gray-900 text-center">Department Portal</h2>
       @if (departmentAcronym()) {
         <p class="text-xs text-gray-500 text-center mt-0.5">
@@ -122,33 +122,34 @@
   </div>
 </aside>
 
+@if (isSidebarOpen()) {
+  <div class="fixed inset-0 z-30 bg-black/50 sm:hidden" (click)="toggleSidebar()"></div>
+}
+
 <!-- Top Bar -->
 <div
-  class="fixed top-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300"
-  [class.left-64]="isSidebarOpen()"
-  [class.left-0]="!isSidebarOpen()"
-  [class.right-0]="true"
+  class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300 sm:left-64"
 >
-  <div class="flex items-center gap-4">
+  <div class="flex items-center gap-4 min-w-0">
     <button
       (click)="toggleSidebar()"
       type="button"
-      class="text-gray-900 bg-transparent hover:bg-gray-200 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm p-2 focus:outline-none"
+      class="text-gray-900 bg-transparent hover:bg-gray-200 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm p-2 focus:outline-none shrink-0"
     >
       <i class="pi pi-bars text-lg"></i>
     </button>
-    <h1 class="text-sm font-semibold text-gray-900">{{ getPageTitle() }}</h1>
+    <h1 class="text-sm font-semibold text-gray-900 truncate">{{ getPageTitle() }}</h1>
   </div>
 
   <!-- Right Section: User Menu -->
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-3 shrink-0">
     <div class="relative">
       <button
         (click)="toggleUserMenu()"
         class="inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
       >
         <i class="pi pi-user text-sm"></i>
-        <span class="text-xs font-medium leading-tight">
+        <span class="text-xs font-medium leading-tight hidden sm:inline">
           {{
             authService.currentUser()?.profile?.department ||
               authService.currentUser()?.profile?.name ||
@@ -198,56 +199,56 @@
 </div>
 
 <!-- Main Content -->
-<div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300" [class.ml-64]="isSidebarOpen()">
+<div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300 sm:ml-64">
   @if (activeTab() === 'dashboard') {
     <div>
       <!-- Dashboard Sub-Tabs -->
-      <div class="mb-4 flex items-center gap-1 border-b border-gray-100">
+      <div class="mb-4 flex items-center gap-1 border-b border-gray-100 overflow-x-auto">
         <button
           (click)="dashboardSubTab.set('overview')"
-          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px shrink-0"
           [class.border-green-500]="dashboardSubTab() === 'overview'"
           [class.text-green-600]="dashboardSubTab() === 'overview'"
           [class.border-transparent]="dashboardSubTab() !== 'overview'"
           [class.text-gray-500]="dashboardSubTab() !== 'overview'"
         >
-          <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
             <i class="pi pi-file text-xs"></i> Requirements & Clearance
           </span>
         </button>
         <button
           (click)="selectDashboardSubTab('analytics')"
-          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px shrink-0"
           [class.border-green-500]="dashboardSubTab() === 'analytics'"
           [class.text-green-600]="dashboardSubTab() === 'analytics'"
           [class.border-transparent]="dashboardSubTab() !== 'analytics'"
           [class.text-gray-500]="dashboardSubTab() !== 'analytics'"
         >
-          <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
             <i class="pi pi-chart-bar text-xs"></i> Faculty Analytics
           </span>
         </button>
         <button
           (click)="selectDashboardSubTab('organization-analytics')"
-          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px shrink-0"
           [class.border-green-500]="dashboardSubTab() === 'organization-analytics'"
           [class.text-green-600]="dashboardSubTab() === 'organization-analytics'"
           [class.border-transparent]="dashboardSubTab() !== 'organization-analytics'"
           [class.text-gray-500]="dashboardSubTab() !== 'organization-analytics'"
         >
-          <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
             <i class="pi pi-sitemap text-xs"></i> Organization Analytics
           </span>
         </button>
         <button
           (click)="selectDashboardSubTab('member-demographics')"
-          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px shrink-0"
           [class.border-green-500]="dashboardSubTab() === 'member-demographics'"
           [class.text-green-600]="dashboardSubTab() === 'member-demographics'"
           [class.border-transparent]="dashboardSubTab() !== 'member-demographics'"
           [class.text-gray-500]="dashboardSubTab() !== 'member-demographics'"
         >
-          <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
             <i class="pi pi-users text-xs"></i> Member Demographics
           </span>
         </button>
@@ -406,7 +407,7 @@
                 </div>
               </div>
               <!-- Legend -->
-              <div class="grid grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="flex items-center space-x-2">
                   <div class="w-4 h-4 bg-green-500 rounded"></div>
                   <div class="text-sm">
@@ -1142,7 +1143,7 @@
               <div class="p-6 border border-gray-200 rounded-sm bg-white shadow-sm">
                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Trainings & Seminars</h3>
                 <div class="space-y-4">
-                  <div class="grid grid-cols-2 gap-4">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="flex items-center justify-between p-4 bg-orange-50 rounded-sm">
                       <div>
                         <p class="text-xs text-gray-600">Total Trainings</p>

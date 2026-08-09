@@ -95,7 +95,7 @@
       }
 
       <!-- Stats -->
-      <div class="px-5 py-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <div class="text-center p-3 bg-blue-50 rounded-sm border border-blue-100">
           <p class="text-xl font-bold text-blue-600">
             {{ selectedFacultyRequirements()!.statistics.total_requirements }}
@@ -164,7 +164,8 @@
           Submitted Requirements
         </p>
       </div>
-      <table class="w-full text-xs">
+      <div class="overflow-x-auto">
+      <table class="w-full min-w-[900px] text-xs">
         <thead>
           <tr class="border-b border-gray-100 bg-gray-50">
             <th
@@ -293,6 +294,7 @@
           }
         </tbody>
       </table>
+      </div>
     </div>
   }
 </div>
@@ -308,7 +310,7 @@
         </p>
       </div>
       <div class="p-6 overflow-y-auto flex-1 space-y-4">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <p class="text-xs text-gray-400 mb-0.5">Academic Year</p>
             <p class="text-xs font-medium text-gray-700">
@@ -327,13 +329,13 @@
               {{ getSemesterLabel(selectedSubmission()!.semester) }}
             </p>
           </div>
-          <div class="col-span-2">
+          <div class="sm:col-span-2">
             <p class="text-xs text-gray-400 mb-0.5">Requirement</p>
             <p class="text-xs font-medium text-gray-700">
               {{ selectedSubmission()!.requirement_name }}
             </p>
           </div>
-          <div class="col-span-2">
+          <div class="sm:col-span-2">
             <p class="text-xs text-gray-400 mb-0.5">File</p>
             <p class="text-xs font-medium text-gray-700">{{ selectedSubmission()!.file_name }}</p>
           </div>
@@ -356,30 +358,30 @@
           </div>
         }
       </div>
-      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-2">
+      <div class="px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2">
         <button
           (click)="closeViewModal()"
-          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Close
         </button>
-        <div class="flex gap-2">
+        <div class="flex flex-col-reverse sm:flex-row gap-2">
           <button
             (click)="downloadFile(selectedSubmission()!.submission_id)"
-            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-sm hover:bg-blue-700 transition"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-sm hover:bg-blue-700 transition"
           >
             <i class="pi pi-download text-xs"></i> Download
           </button>
           @if (selectedSubmission()!.status === 'pending') {
             <button
               (click)="validateRequirement()"
-              class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-green-600 rounded-sm hover:bg-green-700 transition"
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-green-600 rounded-sm hover:bg-green-700 transition"
             >
               <i class="pi pi-check text-xs"></i> Validate
             </button>
             <button
               (click)="returnRequirement()"
-              class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition"
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition"
             >
               <i class="pi pi-undo text-xs"></i> Return
             </button>

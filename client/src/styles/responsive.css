@@ -21,30 +21,6 @@ html, body {
 
 /* Extra small devices (phones, 320px and up) */
 @media (max-width: 767px) {
-  /* Sidebar adjustments */
-  aside {
-    width: 100% !important;
-    max-width: 280px;
-  }
-
-  /* Top bar adjustments */
-  .fixed.top-0 {
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-  }
-
-  /* Main content adjustments */
-  .pt-20 {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-  }
-
-  /* Hide text on small screens, show icons only */
-  .hidden.sm\\:inline {
-    display: none !important;
-  }
-
   /* Tables - make them scrollable */
   table {
     display: block;
@@ -53,21 +29,10 @@ html, body {
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Cards - full width on mobile */
-  .grid {
-    grid-template-columns: 1fr !important;
-  }
-
   /* Forms - full width inputs */
   input, select, textarea {
     width: 100% !important;
     max-width: 100% !important;
-  }
-
-  /* Buttons - full width on mobile */
-  button:not(.inline-button) {
-    width: 100%;
-    max-width: 100%;
   }
 
   /* Font size adjustments */
@@ -83,29 +48,6 @@ html, body {
     font-size: 1.125rem !important;
   }
 
-  /* Padding adjustments */
-  .p-4 {
-    padding: 0.75rem !important;
-  }
-
-  .p-6 {
-    padding: 1rem !important;
-  }
-
-  /* Modal adjustments */
-  .fixed.inset-0 > div {
-    margin: 0.5rem !important;
-    max-height: calc(100vh - 1rem) !important;
-    overflow-y: auto !important;
-  }
-
-  /* Dropdown menus */
-  .absolute.right-0 {
-    right: 0 !important;
-    left: auto !important;
-    min-width: 200px;
-  }
-
   /* Charts - responsive */
   canvas {
     max-width: 100% !important;
@@ -117,20 +59,6 @@ html, body {
     max-width: 100%;
     height: auto;
   }
-
-  /* Flex containers - wrap on mobile */
-  .flex {
-    flex-wrap: wrap;
-  }
-
-  /* Gap adjustments */
-  .gap-4 {
-    gap: 0.5rem !important;
-  }
-
-  .gap-6 {
-    gap: 0.75rem !important;
-  }
 }
 
 /* ========================================
@@ -138,25 +66,6 @@ html, body {
    ======================================== */
 
 @media (min-width: 768px) and (max-width: 1023px) {
-  /* Sidebar */
-  aside {
-    width: 240px;
-  }
-
-  /* Main content with sidebar */
-  .ml-64 {
-    margin-left: 240px !important;
-  }
-
-  /* Grid adjustments */
-  .grid.md\\:grid-cols-2 {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  .grid.md\\:grid-cols-3 {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
   /* Tables - still scrollable */
   table {
     display: block;
@@ -171,31 +80,6 @@ html, body {
 
   h2 {
     font-size: 1.5rem;
-  }
-}
-
-/* ========================================
-   DESKTOP DEVICES (1024px and up)
-   ======================================== */
-
-@media (min-width: 1024px) {
-  /* Sidebar */
-  aside {
-    width: 256px;
-  }
-
-  /* Main content with sidebar */
-  .ml-64 {
-    margin-left: 256px;
-  }
-
-  /* Grid - full columns */
-  .grid.lg\\:grid-cols-3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .grid.lg\\:grid-cols-4 {
-    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -225,26 +109,6 @@ html, body {
   /* Larger padding for touch */
   .p-2 {
     padding: 0.75rem !important;
-  }
-}
-
-/* ========================================
-   LANDSCAPE ORIENTATION
-   ======================================== */
-
-@media (max-width: 767px) and (orientation: landscape) {
-  /* Reduce header height in landscape */
-  .h-16 {
-    height: 3rem !important;
-  }
-
-  .pt-20 {
-    padding-top: 3.5rem !important;
-  }
-
-  /* Sidebar - smaller in landscape */
-  aside {
-    max-width: 240px;
   }
 }
 

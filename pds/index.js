@@ -316,9 +316,15 @@ const other_info = [
 	{ info_type: "MEMBERSHIP", details: "Philippine Society of IT Educators" },
 	{ info_type: "MEMBERSHIP", details: "Computing Society of the Philippines" },
 	{ info_type: "MEMBERSHIP", details: "Philippine Statistical Association" },
-	{ info_type: "MEMBERSHIP", details: "Batangas State University Alumni Association" },
+	{
+		info_type: "MEMBERSHIP",
+		details: "Batangas State University Alumni Association",
+	},
 	{ info_type: "MEMBERSHIP", details: "Data Privacy Officers Network" },
-	{ info_type: "MEMBERSHIP", details: "Junior Chamber International Philippines" },
+	{
+		info_type: "MEMBERSHIP",
+		details: "Junior Chamber International Philippines",
+	},
 ];
 
 const references = [
@@ -475,6 +481,8 @@ function buildOverlays() {
 			w: opts.w,
 			h: opts.h,
 			image: opts.image,
+			maxWidth: opts.maxWidth,
+			overflow: opts.overflow,
 		});
 	};
 
@@ -645,7 +653,10 @@ function buildOverlays() {
 			level === "COLLEGE" ||
 			level === "GRADUATE STUDIES"
 		) {
-			field(`edu_${level}_degree`, 1, 200, y, edu.degree_course || "");
+			field(`edu_${level}_degree`, 1, 190, y, edu.degree_course || "", {
+				maxWidth: 105,
+				overflow: "shrink",
+			});
 		}
 		field(
 			`edu_${level}_from`,
@@ -895,7 +906,16 @@ const overlays = buildOverlays();
 const DEFAULT_POSITIONS = new Map(
 	overlays.map((o) => [
 		o.key,
-		{ x: o.x, y: o.y, center: o.center, w: o.w, h: o.h },
+		{
+			x: o.x,
+			y: o.y,
+			center: o.center,
+			w: o.w,
+			h: o.h,
+			text: o.text,
+			maxWidth: o.maxWidth ?? null,
+			overflow: o.overflow ?? null,
+		},
 	]),
 );
 
@@ -917,6 +937,9 @@ function applyPositions(list) {
 			if (saved.center !== undefined) o.center = !!saved.center;
 			if (saved.w !== undefined) o.w = saved.w;
 			if (saved.h !== undefined) o.h = saved.h;
+			if (saved.text !== undefined) o.text = saved.text;
+			if (saved.maxWidth !== undefined) o.maxWidth = saved.maxWidth ?? undefined;
+			if (saved.overflow !== undefined) o.overflow = saved.overflow ?? undefined;
 		}
 	});
 }
@@ -939,6 +962,9 @@ function saveToLocalStorage() {
 			center: !!o.center,
 			w: o.w,
 			h: o.h,
+			text: o.text,
+			maxWidth: o.maxWidth ?? null,
+			overflow: o.overflow ?? null,
 		}));
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
 	} catch {
@@ -964,6 +990,9 @@ async function savePositionsToFile() {
 		center: !!o.center,
 		w: o.w,
 		h: o.h,
+		text: o.text,
+		maxWidth: o.maxWidth ?? null,
+		overflow: o.overflow ?? null,
 	}));
 	const json = JSON.stringify(snapshot, null, 2);
 
@@ -1013,6 +1042,9 @@ function resetPositions() {
 			o.center = def.center;
 			o.w = def.w;
 			o.h = def.h;
+			o.text = def.text;
+			o.maxWidth = def.maxWidth;
+			o.overflow = def.overflow;
 		}
 	});
 	localStorage.removeItem(STORAGE_KEY);
@@ -1126,6 +1158,54 @@ function renderPage(num) {
 	});
 }
 
+// Decides how many lines `f.text` needs and at what font size, given an
+// optional `f.maxWidth` (PDF points) and `f.overflow` ("shrink" | "wrap").
+// Measures using 1 canvas px == 1 PDF point, so the result is scale-independent
+// — callers apply their own existing size-to-px and x/y-to-px scale factors.
+// Fields without `maxWidth` always get back a single line at `f.size`, unchanged.
+function layoutFieldText(ctx, f) {
+	const family = "'Times New Roman', Times, serif";
+	const baseSize = f.size || 11;
+	ctx.font = `${baseSize}px ${family}`;
+
+	if (!f.maxWidth || ctx.measureText(f.text).width / 1.5 <= f.maxWidth) {
+		return {
+			lines: [{ text: f.text, size: baseSize }],
+			lineHeight: (baseSize * 1.15) / 1.5,
+		};
+	}
+
+	if (f.overflow === "wrap") {
+		const words = f.text.split(" ");
+		const lines = [];
+		let current = "";
+		words.forEach((word) => {
+			const candidate = current ? `${current} ${word}` : word;
+			if (!current || ctx.measureText(candidate).width / 1.5 <= f.maxWidth) {
+				current = candidate;
+			} else {
+				lines.push(current);
+				current = word;
+			}
+		});
+		if (current) lines.push(current);
+		if (!lines.length) lines.push("");
+		return {
+			lines: lines.map((text) => ({ text, size: baseSize })),
+			lineHeight: (baseSize * 1.15) / 1.5,
+		};
+	}
+
+	// Default: shrink. Step font size down until it fits, floor at 6pt.
+	let size = baseSize;
+	while (size > 6) {
+		ctx.font = `${size}px ${family}`;
+		if (ctx.measureText(f.text).width / 1.5 <= f.maxWidth) break;
+		size -= 1;
+	}
+	return { lines: [{ text: f.text, size }], lineHeight: (size * 1.15) / 1.5 };
+}
+
 function drawOverlays(pageNum, viewport) {
 	oCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 	overlays
@@ -1134,10 +1214,13 @@ function drawOverlays(pageNum, viewport) {
 			const s = viewport.scale;
 			const cx = f.x * s;
 			const cy = viewport.height - f.y * s;
-			oCtx.font = `${((f.size || 11) * s) / 1.5}px 'Times New Roman', Times, serif`;
+			const { lines, lineHeight } = layoutFieldText(oCtx, f);
 			oCtx.fillStyle = f.color || "#000";
 			oCtx.textAlign = f.center ? "center" : "left";
-			oCtx.fillText(f.text, cx, cy);
+			lines.forEach((line, i) => {
+				oCtx.font = `${(line.size * s) / 1.5}px 'Times New Roman', Times, serif`;
+				oCtx.fillText(line.text, cx, cy + i * lineHeight * s);
+			});
 		});
 	oCtx.textAlign = "left";
 
@@ -1381,6 +1464,13 @@ function selectField(field) {
 		fieldEditorH.value = field.h;
 	}
 
+	fieldEditorText.value = field.text || "";
+	fieldEditorMaxWidth.value = field.maxWidth ?? "";
+	fieldEditorOverflow.value = field.overflow || "shrink";
+	fieldEditorTextRow.classList.toggle("hidden", isImage);
+	fieldEditorMaxWidthRow.classList.toggle("hidden", isImage);
+	fieldEditorOverflowRow.classList.toggle("hidden", isImage || !field.maxWidth);
+
 	fieldEditorX.focus();
 }
 
@@ -1418,6 +1508,16 @@ const fieldEditorCenterRow = document.getElementById("field-editor-center-row");
 const fieldEditorSizeRow = document.getElementById("field-editor-size-row");
 const fieldEditorW = document.getElementById("field-editor-w");
 const fieldEditorH = document.getElementById("field-editor-h");
+const fieldEditorTextRow = document.getElementById("field-editor-text-row");
+const fieldEditorText = document.getElementById("field-editor-text");
+const fieldEditorMaxWidthRow = document.getElementById(
+	"field-editor-maxwidth-row",
+);
+const fieldEditorMaxWidth = document.getElementById("field-editor-maxwidth");
+const fieldEditorOverflow = document.getElementById("field-editor-overflow");
+const fieldEditorOverflowRow = document.getElementById(
+	"field-editor-overflow-row",
+);
 const fieldEditorApply = document.getElementById("field-editor-apply");
 let selectedField = null;
 
@@ -1426,13 +1526,20 @@ function getFieldBox(f) {
 	if (f.type === "image") {
 		return { x0: f.x, y0: f.y, x1: f.x + f.w, y1: f.y + f.h };
 	}
-	oCtx.font = `${f.size || 11}px 'Times New Roman', Times, serif`;
-	const text = f.text && f.text.length ? f.text : "(empty)";
-	const w = Math.max(oCtx.measureText(text).width, 24);
-	const h = (f.size || 11) + 6;
-	const x0 = f.center ? f.x - w / 2 : f.x;
-	const y0 = f.y - 3;
-	return { x0, y0, x1: x0 + w, y1: y0 + h };
+	const textedField =
+		f.text && f.text.length ? f : { ...f, text: "(empty)" };
+	const { lines, lineHeight } = layoutFieldText(oCtx, textedField);
+	const widest = Math.max(
+		...lines.map((line) => {
+			oCtx.font = `${line.size}px 'Times New Roman', Times, serif`;
+			return oCtx.measureText(line.text).width;
+		}),
+		24,
+	);
+	const h = (lines.length - 1) * lineHeight + lines[0].size + 6;
+	const y0 = f.y - 3 - (lines.length - 1) * lineHeight;
+	const x0 = f.center ? f.x - widest / 2 : f.x;
+	return { x0, y0, x1: x0 + widest, y1: y0 + h };
 }
 
 let saveDebounceTimer = null;
@@ -1567,6 +1674,16 @@ function applyFieldEditLive() {
 		if (Number.isFinite(h) && h > 0) selectedField.h = h;
 	} else {
 		selectedField.center = fieldEditorCenter.checked;
+		selectedField.text = fieldEditorText.value;
+		const maxWidth = Number(fieldEditorMaxWidth.value);
+		selectedField.maxWidth =
+			fieldEditorMaxWidth.value !== "" && Number.isFinite(maxWidth) && maxWidth > 0
+				? maxWidth
+				: undefined;
+		selectedField.overflow = selectedField.maxWidth
+			? fieldEditorOverflow.value
+			: undefined;
+		fieldEditorOverflowRow.classList.toggle("hidden", !selectedField.maxWidth);
 	}
 
 	const grid = findRow0Grid(selectedField.key);
@@ -1584,6 +1701,9 @@ fieldEditorY.addEventListener("input", applyFieldEditLive);
 fieldEditorCenter.addEventListener("change", applyFieldEditLive);
 fieldEditorW.addEventListener("input", applyFieldEditLive);
 fieldEditorH.addEventListener("input", applyFieldEditLive);
+fieldEditorText.addEventListener("input", applyFieldEditLive);
+fieldEditorMaxWidth.addEventListener("input", applyFieldEditLive);
+fieldEditorOverflow.addEventListener("change", applyFieldEditLive);
 
 fieldEditorApply.addEventListener("click", () => {
 	if (!selectedField) return;
@@ -1624,10 +1744,13 @@ async function downloadPDF() {
 				const s = viewport.scale;
 				const cx = f.x * s;
 				const cy = viewport.height - f.y * s;
-				ctx.font = `${((f.size || 11) * s) / 1.5}px Times New Roman`;
+				const { lines, lineHeight } = layoutFieldText(ctx, f);
 				ctx.fillStyle = "#000";
 				ctx.textAlign = f.center ? "center" : "left";
-				ctx.fillText(f.text, cx, cy);
+				lines.forEach((line, i) => {
+					ctx.font = `${(line.size * s) / 1.5}px Times New Roman`;
+					ctx.fillText(line.text, cx, cy + i * lineHeight * s);
+				});
 			});
 		ctx.textAlign = "left";
 		// Bake every image-backed overlay (photo, signature, ...) defined for this page

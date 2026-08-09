@@ -2,6 +2,7 @@ const db = require("../models");
 const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
 const { sendAccountCredentials } = require("../utils/email");
+const { presignFields } = require("../utils/presign");
 
 // Generate secure random password
 const generatePassword = () => {
@@ -501,8 +502,12 @@ exports.getFacultyFullProfile = async (req, res) => {
     // This is a placeholder - adjust based on your actual data structure
     const coursesHandled = [];
 
+    const presignedPersonal = personalProfile
+      ? await presignFields(personalProfile, ["profile_picture", "passport_photo"])
+      : null;
+
     res.json({
-      personal: personalProfile || null,
+      personal: presignedPersonal,
       academic: academicProfiles || [],
       employment: employmentProfiles || [],
       memberships: memberships || [],

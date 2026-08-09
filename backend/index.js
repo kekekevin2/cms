@@ -7,10 +7,17 @@ const app = express();
 
 const db = require("./models");
 
-// Enhanced CORS configuration
+// In production, only the real frontend domains may call this API with
+// credentials. Development stays permissive (origin: true) since the client
+// can run on any localhost port.
+const PRODUCTION_ORIGINS = [
+	"https://batstateu-cmp.online",
+	"https://www.batstateu-cmp.online",
+];
+
 app.use(
 	cors({
-		origin: true, // Allow all origins in development
+		origin: process.env.NODE_ENV === "production" ? PRODUCTION_ORIGINS : true,
 		credentials: true,
 		methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 		allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],

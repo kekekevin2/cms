@@ -45,11 +45,6 @@ header {
   cursor: default;
 }
 
-#page-info {
-  font-size: 13px;
-  color: #555;
-}
-
 #app-body {
   display: flex;
   align-items: flex-start;
@@ -64,7 +59,7 @@ header {
 }
 
 #field-list-panel {
-  width: 300px;
+  width: 320px;
   flex-shrink: 0;
   position: sticky;
   top: 60px;
@@ -117,26 +112,18 @@ header {
   word-break: break-all;
 }
 
-#field-editor-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-#field-editor-row label {
-  flex: 1 1 90px;
-  min-width: 90px;
-  font-size: 11px;
-  color: #555;
+#field-editor label {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 8px;
 }
 
-#field-editor-row input {
+#field-editor input,
+#field-editor select {
   width: 100%;
-  min-width: 0;
   padding: 6px 8px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -145,84 +132,61 @@ header {
   box-sizing: border-box;
 }
 
-#field-editor-center-row {
+#field-editor-row,
+#field-editor-style-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#field-editor-row label,
+#field-editor-style-row label {
+  flex: 1 1 90px;
+  min-width: 90px;
+}
+
+#field-editor-checks {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 14px;
   font-size: 12px;
   color: #333;
   margin-bottom: 8px;
+}
+
+#field-editor-checks label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  margin: 0;
+}
+
+#field-editor-color {
+  padding: 2px;
+  height: 32px;
   cursor: pointer;
 }
 
-#field-editor-size-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-#field-editor-size-row label {
-  flex: 1 1 90px;
-  min-width: 90px;
-  font-size: 11px;
-  color: #555;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-#field-editor-size-row input {
-  width: 100%;
-  min-width: 0;
-  padding: 6px 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 13px;
-  font-family: monospace;
-  box-sizing: border-box;
-}
-
-#field-editor-text-row,
-#field-editor-maxwidth-row,
-#field-editor-overflow-row {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 11px;
-  color: #555;
-  margin-bottom: 8px;
-}
-
-#field-editor-text-row input,
-#field-editor-maxwidth-row input,
-#field-editor-overflow-row select {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 13px;
-  font-family: monospace;
-  box-sizing: border-box;
-}
-
-#field-editor-center-row.hidden,
-#field-editor-size-row.hidden,
-#field-editor-overflow-row.hidden,
-#field-editor-text-row.hidden,
-#field-editor-maxwidth-row.hidden {
-  display: none;
-}
-
-#field-editor-apply {
+#field-editor-apply,
+#field-editor-delete {
   width: 100%;
   padding: 7px 0;
-  background: #0284c7;
-  color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
+  margin-top: 4px;
+}
+
+#field-editor-apply {
+  background: #0284c7;
+  color: white;
+}
+
+#field-editor-delete {
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .field-group-heading {
