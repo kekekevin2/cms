@@ -81,7 +81,8 @@ const CONTENT_RIGHT = PAGE_W - MARGIN;
 const CONTENT_WIDTH = CONTENT_RIGHT - MARGIN;
 const TABLE_TOP_FIRST = 170; // below the template's header graphic
 const TABLE_BOTTOM = 880; // above the template's footer band
-const ROW_PADDING = 5;
+const CELL_PADDING_X = 8; // horizontal breathing room, left/right of cell text
+const CELL_PADDING_Y = 8; // vertical breathing room, top/bottom of cell text
 const ROW_LINE_HEIGHT = 10;
 const CELL_FONT_SIZE = 8.5;
 const HEADER_FONT_SIZE = 8.5;
@@ -211,10 +212,15 @@ export class FacultyProfilePdfService {
       section.rows.forEach((row) => {
         ctx.font = `${CELL_FONT_SIZE * scale}px 'Times New Roman', Times, serif`;
         const wrapped = section.columns.map((c) =>
-          this.wrapText(ctx, row[c.key] || '', c.widthFraction * CONTENT_WIDTH - 6, scale),
+          this.wrapText(
+            ctx,
+            row[c.key] || '',
+            c.widthFraction * CONTENT_WIDTH - CELL_PADDING_X * 2,
+            scale,
+          ),
         );
         const lineCount = Math.max(...wrapped.map((l) => l.length), 1);
-        const rowHeight = lineCount * ROW_LINE_HEIGHT + ROW_PADDING * 2;
+        const rowHeight = lineCount * ROW_LINE_HEIGHT + CELL_PADDING_Y * 2;
 
         if (cursorY + rowHeight > TABLE_BOTTOM) {
           this.commitPage(pdf, canvas, isFirstPageOverall);
@@ -278,25 +284,33 @@ export class FacultyProfilePdfService {
     columns: ActivityReportColumn[],
   ): number {
     const y = TABLE_TOP_FIRST;
-    const rowHeight = 22;
-    let x = MARGIN;
+    ctx.font = `bold ${HEADER_FONT_SIZE * scale}px 'Times New Roman', Times, serif`;
 
+    const wrappedHeaders = columns.map((col) =>
+      this.wrapText(ctx, col.header, col.widthFraction * CONTENT_WIDTH - CELL_PADDING_X * 2, scale),
+    );
+    const lineCount = Math.max(...wrappedHeaders.map((l) => l.length), 1);
+    const rowHeight = lineCount * ROW_LINE_HEIGHT + CELL_PADDING_Y * 2;
+
+    let x = MARGIN;
     ctx.fillStyle = '#f0f0f0';
     ctx.fillRect(MARGIN * scale, y * scale, CONTENT_WIDTH * scale, rowHeight * scale);
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = scale;
     ctx.strokeRect(MARGIN * scale, y * scale, CONTENT_WIDTH * scale, rowHeight * scale);
 
-    ctx.font = `bold ${HEADER_FONT_SIZE * scale}px 'Times New Roman', Times, serif`;
     ctx.fillStyle = '#000000';
     ctx.textBaseline = 'top';
 
-    columns.forEach((col) => {
+    columns.forEach((col, i) => {
       const colWidth = col.widthFraction * CONTENT_WIDTH;
       ctx.strokeRect(x * scale, y * scale, colWidth * scale, rowHeight * scale);
-      const lines = this.wrapText(ctx, col.header, colWidth - 6, scale);
-      lines.forEach((line, i) => {
-        ctx.fillText(line, (x + 3) * scale, (y + ROW_PADDING + i * ROW_LINE_HEIGHT) * scale);
+      wrappedHeaders[i].forEach((line, li) => {
+        ctx.fillText(
+          line,
+          (x + CELL_PADDING_X) * scale,
+          (y + CELL_PADDING_Y + li * ROW_LINE_HEIGHT) * scale,
+        );
       });
       x += colWidth;
     });
@@ -324,7 +338,11 @@ export class FacultyProfilePdfService {
       const colWidth = col.widthFraction * CONTENT_WIDTH;
       ctx.strokeRect(x * scale, y * scale, colWidth * scale, rowHeight * scale);
       wrappedCells[i].forEach((line, li) => {
-        ctx.fillText(line, (x + 3) * scale, (y + ROW_PADDING + li * ROW_LINE_HEIGHT) * scale);
+        ctx.fillText(
+          line,
+          (x + CELL_PADDING_X) * scale,
+          (y + CELL_PADDING_Y + li * ROW_LINE_HEIGHT) * scale,
+        );
       });
       x += colWidth;
     });
