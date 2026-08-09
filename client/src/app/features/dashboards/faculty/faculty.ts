@@ -113,25 +113,25 @@ interface Assignment {
     <div
       class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300 sm:left-64"
     >
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 min-w-0">
         <button
           (click)="toggleSidebar()"
           type="button"
-          class="text-gray-900 bg-transparent hover:bg-gray-200 font-medium rounded-lg text-sm p-2 focus:outline-none"
+          class="text-gray-900 bg-transparent hover:bg-gray-200 font-medium rounded-lg text-sm p-2 focus:outline-none shrink-0"
         >
           <i class="pi pi-bars text-lg"></i>
         </button>
-        <h1 class="text-sm font-semibold text-gray-900">{{ getPageTitle() }}</h1>
+        <h1 class="text-sm font-semibold text-gray-900 truncate">{{ getPageTitle() }}</h1>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 shrink-0">
         <div class="relative">
           <button
             (click)="toggleUserMenu()"
             class="inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
           >
             <i class="pi pi-user text-sm"></i>
-            <span class="text-xs font-medium">
+            <span class="text-xs font-medium hidden sm:inline">
               {{ authService.currentUser()?.profile?.first_name }}
               {{ authService.currentUser()?.profile?.last_name }}
             </span>
