@@ -98,7 +98,7 @@ export class FacultyProfilePdfService {
     buildOverlays(data).forEach((o) => {
       const x = o.x * scale;
       const y = o.y * scale;
-      ctx.font = `${o.bold ? 'bold ' : ''}${o.size * scale}px Arial`;
+      ctx.font = `${o.bold ? 'bold ' : ''}${o.size * scale}px 'Times New Roman', Times, serif`;
       ctx.fillStyle = o.color || '#000000';
       ctx.textAlign = o.center ? 'center' : 'left';
       ctx.textBaseline = 'top';

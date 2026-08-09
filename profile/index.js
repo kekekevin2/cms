@@ -370,7 +370,7 @@ function drawOverlays() {
     } else {
       const x = f.x * renderScale;
       const y = f.y * renderScale;
-      ctx.font = `${f.bold ? "bold " : ""}${f.fontSize * renderScale}px Arial`;
+      ctx.font = `${f.bold ? "bold " : ""}${f.fontSize * renderScale}px 'Times New Roman', Times, serif`;
       ctx.fillStyle = f.color || "#000000";
       ctx.textAlign = f.center ? "center" : "left";
       ctx.textBaseline = "top";
@@ -692,7 +692,7 @@ async function downloadPDF() {
     if (f.type === "photo") return; // no sample image in this dev tool
     const x = f.x * scale;
     const y = f.y * scale;
-    ctx.font = `${f.bold ? "bold " : ""}${f.fontSize * scale}px Arial`;
+    ctx.font = `${f.bold ? "bold " : ""}${f.fontSize * scale}px 'Times New Roman', Times, serif`;
     ctx.fillStyle = f.color || "#000000";
     ctx.textAlign = f.center ? "center" : "left";
     ctx.textBaseline = "top";
