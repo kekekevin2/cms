@@ -22,21 +22,21 @@
         @if (!isFormReadonly() && !isEditMode()) {
           <button
             (click)="autoFillFromProfile()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition whitespace-nowrap"
           >
             <i class="pi pi-sync text-xs"></i> Sync Profile
           </button>
           <button
             (click)="savePDS()"
             [disabled]="loading()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50 whitespace-nowrap"
           >
             <i class="pi pi-save text-xs"></i> Save Draft
           </button>
           <button
             (click)="submitPDS()"
             [disabled]="loading()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50 whitespace-nowrap"
           >
             <i class="pi pi-send text-xs"></i> Submit
           </button>
@@ -44,7 +44,7 @@
         @if (isFormReadonly() && !isEditMode()) {
           <button
             (click)="enableEditMode()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-sm hover:bg-blue-700 transition"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-sm hover:bg-blue-700 transition whitespace-nowrap"
           >
             <i class="pi pi-pencil text-xs"></i> Edit
           </button>
@@ -52,27 +52,27 @@
         @if (isEditMode()) {
           <button
             (click)="autoFillFromProfile()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition whitespace-nowrap"
           >
             <i class="pi pi-sync text-xs"></i> Sync Profile
           </button>
           <button
             (click)="cancelEditMode()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition whitespace-nowrap"
           >
             <i class="pi pi-times text-xs"></i> Cancel
           </button>
           <button
             (click)="savePDS()"
             [disabled]="loading()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50 whitespace-nowrap"
           >
             <i class="pi pi-save text-xs"></i> Save Changes
           </button>
           <button
             (click)="submitPDS()"
             [disabled]="loading()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50 whitespace-nowrap"
           >
             <i class="pi pi-send text-xs"></i> Resubmit
           </button>
@@ -80,7 +80,7 @@
         <button
           (click)="previewPDF()"
           [disabled]="loading()"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50 whitespace-nowrap"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs"></i>
@@ -92,7 +92,7 @@
         <button
           (click)="downloadPDF()"
           [disabled]="loading()"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50 whitespace-nowrap"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs"></i>
@@ -113,13 +113,13 @@
               <button
                 (click)="downloadPDF()"
                 [disabled]="loading()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50 whitespace-nowrap"
               >
                 <i class="pi pi-file-pdf text-xs"></i> Download
               </button>
               <button
                 (click)="closePdfPreview()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition whitespace-nowrap"
               >
                 <i class="pi pi-times text-xs"></i> Close
               </button>
@@ -1251,7 +1251,7 @@
                   @for (info of pds.other_info; track info; let i = $index) {
                     @if (info.info_type === 'SKILL') {
                       <span
-                        class="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-sm border border-blue-100"
+                        class="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-sm border border-blue-100 whitespace-nowrap"
                       >
                         {{ info.details }}
                         @if (!isFormReadonly()) {
@@ -1996,7 +1996,7 @@
                       />
                       <label
                         for="photoInput"
-                        class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+                        class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition whitespace-nowrap"
                       >
                         <i class="pi pi-upload text-xs"></i> Choose Photo
                       </label>
@@ -2051,7 +2051,7 @@
                       />
                       <label
                         for="signatureInput"
-                        class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+                        class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition whitespace-nowrap"
                       >
                         <i class="pi pi-upload text-xs"></i> Choose File
                       </label>

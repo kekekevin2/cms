@@ -59,21 +59,21 @@
         @if (!isEditing()) {
           <button
             (click)="startEdit()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition whitespace-nowrap"
           >
             <i class="pi pi-pencil text-xs"></i> Edit Profile
           </button>
         } @else {
           <button
             (click)="cancelEdit()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition whitespace-nowrap"
           >
             Cancel
           </button>
           <button
             (click)="save()"
             [disabled]="saving()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50 whitespace-nowrap"
           >
             @if (saving()) {
               <i class="pi pi-spin pi-spinner text-xs"></i> Saving…
