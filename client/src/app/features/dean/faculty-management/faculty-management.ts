@@ -84,13 +84,12 @@ export class DeanFacultyManagement implements OnInit {
   ) {}
 
   generateAllActivitiesPDF(faculty: Faculty) {
-    // Fetch all three types of activities
     Promise.all([
       this.analyticsService.getSeminarsTrainingsByFaculty(faculty.faculty_id).toPromise(),
       this.analyticsService.getResearchActivitiesByFaculty(faculty.faculty_id).toPromise(),
       this.analyticsService.getExtensionActivitiesByFaculty(faculty.faculty_id).toPromise(),
     ])
-      .then(([seminarsData, researchData, extensionData]) => {
+      .then(async ([seminarsData, researchData, extensionData]) => {
         const seminars = seminarsData?.facultyList?.[0]?.activities || [];
         const research = researchData?.facultyList?.[0]?.activities || [];
         const extensions = extensionData?.facultyList?.[0]?.activities || [];
@@ -105,7 +104,70 @@ export class DeanFacultyManagement implements OnInit {
           return;
         }
 
-        this.createHTMLPDF(faculty, seminars, research, extensions);
+        const formatDate = (date: string) => {
+          if (!date) return '';
+          const d = new Date(date);
+          if (isNaN(d.getTime())) return '';
+          return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        };
+
+        await this.facultyProfilePdfService.generateActivitiesReport(faculty, [
+          {
+            title: 'Seminars/Trainings/Conferences Attended',
+            columns: [
+              { key: 'no', header: 'No.', widthFraction: 0.05 },
+              {
+                key: 'title',
+                header: 'Title of Seminar/Workshop/Training/Conference Attended',
+                widthFraction: 0.4,
+              },
+              { key: 'category', header: 'Category (Local, National, International)', widthFraction: 0.15 },
+              { key: 'date', header: 'Date', widthFraction: 0.15 },
+              { key: 'sponsoring_agency', header: 'Sponsoring Agency', widthFraction: 0.25 },
+            ],
+            rows: seminars.map((s: any, i: number) => ({
+              no: String(i + 1),
+              title: s.title || '',
+              category: s.category || '',
+              date: formatDate(s.date),
+              sponsoring_agency: s.sponsoring_agency || '',
+            })),
+          },
+          {
+            title: 'Research Activities',
+            columns: [
+              { key: 'no', header: 'No.', widthFraction: 0.05 },
+              { key: 'title', header: 'Title of Research', widthFraction: 0.4 },
+              { key: 'category', header: 'Category', widthFraction: 0.15 },
+              { key: 'date', header: 'Date', widthFraction: 0.15 },
+              { key: 'sponsoring_agency', header: 'Sponsoring Agency', widthFraction: 0.25 },
+            ],
+            rows: research.map((r: any, i: number) => ({
+              no: String(i + 1),
+              title: r.title || '',
+              category: r.category || '',
+              date: formatDate(r.date),
+              sponsoring_agency: r.sponsoring_agency || '',
+            })),
+          },
+          {
+            title: 'Extension Activities',
+            columns: [
+              { key: 'no', header: 'No.', widthFraction: 0.05 },
+              { key: 'title', header: 'Title of Extension PPAs', widthFraction: 0.4 },
+              { key: 'date', header: 'Date of Implementation', widthFraction: 0.15 },
+              { key: 'beneficiary', header: 'Beneficiary', widthFraction: 0.22 },
+              { key: 'location', header: 'Location', widthFraction: 0.18 },
+            ],
+            rows: extensions.map((e: any, i: number) => ({
+              no: String(i + 1),
+              title: e.title || '',
+              date: formatDate(e.date),
+              beneficiary: e.beneficiary || '',
+              location: e.location || '',
+            })),
+          },
+        ]);
       })
       .catch((error) => {
         console.error('Error generating PDF:', error);
@@ -116,384 +178,6 @@ export class DeanFacultyManagement implements OnInit {
           confirmButtonColor: '#2563eb',
         });
       });
-  }
-
-  private createHTMLPDF(faculty: Faculty, seminars: any[], research: any[], extensions: any[]) {
-    const currentYear = new Date().getFullYear();
-    const facultyName = `${faculty.last_name.toUpperCase()}, ${faculty.first_name.toUpperCase()} ${faculty.middle_name?.toUpperCase() || ''}`;
-
-    const formatDate = (date: string) => {
-      if (!date) return '';
-      const d = new Date(date);
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    };
-
-    let htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Faculty Activities Report</title>
-        <style>
-          @media print {
-            @page { margin: 0.5in; size: letter; }
-            body { margin: 0; }
-          }
-          body {
-            font-family: Arial, sans-serif;
-            font-size: 9pt;
-            line-height: 1.2;
-          }
-          .page-break { page-break-after: always; }
-          .header {
-            text-align: center;
-            margin-bottom: 15px;
-          }
-          .title {
-            font-size: 11pt;
-            font-weight: bold;
-            margin-bottom: 5px;
-          }
-          .subtitle {
-            font-size: 10pt;
-            margin-bottom: 10px;
-          }
-          .faculty-name {
-            text-align: left;
-            font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 10pt;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-          }
-          th, td {
-            border: 1px solid black;
-            padding: 4px;
-            text-align: left;
-            vertical-align: top;
-            word-wrap: break-word;
-            font-size: 8pt;
-          }
-          th {
-            background-color: #f0f0f0;
-            font-weight: bold;
-          }
-          .col-no { width: 5%; }
-          .col-title { width: 40%; }
-          .col-category { width: 15%; }
-          .col-date { width: 15%; }
-          .col-agency { width: 25%; }
-          .col-beneficiary { width: 22%; }
-          .col-location { width: 18%; }
-        </style>
-      </head>
-      <body>
-    `;
-
-    // Seminars Section
-    if (seminars.length > 0) {
-      htmlContent += `
-        <div class="header">
-          <div class="title">Seminars/Trainings/Conferences Attended</div>
-          <div class="subtitle">FY ${currentYear}-${currentYear + 1}</div>
-        </div>
-        <div class="faculty-name">Faculty Name: ${facultyName}</div>
-        <table>
-          <thead>
-            <tr>
-              <th class="col-no">No.</th>
-              <th class="col-title">Title of Seminar/Workshop/Training/Conference Attended</th>
-              <th class="col-category">Category (Local, National, International)</th>
-              <th class="col-date">Date</th>
-              <th class="col-agency">Sponsoring Agency</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      seminars.forEach((seminar, index) => {
-        htmlContent += `
-          <tr>
-            <td class="col-no">${index + 1}</td>
-            <td class="col-title">${seminar.title || ''}</td>
-            <td class="col-category">${seminar.category || ''}</td>
-            <td class="col-date">${formatDate(seminar.date)}</td>
-            <td class="col-agency">${seminar.sponsoring_agency || ''}</td>
-          </tr>
-        `;
-      });
-
-      htmlContent += `
-          </tbody>
-        </table>
-        <div class="page-break"></div>
-      `;
-    }
-
-    // Research Section
-    if (research.length > 0) {
-      htmlContent += `
-        <div class="header">
-          <div class="title">Research Activities</div>
-          <div class="subtitle">FY ${currentYear}-${currentYear + 1}</div>
-        </div>
-        <div class="faculty-name">Faculty Name: ${facultyName}</div>
-        <table>
-          <thead>
-            <tr>
-              <th class="col-no">No.</th>
-              <th class="col-title">Title of Research</th>
-              <th class="col-category">Category</th>
-              <th class="col-date">Date</th>
-              <th class="col-agency">Sponsoring Agency</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      research.forEach((item, index) => {
-        htmlContent += `
-          <tr>
-            <td class="col-no">${index + 1}</td>
-            <td class="col-title">${item.title || ''}</td>
-            <td class="col-category">${item.category || ''}</td>
-            <td class="col-date">${formatDate(item.date)}</td>
-            <td class="col-agency">${item.sponsoring_agency || ''}</td>
-          </tr>
-        `;
-      });
-
-      htmlContent += `
-          </tbody>
-        </table>
-        <div class="page-break"></div>
-      `;
-    }
-
-    // Extension Section
-    if (extensions.length > 0) {
-      htmlContent += `
-        <div class="header">
-          <div class="title">Extension Activities</div>
-          <div class="subtitle">FY ${currentYear}-${currentYear + 1}</div>
-        </div>
-        <div class="faculty-name">Faculty Name: ${facultyName}</div>
-        <table>
-          <thead>
-            <tr>
-              <th class="col-no">No.</th>
-              <th class="col-title">Title of Extension PPAs</th>
-              <th class="col-date">Date of Implementation</th>
-              <th class="col-beneficiary">Beneficiary</th>
-              <th class="col-location">Location</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      extensions.forEach((item, index) => {
-        htmlContent += `
-          <tr>
-            <td class="col-no">${index + 1}</td>
-            <td class="col-title">${item.title || ''}</td>
-            <td class="col-date">${formatDate(item.date_from)}</td>
-            <td class="col-beneficiary">${item.beneficiary || ''}</td>
-            <td class="col-location">${item.location || ''}</td>
-          </tr>
-        `;
-      });
-
-      htmlContent += `
-          </tbody>
-        </table>
-      `;
-    }
-
-    htmlContent += `
-      </body>
-      </html>
-    `;
-
-    // Open print dialog
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-      }, 250);
-    }
-  }
-
-  private createPDF(data: any, type: string, faculty: Faculty) {
-    const { jsPDF } = (window as any).jspdf;
-    const doc = new jsPDF();
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 15;
-    let yPosition = margin;
-
-    // Title
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    const title = data.title;
-    const titleLines = doc.splitTextToSize(title, pageWidth - 2 * margin);
-    doc.text(titleLines, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += titleLines.length * 6 + 5;
-
-    // Academic Year
-    const currentYear = new Date().getFullYear();
-    doc.setFontSize(11);
-    doc.text(`FY ${currentYear}-${currentYear + 1}`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 10;
-
-    // Faculty Name
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Faculty Name: ${data.facultyList[0].faculty_name.toUpperCase()}`, margin, yPosition);
-    yPosition += 8;
-
-    // Table headers
-    const headers = this.getTableHeaders(type);
-    const columnWidths = this.getColumnWidths(type, pageWidth, margin);
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.rect(margin, yPosition, pageWidth - 2 * margin, 7);
-
-    let xPosition = margin + 2;
-    headers.forEach((header: string, index: number) => {
-      doc.text(header, xPosition, yPosition + 5);
-      xPosition += columnWidths[index];
-    });
-    yPosition += 7;
-
-    // Table rows
-    doc.setFont('helvetica', 'normal');
-    data.facultyList[0].activities.forEach((activity: any, activityIndex: number) => {
-      const rowData = this.getRowData(activity, type, activityIndex + 1);
-      const rowHeight = this.calculateRowHeight(doc, rowData, columnWidths, pageWidth, margin);
-
-      // Check if we need a new page
-      if (yPosition + rowHeight > pageHeight - margin) {
-        doc.addPage();
-        yPosition = margin;
-      }
-
-      doc.rect(margin, yPosition, pageWidth - 2 * margin, rowHeight);
-
-      xPosition = margin + 2;
-      rowData.forEach((cellData: string, index: number) => {
-        const cellLines = doc.splitTextToSize(cellData, columnWidths[index] - 4);
-        doc.text(cellLines, xPosition, yPosition + 4);
-        xPosition += columnWidths[index];
-      });
-
-      yPosition += rowHeight;
-    });
-
-    // Save PDF
-    const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
-    const facultyName = `${faculty.last_name}_${faculty.first_name}`.replace(/\s+/g, '_');
-    const fileName = `${facultyName}_${typeLabel}_Report_${currentYear}.pdf`;
-    doc.save(fileName);
-  }
-
-  private getTableHeaders(type: string): string[] {
-    switch (type) {
-      case 'extension':
-        return [
-          'No.',
-          'Title of Extension PPAs',
-          'Date of Implementation',
-          'Beneficiary',
-          'Location',
-        ];
-      case 'research':
-        return ['No.', 'Title of Research', 'Category', 'Date', 'Sponsoring Agency'];
-      case 'seminars':
-        return [
-          'No.',
-          'Title of Seminar/Workshop/Training/Conference Attended',
-          'Category (Local, National, International)',
-          'Date',
-          'Sponsoring Agency',
-        ];
-      default:
-        return [];
-    }
-  }
-
-  private getColumnWidths(type: string, pageWidth: number, margin: number): number[] {
-    const totalWidth = pageWidth - 2 * margin;
-    switch (type) {
-      case 'extension':
-        return [12, totalWidth * 0.35, totalWidth * 0.18, totalWidth * 0.22, totalWidth * 0.13];
-      case 'research':
-      case 'seminars':
-        return [12, totalWidth * 0.4, totalWidth * 0.15, totalWidth * 0.15, totalWidth * 0.18];
-      default:
-        return [];
-    }
-  }
-
-  private getRowData(activity: any, type: string, rowNumber: number): string[] {
-    const formatDate = (date: string) => {
-      if (!date) return '';
-      const d = new Date(date);
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    };
-
-    switch (type) {
-      case 'extension':
-        const dateRange = activity.date_to
-          ? `${formatDate(activity.date_from)} - ${formatDate(activity.date_to)}`
-          : formatDate(activity.date_from);
-        return [
-          rowNumber.toString(),
-          activity.title || '',
-          dateRange,
-          activity.beneficiary || '',
-          activity.location || '',
-        ];
-      case 'research':
-        return [
-          rowNumber.toString(),
-          activity.title || '',
-          activity.category || '',
-          formatDate(activity.date),
-          activity.sponsoring_agency || '',
-        ];
-      case 'seminars':
-        return [
-          rowNumber.toString(),
-          activity.title || '',
-          activity.category || '',
-          formatDate(activity.date),
-          activity.sponsoring_agency || '',
-        ];
-      default:
-        return [];
-    }
-  }
-
-  private calculateRowHeight(
-    doc: any,
-    rowData: string[],
-    columnWidths: number[],
-    pageWidth: number,
-    margin: number,
-  ): number {
-    let maxLines = 1;
-    rowData.forEach((cellData: string, index: number) => {
-      const lines = doc.splitTextToSize(cellData, columnWidths[index] - 4);
-      maxLines = Math.max(maxLines, lines.length);
-    });
-    return Math.max(7, maxLines * 4 + 3);
   }
 
   ngOnInit() {
