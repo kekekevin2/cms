@@ -203,52 +203,52 @@
   @if (activeTab() === 'dashboard') {
     <div>
       <!-- Dashboard Sub-Tabs -->
-      <div class="mb-4 flex items-center gap-1 border-b border-gray-100">
+      <div class="mb-4 flex items-center gap-1 border-b border-gray-100 overflow-x-auto">
         <button
           (click)="dashboardSubTab.set('overview')"
-          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px shrink-0"
           [class.border-green-500]="dashboardSubTab() === 'overview'"
           [class.text-green-600]="dashboardSubTab() === 'overview'"
           [class.border-transparent]="dashboardSubTab() !== 'overview'"
           [class.text-gray-500]="dashboardSubTab() !== 'overview'"
         >
-          <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
             <i class="pi pi-file text-xs"></i> Requirements & Clearance
           </span>
         </button>
         <button
           (click)="selectDashboardSubTab('analytics')"
-          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px shrink-0"
           [class.border-green-500]="dashboardSubTab() === 'analytics'"
           [class.text-green-600]="dashboardSubTab() === 'analytics'"
           [class.border-transparent]="dashboardSubTab() !== 'analytics'"
           [class.text-gray-500]="dashboardSubTab() !== 'analytics'"
         >
-          <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
             <i class="pi pi-chart-bar text-xs"></i> Faculty Analytics
           </span>
         </button>
         <button
           (click)="selectDashboardSubTab('organization-analytics')"
-          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px shrink-0"
           [class.border-green-500]="dashboardSubTab() === 'organization-analytics'"
           [class.text-green-600]="dashboardSubTab() === 'organization-analytics'"
           [class.border-transparent]="dashboardSubTab() !== 'organization-analytics'"
           [class.text-gray-500]="dashboardSubTab() !== 'organization-analytics'"
         >
-          <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
             <i class="pi pi-sitemap text-xs"></i> Organization Analytics
           </span>
         </button>
         <button
           (click)="selectDashboardSubTab('member-demographics')"
-          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px"
+          class="px-4 py-2 text-xs font-medium border-b-2 transition -mb-px shrink-0"
           [class.border-green-500]="dashboardSubTab() === 'member-demographics'"
           [class.text-green-600]="dashboardSubTab() === 'member-demographics'"
           [class.border-transparent]="dashboardSubTab() !== 'member-demographics'"
           [class.text-gray-500]="dashboardSubTab() !== 'member-demographics'"
         >
-          <span class="inline-flex items-center gap-1.5">
+          <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
             <i class="pi pi-users text-xs"></i> Member Demographics
           </span>
         </button>
