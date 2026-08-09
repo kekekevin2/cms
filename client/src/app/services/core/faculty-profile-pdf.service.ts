@@ -51,7 +51,15 @@ interface TextOverlay {
 const PAGE_W = 612;
 const PAGE_H = 936;
 
-const PHOTO_BOX = { x: 26, y: 95, w: 150, h: 195 };
+// 1-inch left/right page margin, so nothing sits flush against the edges.
+const MARGIN = 72;
+const COL_LEFT = MARGIN; // section headers, photo
+const COL_LABEL = MARGIN + 27; // table row labels (First Name, Undergraduate, ...)
+const COL_HEADING = MARGIN + 174; // name/position/department/contact block
+const COL_VALUE = MARGIN + 204; // table row values
+const COL_COURSE2 = MARGIN + 274; // second column of the courses-handled list
+
+const PHOTO_BOX = { x: COL_LEFT, y: 95, w: 150, h: 195 };
 
 /** Renders a faculty's profile onto the branded cover template and downloads it as a PDF. */
 @Injectable({ providedIn: 'root' })
@@ -146,7 +154,7 @@ function calculateAge(birthDate: string | undefined | null): string {
 
 function personalInfoRow(x: number, y: number, label: string, value: string): TextOverlay[] {
   return [
-    { x: 53, y, text: label, size: 10, bold: true, color: '#333333' },
+    { x: COL_LABEL, y, text: label, size: 10, bold: true, color: '#333333' },
     { x, y, text: value, size: 10, color: '#000000' },
   ];
 }
@@ -158,9 +166,9 @@ function educationRow(
   details: string,
 ): TextOverlay[] {
   return [
-    { x: 53, y, text: label, size: 10, bold: true, color: '#333333' },
-    { x: 230, y, text: degree, size: 10, bold: true, color: '#000000' },
-    { x: 230, y: y + 15, text: details, size: 8.5, color: '#666666' },
+    { x: COL_LABEL, y, text: label, size: 10, bold: true, color: '#333333' },
+    { x: COL_VALUE, y, text: degree, size: 10, bold: true, color: '#000000' },
+    { x: COL_VALUE, y: y + 15, text: details, size: 8.5, color: '#666666' },
   ];
 }
 
@@ -179,34 +187,48 @@ function buildOverlays(data: FacultyProfilePdfData): TextOverlay[] {
   const currentEmployment = employment.find((e) => e.is_current) || employment[0];
   const academicRank = currentEmployment?.position_title || faculty.position_level || '';
 
-  push({ x: 200, y: 108, text: 'FACULTY PROFILE', size: 22, bold: true, color: '#8b1538' });
-  push({ x: 200, y: 155, text: fullName, size: 15, bold: true, color: '#000000' });
-  push({ x: 200, y: 176, text: academicRank, size: 11, color: '#000000' });
-  push({ x: 200, y: 222, text: faculty.department || '', size: 11, bold: true, color: '#000000' });
+  push({ x: COL_HEADING, y: 108, text: 'FACULTY PROFILE', size: 22, bold: true, color: '#8b1538' });
+  push({ x: COL_HEADING, y: 155, text: fullName, size: 15, bold: true, color: '#000000' });
+  push({ x: COL_HEADING, y: 176, text: academicRank, size: 11, color: '#000000' });
+  push({
+    x: COL_HEADING,
+    y: 222,
+    text: faculty.department || '',
+    size: 11,
+    bold: true,
+    color: '#000000',
+  });
 
-  push({ x: 200, y: 256, text: 'Contact Number:', size: 9, color: '#666666' });
-  push({ x: 200, y: 270, text: faculty.contact_number || '', size: 10, color: '#000000' });
-  push({ x: 200, y: 293, text: 'Email Address:', size: 9, color: '#666666' });
-  push({ x: 200, y: 307, text: faculty.email || '', size: 10, color: '#000000' });
+  push({ x: COL_HEADING, y: 256, text: 'Contact Number:', size: 9, color: '#666666' });
+  push({ x: COL_HEADING, y: 270, text: faculty.contact_number || '', size: 10, color: '#000000' });
+  push({ x: COL_HEADING, y: 293, text: 'Email Address:', size: 9, color: '#666666' });
+  push({ x: COL_HEADING, y: 307, text: faculty.email || '', size: 10, color: '#000000' });
 
-  push({ x: 26, y: 345, text: 'PERSONAL INFORMATION', size: 13, bold: true, color: '#8b1538' });
-  push(...personalInfoRow(230, 372, 'FIRST NAME', faculty.first_name || ''));
-  push(...personalInfoRow(230, 391, 'MIDDLE NAME', faculty.middle_name || ''));
-  push(...personalInfoRow(230, 410, 'LAST NAME', faculty.last_name || ''));
-  push(...personalInfoRow(230, 429, 'ACADEMIC RANK', academicRank));
+  push({
+    x: COL_LEFT,
+    y: 345,
+    text: 'PERSONAL INFORMATION',
+    size: 13,
+    bold: true,
+    color: '#8b1538',
+  });
+  push(...personalInfoRow(COL_VALUE, 372, 'FIRST NAME', faculty.first_name || ''));
+  push(...personalInfoRow(COL_VALUE, 391, 'MIDDLE NAME', faculty.middle_name || ''));
+  push(...personalInfoRow(COL_VALUE, 410, 'LAST NAME', faculty.last_name || ''));
+  push(...personalInfoRow(COL_VALUE, 429, 'ACADEMIC RANK', academicRank));
   push(
     ...personalInfoRow(
-      230,
+      COL_VALUE,
       448,
       'EMPLOYMENT STATUS',
       currentEmployment?.employment_status || '',
     ),
   );
-  push(...personalInfoRow(230, 467, 'BIRTH DATE', formatLongDate(personal?.date_of_birth)));
-  push(...personalInfoRow(230, 486, 'AGE', calculateAge(personal?.date_of_birth)));
-  push(...personalInfoRow(230, 505, 'CIVIL STATUS', personal?.civil_status || ''));
+  push(...personalInfoRow(COL_VALUE, 467, 'BIRTH DATE', formatLongDate(personal?.date_of_birth)));
+  push(...personalInfoRow(COL_VALUE, 486, 'AGE', calculateAge(personal?.date_of_birth)));
+  push(...personalInfoRow(COL_VALUE, 505, 'CIVIL STATUS', personal?.civil_status || ''));
 
-  push({ x: 26, y: 545, text: 'EDUCATION', size: 13, bold: true, color: '#8b1538' });
+  push({ x: COL_LEFT, y: 545, text: 'EDUCATION', size: 13, bold: true, color: '#8b1538' });
   const eduFor = (level: string) => academic.find((e) => e.level === level);
   const undergrad = eduFor('Undergraduate');
   const masters = eduFor('Masters');
@@ -222,14 +244,14 @@ function buildOverlays(data: FacultyProfilePdfData): TextOverlay[] {
   push(...educationRow(620, "MASTER'S", masters?.degree_course || '', eduDetails(masters)));
   push(...educationRow(668, 'DOCTORATE', doctorate?.degree_course || '', eduDetails(doctorate)));
 
-  push({ x: 26, y: 715, text: 'COURSES HANDLED', size: 13, bold: true, color: '#8b1538' });
+  push({ x: COL_LEFT, y: 715, text: 'COURSES HANDLED', size: 13, bold: true, color: '#8b1538' });
   const rowHeight = 18;
   const rowsPerColumn = 3;
   coursesHandled.forEach((course, i) => {
     const col = Math.floor(i / rowsPerColumn);
     const row = i % rowsPerColumn;
     push({
-      x: 53 + col * 247,
+      x: col === 0 ? COL_LABEL : COL_COURSE2,
       y: 742 + row * rowHeight,
       text: `• ${course}`,
       size: 9.5,
