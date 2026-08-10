@@ -10,22 +10,28 @@
 #
 # What it does:
 #   1. Installs Node.js 22+ (via NodeSource), git, nginx, pm2 if missing.
-#   2. git pull's the repo (skip with --skip-git-pull).
-#   3. Backend: makes sure backend/.env exists (copied from
+#   2. Creates a swapfile if none is active (default 2G, see --swap-size /
+#      --skip-swap) — `ng build` can hang or get OOM-killed without one on
+#      small instances (t2/t3.micro).
+#   3. git pull's the repo (skip with --skip-git-pull).
+#   4. Backend: makes sure backend/.env exists (copied from
 #      backend/.env.production if present — that file is gitignored on
 #      purpose, so it must already be sitting on this box; see below),
 #      npm ci --omit=dev, then (re)starts it under pm2 as SERVICE_USER and
 #      persists it across reboots via `pm2 startup` + `pm2 save`.
-#   4. Frontend: npm ci && npm run build (production build — picks up
+#   5. Frontend: npm ci && npm run build (production build — picks up
 #      client/src/app/environments/environment.prod.ts automatically).
-#   5. nginx — writes two dedicated conf.d files (safe to fully regenerate
+#      Both npm ci's are skipped on a redeploy if package-lock.json and the
+#      Node version haven't changed since the last successful install (see
+#      npm_ci_if_needed) — the build itself always re-runs.
+#   6. nginx — writes two dedicated conf.d files (safe to fully regenerate
 #      on every run, EXCEPT once certbot has added its own SSL block, at
 #      which point re-runs leave that file alone):
 #        - Frontend domain(s): serves the Angular build as a static SPA.
 #        - API domain: reverse-proxies to the pm2-managed backend.
-#   6. --certbot requests/renews Let's Encrypt certs for all domains via
+#   7. --certbot requests/renews Let's Encrypt certs for all domains via
 #      certbot's nginx plugin (skipped per-domain if a cert already exists).
-#   7. Health-checks both the backend (direct) and the frontend (via nginx).
+#   8. Health-checks both the backend (direct) and the frontend (via nginx).
 #
 # backend/.env.production is intentionally NOT in git (see .gitignore) since
 # it holds real secrets (DB password, JWT secret, AWS keys, SMTP password).
@@ -48,6 +54,8 @@ SERVICE_NAME="cms-backend"
 SKIP_GIT_PULL=false
 RUN_CERTBOT=false
 CERTBOT_EMAIL=""
+SWAP_SIZE="2G"
+SKIP_SWAP=false
 
 usage() {
 	cat <<EOF
@@ -62,6 +70,8 @@ Options:
   --service-user <u>        Linux user pm2/npm run as (default: \$SUDO_USER)
   --certbot                 Request/renew Let's Encrypt certs for all domains
   --certbot-email <e>       Email for certbot registration (default: admin@<frontend-domain>)
+  --swap-size <size>        Swapfile size if none exists yet, e.g. 2G, 512M (default: 2G)
+  --skip-swap               Don't create a swapfile even if none exists
   --skip-git-pull           Don't run 'git pull' before installing/building
   -h, --help                Show this help
 EOF
@@ -97,6 +107,14 @@ while [[ $# -gt 0 ]]; do
 		CERTBOT_EMAIL="$2"
 		shift 2
 		;;
+	--swap-size)
+		SWAP_SIZE="$2"
+		shift 2
+		;;
+	--skip-swap)
+		SKIP_SWAP=true
+		shift
+		;;
 	--skip-git-pull)
 		SKIP_GIT_PULL=true
 		shift
@@ -121,6 +139,30 @@ die() {
 
 [[ $EUID -eq 0 ]] || die "Run this with sudo: sudo $0 $*"
 run_as_user() { sudo -u "$SERVICE_USER" -H bash -lc "$1"; }
+
+# Skips `npm ci` when neither package-lock.json nor the Node.js version has
+# changed since the last successful install in that dir — a redeploy where
+# only application code changed shouldn't pay a full clean-reinstall every
+# time. Node version is part of the fingerprint because native addons
+# (e.g. backend's bcrypt) are compiled against a specific Node ABI; if this
+# script upgrades Node (see step 1) a stale binary built for the old
+# version would silently keep running otherwise. The stamp lives inside
+# node_modules so wiping node_modules also invalidates it.
+npm_ci_if_needed() {
+	local dir="$1" extra_args="$2"
+	local stamp="$dir/node_modules/.deploy-fingerprint"
+	local current
+	current="$(sha256sum "$dir/package-lock.json" | awk '{print $1}')-$(node -v)"
+
+	if [[ -d "$dir/node_modules" ]] && [[ -f "$stamp" ]] && [[ "$(cat "$stamp")" == "$current" ]]; then
+		echo "package-lock.json and Node version unchanged since last install in $dir — skipping npm ci"
+		return
+	fi
+
+	run_as_user "cd '$dir' && npm ci $extra_args"
+	echo "$current" >"$stamp"
+	chown "$SERVICE_USER":"$SERVICE_USER" "$stamp"
+}
 
 # ── 1. System packages ───────────────────────────────────────────
 log "dnf update"
@@ -155,14 +197,40 @@ fi
 systemctl enable nginx >/dev/null
 systemctl is-active --quiet nginx || systemctl start nginx
 
-# ── 2. Code ───────────────────────────────────────────────────────
+# ── 2. Swap ───────────────────────────────────────────────────────
+# `ng build` (frontend) is memory-hungry enough to hang or get OOM-killed on
+# small instances (t2/t3.micro, 1GB RAM) with no swap. Adding one is cheap
+# insurance and only needs to happen once.
+if [[ "$SKIP_SWAP" == false ]]; then
+	if swapon --show | grep -q .; then
+		log "Swap already active — skipping swapfile creation"
+	elif [[ -f /swapfile ]]; then
+		log "/swapfile exists but isn't active — enabling it"
+		swapon /swapfile
+	else
+		log "No swap active — creating a ${SWAP_SIZE} swapfile at /swapfile"
+		if ! fallocate -l "$SWAP_SIZE" /swapfile 2>/dev/null; then
+			log "fallocate unsupported on this filesystem — falling back to dd (slower)"
+			rm -f /swapfile
+			SIZE_MB=$(($(numfmt --from=iec "$SWAP_SIZE") / 1048576))
+			dd if=/dev/zero of=/swapfile bs=1M count="$SIZE_MB" status=progress
+		fi
+		chmod 600 /swapfile
+		mkswap /swapfile
+		swapon /swapfile
+		grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >>/etc/fstab
+		echo "Swap enabled: $(swapon --show)"
+	fi
+fi
+
+# ── 3. Code ───────────────────────────────────────────────────────
 if [[ "$SKIP_GIT_PULL" == false ]] && [[ -d "$REPO_DIR/.git" ]]; then
 	log "git pull in $REPO_DIR"
 	git -C "$REPO_DIR" config --global --add safe.directory "$REPO_DIR" 2>/dev/null || true
 	git -C "$REPO_DIR" pull --ff-only || die "git pull failed — resolve manually and re-run with --skip-git-pull"
 fi
 
-# ── 3. Backend env ────────────────────────────────────────────────
+# ── 4. Backend env ────────────────────────────────────────────────
 if [[ ! -f "$BACKEND_DIR/.env" ]]; then
 	if [[ -f "$BACKEND_DIR/.env.production" ]]; then
 		log "backend/.env missing — copying from backend/.env.production"
@@ -177,9 +245,9 @@ scp backend/.env.production ${SERVICE_USER}@<this-box>:$BACKEND_DIR/.env.product
 	fi
 fi
 
-# ── 4. Backend deps + pm2 ─────────────────────────────────────────
+# ── 5. Backend deps + pm2 ─────────────────────────────────────────
 log "npm ci (production) in $BACKEND_DIR"
-run_as_user "cd '$BACKEND_DIR' && npm ci --omit=dev"
+npm_ci_if_needed "$BACKEND_DIR" "--omit=dev"
 
 log "Starting/reloading $SERVICE_NAME under pm2 (user=$SERVICE_USER port=$BACKEND_PORT)"
 if run_as_user "pm2 describe $SERVICE_NAME" >/dev/null 2>&1; then
@@ -210,12 +278,13 @@ else
 	die "Backend isn't responding on port ${BACKEND_PORT} — check: sudo -u $SERVICE_USER pm2 logs $SERVICE_NAME"
 fi
 
-# ── 5. Frontend build ─────────────────────────────────────────────
-log "npm ci && npm run build in $CLIENT_DIR (production config, picks up environment.prod.ts)"
-run_as_user "cd '$CLIENT_DIR' && npm ci && npm run build"
+# ── 6. Frontend build ─────────────────────────────────────────────
+log "Building frontend in $CLIENT_DIR (production config, picks up environment.prod.ts)"
+npm_ci_if_needed "$CLIENT_DIR" ""
+run_as_user "cd '$CLIENT_DIR' && npm run build"
 [[ -f "$CLIENT_BUILD_DIR/index.html" ]] || die "Frontend build didn't produce $CLIENT_BUILD_DIR/index.html — check the build output above."
 
-# ── 6. nginx ───────────────────────────────────────────────────────
+# ── 7. nginx ───────────────────────────────────────────────────────
 FRONTEND_CONF="/etc/nginx/conf.d/cms-frontend.conf"
 API_CONF="/etc/nginx/conf.d/cms-api.conf"
 
@@ -279,7 +348,7 @@ else
 	die "nginx -t failed — check $FRONTEND_CONF and $API_CONF manually"
 fi
 
-# ── 7. certbot (optional) ─────────────────────────────────────────
+# ── 8. certbot (optional) ─────────────────────────────────────────
 if $RUN_CERTBOT; then
 	if ! command -v certbot >/dev/null 2>&1; then
 		log "Installing certbot"
@@ -299,7 +368,7 @@ if $RUN_CERTBOT; then
 		die "certbot failed — check the output above (common cause: DNS for these domains hasn't propagated to this box's IP yet)"
 fi
 
-# ── 8. Frontend health check (via nginx) ──────────────────────────
+# ── 9. Frontend health check (via nginx) ──────────────────────────
 log "Health check on http://127.0.0.1/ (Host: ${FRONTEND_DOMAIN})"
 CODE="$(curl -s -o /dev/null -w '%{http_code}' -H "Host: ${FRONTEND_DOMAIN}" "http://127.0.0.1/" || echo "000")"
 if [[ "$CODE" == "200" ]]; then
