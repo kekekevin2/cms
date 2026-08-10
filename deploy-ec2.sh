@@ -21,9 +21,12 @@
 #      persists it across reboots via `pm2 startup` + `pm2 save`.
 #   5. Frontend: npm ci && npm run build (production build — picks up
 #      client/src/app/environments/environment.prod.ts automatically).
-#      Both npm ci's are skipped on a redeploy if package-lock.json and the
-#      Node version haven't changed since the last successful install (see
-#      npm_ci_if_needed) — the build itself always re-runs.
+#      Both installs are skipped on a redeploy if package-lock.json, the
+#      Node version, and the install command used all match the last
+#      successful install (see npm_ci_if_needed) — the build itself always
+#      re-runs. Uses `npm ci` by default; --use-npm-install switches to
+#      `npm install` as a last-resort fallback if npm ci itself keeps
+#      crashing/OOMing even with swap (see step 2).
 #   6. nginx — writes two dedicated conf.d files (safe to fully regenerate
 #      on every run, EXCEPT once certbot has added its own SSL block, at
 #      which point re-runs leave that file alone):
@@ -56,6 +59,7 @@ RUN_CERTBOT=false
 CERTBOT_EMAIL=""
 SWAP_SIZE="2G"
 SKIP_SWAP=false
+USE_NPM_INSTALL=false
 
 usage() {
 	cat <<EOF
@@ -72,6 +76,11 @@ Options:
   --certbot-email <e>       Email for certbot registration (default: admin@<frontend-domain>)
   --swap-size <size>        Swapfile size if none exists yet, e.g. 2G, 512M (default: 2G)
   --skip-swap               Don't create a swapfile even if none exists
+  --use-npm-install         Use 'npm install' instead of 'npm ci'. Only reach for this
+                            if npm ci itself is crashing/OOMing and swap didn't fix it —
+                            npm install has the same memory footprint, it just doesn't
+                            enforce that package-lock.json is honored exactly, so it's a
+                            last resort, not a real fix for a memory-constrained box.
   --skip-git-pull           Don't run 'git pull' before installing/building
   -h, --help                Show this help
 EOF
@@ -115,6 +124,10 @@ while [[ $# -gt 0 ]]; do
 		SKIP_SWAP=true
 		shift
 		;;
+	--use-npm-install)
+		USE_NPM_INSTALL=true
+		shift
+		;;
 	--skip-git-pull)
 		SKIP_GIT_PULL=true
 		shift
@@ -140,26 +153,34 @@ die() {
 [[ $EUID -eq 0 ]] || die "Run this with sudo: sudo $0 $*"
 run_as_user() { sudo -u "$SERVICE_USER" -H bash -lc "$1"; }
 
-# Skips `npm ci` when neither package-lock.json nor the Node.js version has
-# changed since the last successful install in that dir — a redeploy where
-# only application code changed shouldn't pay a full clean-reinstall every
-# time. Node version is part of the fingerprint because native addons
-# (e.g. backend's bcrypt) are compiled against a specific Node ABI; if this
-# script upgrades Node (see step 1) a stale binary built for the old
-# version would silently keep running otherwise. The stamp lives inside
-# node_modules so wiping node_modules also invalidates it.
+# Skips the install step when package-lock.json, the Node.js version, and
+# whether --use-npm-install was passed all match the last successful install
+# in that dir — a redeploy where only application code changed shouldn't pay
+# a full clean-reinstall every time. Node version is part of the fingerprint
+# because native addons (e.g. backend's bcrypt) are compiled against a
+# specific Node ABI; if this script upgrades Node (see step 1) a stale
+# binary built for the old version would silently keep running otherwise.
+# --use-npm-install is part of it too, so flipping that flag between runs
+# always forces a fresh install rather than trusting a stamp left by the
+# other command. The stamp lives inside node_modules so wiping node_modules
+# also invalidates it.
 npm_ci_if_needed() {
 	local dir="$1" extra_args="$2"
 	local stamp="$dir/node_modules/.deploy-fingerprint"
 	local current
-	current="$(sha256sum "$dir/package-lock.json" | awk '{print $1}')-$(node -v)"
+	current="$(sha256sum "$dir/package-lock.json" | awk '{print $1}')-$(node -v)-${USE_NPM_INSTALL}"
 
 	if [[ -d "$dir/node_modules" ]] && [[ -f "$stamp" ]] && [[ "$(cat "$stamp")" == "$current" ]]; then
-		echo "package-lock.json and Node version unchanged since last install in $dir — skipping npm ci"
+		echo "package-lock.json and Node version unchanged since last install in $dir — skipping install"
 		return
 	fi
 
-	run_as_user "cd '$dir' && npm ci $extra_args"
+	if $USE_NPM_INSTALL; then
+		echo "Using npm install instead of npm ci (--use-npm-install)"
+		run_as_user "cd '$dir' && npm install $extra_args"
+	else
+		run_as_user "cd '$dir' && npm ci $extra_args"
+	fi
 	echo "$current" >"$stamp"
 	chown "$SERVICE_USER":"$SERVICE_USER" "$stamp"
 }
