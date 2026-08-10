@@ -26,7 +26,10 @@
 #      successful install (see npm_ci_if_needed) — the build itself always
 #      re-runs. Uses `npm ci` by default; --use-npm-install switches to
 #      `npm install` as a last-resort fallback if npm ci itself keeps
-#      crashing/OOMing even with swap (see step 2).
+#      crashing/OOMing even with swap (see step 2). The build runs with
+#      NODE_OPTIONS=--max-old-space-size=<--build-memory, default 2048> —
+#      this is a separate V8 heap ceiling from system/swap memory; "JS heap
+#      out of memory" from ng build means THIS needs raising, not swap.
 #   6. nginx — writes two dedicated conf.d files (safe to fully regenerate
 #      on every run, EXCEPT once certbot has added its own SSL block, at
 #      which point re-runs leave that file alone):
@@ -60,6 +63,7 @@ CERTBOT_EMAIL=""
 SWAP_SIZE="2G"
 SKIP_SWAP=false
 USE_NPM_INSTALL=false
+BUILD_MEMORY_MB="2048"
 
 usage() {
 	cat <<EOF
@@ -81,6 +85,11 @@ Options:
                             npm install has the same memory footprint, it just doesn't
                             enforce that package-lock.json is honored exactly, so it's a
                             last resort, not a real fix for a memory-constrained box.
+  --build-memory <MB>       Node's V8 heap ceiling for the Angular build via
+                            NODE_OPTIONS=--max-old-space-size (default: 2048). This is a
+                            separate limit from swap/system RAM — "JS heap out of memory"
+                            from ng build means THIS needs raising, not the swapfile.
+                            Bump it (e.g. 3072, 4096) if the default still OOMs.
   --skip-git-pull           Don't run 'git pull' before installing/building
   -h, --help                Show this help
 EOF
@@ -127,6 +136,10 @@ while [[ $# -gt 0 ]]; do
 	--use-npm-install)
 		USE_NPM_INSTALL=true
 		shift
+		;;
+	--build-memory)
+		BUILD_MEMORY_MB="$2"
+		shift 2
 		;;
 	--skip-git-pull)
 		SKIP_GIT_PULL=true
@@ -300,9 +313,9 @@ else
 fi
 
 # ── 6. Frontend build ─────────────────────────────────────────────
-log "Building frontend in $CLIENT_DIR (production config, picks up environment.prod.ts)"
+log "Building frontend in $CLIENT_DIR (production config, picks up environment.prod.ts, NODE_OPTIONS heap=${BUILD_MEMORY_MB}MB)"
 npm_ci_if_needed "$CLIENT_DIR" ""
-run_as_user "cd '$CLIENT_DIR' && npm run build"
+run_as_user "cd '$CLIENT_DIR' && NODE_OPTIONS='--max-old-space-size=${BUILD_MEMORY_MB}' npm run build"
 [[ -f "$CLIENT_BUILD_DIR/index.html" ]] || die "Frontend build didn't produce $CLIENT_BUILD_DIR/index.html — check the build output above."
 
 # ── 7. nginx ───────────────────────────────────────────────────────
