@@ -318,6 +318,27 @@ npm_ci_if_needed "$CLIENT_DIR" ""
 run_as_user "cd '$CLIENT_DIR' && NODE_OPTIONS='--max-old-space-size=${BUILD_MEMORY_MB}' npm run build"
 [[ -f "$CLIENT_BUILD_DIR/index.html" ]] || die "Frontend build didn't produce $CLIENT_BUILD_DIR/index.html — check the build output above."
 
+# nginx's worker runs as its own unprivileged user (not SERVICE_USER), and a
+# fresh box's home directory is commonly mode 700 — nginx can't even
+# traverse into it to reach the build output, which serves as an opaque 500
+# with no obvious cause (see /var/log/nginx/error.log: "13: Permission
+# denied"). Grant traverse-only (o+x — NOT readable/listable, so other
+# users still can't browse the directory, just reach this one known path)
+# on every ancestor directory up to /, for any directory SERVICE_USER owns.
+log "Ensuring nginx can traverse the path to $CLIENT_BUILD_DIR"
+DIR_TO_CHECK="$CLIENT_BUILD_DIR"
+while [[ "$DIR_TO_CHECK" != "/" && -n "$DIR_TO_CHECK" ]]; do
+	if [[ "$(stat -c '%U' "$DIR_TO_CHECK" 2>/dev/null)" == "$SERVICE_USER" ]]; then
+		MODE="$(stat -c '%a' "$DIR_TO_CHECK")"
+		OTHERS="${MODE: -1}"
+		if (((OTHERS & 1) == 0)); then
+			chmod o+x "$DIR_TO_CHECK"
+			echo "  chmod o+x $DIR_TO_CHECK (was mode $MODE)"
+		fi
+	fi
+	DIR_TO_CHECK="$(dirname "$DIR_TO_CHECK")"
+done
+
 # ── 7. nginx ───────────────────────────────────────────────────────
 FRONTEND_CONF="/etc/nginx/conf.d/cms-frontend.conf"
 API_CONF="/etc/nginx/conf.d/cms-api.conf"
@@ -403,8 +424,15 @@ if $RUN_CERTBOT; then
 fi
 
 # ── 9. Frontend health check (via nginx) ──────────────────────────
+# -L follows redirects and --resolve pins the domain to 127.0.0.1 for both
+# ports, so once certbot is active and nginx 301s HTTP -> HTTPS, this
+# follows the whole chain (including real cert validation) without ever
+# leaving the box or depending on DNS having propagated.
 log "Health check on http://127.0.0.1/ (Host: ${FRONTEND_DOMAIN})"
-CODE="$(curl -s -o /dev/null -w '%{http_code}' -H "Host: ${FRONTEND_DOMAIN}" "http://127.0.0.1/" || echo "000")"
+CODE="$(curl -s -o /dev/null -w '%{http_code}' -L \
+	--resolve "${FRONTEND_DOMAIN}:80:127.0.0.1" \
+	--resolve "${FRONTEND_DOMAIN}:443:127.0.0.1" \
+	-H "Host: ${FRONTEND_DOMAIN}" "http://127.0.0.1/" || echo "000")"
 if [[ "$CODE" == "200" ]]; then
 	echo "OK — frontend is serving via nginx"
 else
