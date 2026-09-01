@@ -8,7 +8,6 @@ import {
   Program,
   CareerOpportunity,
 } from '../../../services/dean/college-department-profile.service';
-import { environment } from '../../../environments/environment';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -22,7 +21,6 @@ export class DeanMyProfile implements OnInit {
   saving = signal(false);
   isEditing = signal(false);
   uploadingPicture = signal(false);
-  baseUrl = environment.apiUrl.replace('/api', '');
 
   profile = signal<CollegeDepartmentProfile>({});
   form = signal<CollegeDepartmentProfile>({});

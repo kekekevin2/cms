@@ -1,17 +1,14 @@
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
 const facultyCredentialsController = require("../controllers/faculty-credentials.controller");
 const verifyToken = require("../middleware/auth.middleware");
 const checkRole = require("../middleware/role.middleware");
+const { makeUpload, MB, DOCUMENT_TYPES } = require("../utils/upload");
 
-// Configure multer for file uploads
-const storage = multer.memoryStorage();
-const upload = multer({
-	storage,
-	limits: {
-		fileSize: 200 * 1024 * 1024, // 200MB limit
-	},
+const upload = makeUpload({
+	folder: "credentials",
+	allowedTypes: DOCUMENT_TYPES,
+	maxSize: 25 * MB,
 });
 
 // Define file fields for upload

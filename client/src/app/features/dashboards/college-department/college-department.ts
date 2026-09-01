@@ -38,7 +38,7 @@ export interface DeptStats {
   styles: [],
 })
 export class CollegeDepartmentDashboard implements OnInit {
-  isSidebarOpen = signal(true);
+  isSidebarOpen = signal(false);
   activeTab = signal<string>('overview');
   isUserMenuOpen = signal(false);
   isChangePasswordOpen = signal(false);

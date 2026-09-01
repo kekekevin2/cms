@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { downloadFromUrl } from '../../shared/utils/download.util';
 
 export interface RequirementFile {
   file_id: number;
@@ -157,16 +158,9 @@ export class FacultyRequirementService {
   // Download a specific file by file_id
   downloadSingleFile(submission_id: number, file_id: number, fileName: string): void {
     this.http
-      .get(`${this.apiUrl}/${submission_id}/files/${file_id}/download`, { responseType: 'blob' })
+      .get<{ url: string }>(`${this.apiUrl}/${submission_id}/files/${file_id}/download`)
       .subscribe({
-        next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = fileName;
-          a.click();
-          window.URL.revokeObjectURL(url);
-        },
+        next: ({ url }) => downloadFromUrl(url, fileName),
         error: (err) => console.error('Download failed', err),
       });
   }
@@ -183,26 +177,10 @@ export class FacultyRequirementService {
 
   // Download a requirement file (authenticated)
   downloadRequirement(submission_id: number, fileName?: string): void {
-    this.http
-      .get(`${this.apiUrl}/${submission_id}/download`, { responseType: 'blob', observe: 'response' })
-      .subscribe({
-        next: (response) => {
-          const blob = response.body!;
-          const disposition = response.headers.get('Content-Disposition');
-          let name = fileName ?? `requirement_${submission_id}`;
-          if (disposition) {
-            const match = disposition.match(/filename[^;=\n]*=(?:(['"]))?(.*?)\1/);
-            if (match?.[2]) name = match[2];
-          }
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = name;
-          a.click();
-          window.URL.revokeObjectURL(url);
-        },
-        error: (err) => console.error('Download failed', err),
-      });
+    this.http.get<{ url: string }>(`${this.apiUrl}/${submission_id}/download`).subscribe({
+      next: ({ url }) => downloadFromUrl(url, fileName),
+      error: (err) => console.error('Download failed', err),
+    });
   }
 
   // Get the faculty's clearance status for a specific period

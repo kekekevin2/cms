@@ -9,6 +9,7 @@ const memberController = require("../controllers/organization-member.controller"
 const documentController = require("../controllers/organization-document.controller");
 const adviserController = require("../controllers/organization-adviser.controller");
 const cvlAttachmentController = require("../controllers/cvl-attachment.controller");
+const { makeUpload, MB, DOCUMENT_TYPES, IMAGE_TYPES, SPREADSHEET_TYPES } = require("../utils/upload");
 
 // Configure multer for document uploads
 const uploadDir = "uploads/organization-documents/";
@@ -83,47 +84,22 @@ const csvUpload = multer({
       cb(new Error("Only CSV or Excel files (.csv, .xls, .xlsx) are allowed"));
     }
   },
+const upload = makeUpload({
+  folder: "organization-documents",
+  allowedTypes: DOCUMENT_TYPES,
+  maxSize: 25 * MB,
 });
 
-// Configure multer for member photo uploads
-const photoStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    let uploadPath = "uploads/member-photos/";
-    
-    // Use different path for signatures
-    if (file.fieldname === 'signature') {
-      uploadPath = "uploads/member-signatures/";
-    }
-    
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const prefix = file.fieldname === 'signature' ? 'signature-' : 'member-';
-    cb(null, prefix + uniqueSuffix + path.extname(file.originalname));
-  },
+const csvUpload = makeUpload({
+  folder: "organization-population",
+  allowedTypes: SPREADSHEET_TYPES,
+  maxSize: 5 * MB,
 });
 
-const photoUpload = multer({
-  storage: photoStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: function (req, file, cb) {
-    const allowedTypes = /jpeg|jpg|png/;
-    const extname = allowedTypes.test(
-      path.extname(file.originalname).toLowerCase(),
-    );
-    const mimetype = file.mimetype.startsWith("image/");
-
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error("Only image files (JPEG, JPG, PNG) are allowed"));
-    }
-  },
+const photoUpload = makeUpload({
+  folder: "member-photos",
+  allowedTypes: IMAGE_TYPES,
+  maxSize: 5 * MB,
 });
 
 // Organization dashboard

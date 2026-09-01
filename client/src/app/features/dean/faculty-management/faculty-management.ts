@@ -16,6 +16,7 @@ import { DeanAnalyticsService } from '../../../services/dean/dean-analytics.serv
 import { DeanPDSService } from '../../../services/dean/dean-pds.service';
 import { DeanFacultyProfileService } from '../../../services/dean/dean-faculty-profile.service';
 import { PdsPdfService } from '../../../services/core/pds-pdf.service';
+import { FacultyProfilePdfService } from '../../../services/core/faculty-profile-pdf.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -79,16 +80,16 @@ export class DeanFacultyManagement implements OnInit {
     private pdsService: DeanPDSService,
     private facultyProfileService: DeanFacultyProfileService,
     private pdfService: PdsPdfService,
+    private facultyProfilePdfService: FacultyProfilePdfService,
   ) {}
 
   generateAllActivitiesPDF(faculty: Faculty) {
-    // Fetch all three types of activities
     Promise.all([
       this.analyticsService.getSeminarsTrainingsByFaculty(faculty.faculty_id).toPromise(),
       this.analyticsService.getResearchActivitiesByFaculty(faculty.faculty_id).toPromise(),
       this.analyticsService.getExtensionActivitiesByFaculty(faculty.faculty_id).toPromise(),
     ])
-      .then(([seminarsData, researchData, extensionData]) => {
+      .then(async ([seminarsData, researchData, extensionData]) => {
         const seminars = seminarsData?.facultyList?.[0]?.activities || [];
         const research = researchData?.facultyList?.[0]?.activities || [];
         const extensions = extensionData?.facultyList?.[0]?.activities || [];
@@ -103,7 +104,70 @@ export class DeanFacultyManagement implements OnInit {
           return;
         }
 
-        this.createHTMLPDF(faculty, seminars, research, extensions);
+        const formatDate = (date: string) => {
+          if (!date) return '';
+          const d = new Date(date);
+          if (isNaN(d.getTime())) return '';
+          return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        };
+
+        await this.facultyProfilePdfService.generateActivitiesReport(faculty, [
+          {
+            title: 'Seminars/Trainings/Conferences Attended',
+            columns: [
+              { key: 'no', header: 'No.', widthFraction: 0.05 },
+              {
+                key: 'title',
+                header: 'Title of Seminar/Workshop/Training/Conference Attended',
+                widthFraction: 0.4,
+              },
+              { key: 'category', header: 'Category (Local, National, International)', widthFraction: 0.15 },
+              { key: 'date', header: 'Date', widthFraction: 0.15 },
+              { key: 'sponsoring_agency', header: 'Sponsoring Agency', widthFraction: 0.25 },
+            ],
+            rows: seminars.map((s: any, i: number) => ({
+              no: String(i + 1),
+              title: s.title || '',
+              category: s.category || '',
+              date: formatDate(s.date),
+              sponsoring_agency: s.sponsoring_agency || '',
+            })),
+          },
+          {
+            title: 'Research Activities',
+            columns: [
+              { key: 'no', header: 'No.', widthFraction: 0.05 },
+              { key: 'title', header: 'Title of Research', widthFraction: 0.4 },
+              { key: 'category', header: 'Category', widthFraction: 0.15 },
+              { key: 'date', header: 'Date', widthFraction: 0.15 },
+              { key: 'sponsoring_agency', header: 'Sponsoring Agency', widthFraction: 0.25 },
+            ],
+            rows: research.map((r: any, i: number) => ({
+              no: String(i + 1),
+              title: r.title || '',
+              category: r.category || '',
+              date: formatDate(r.date),
+              sponsoring_agency: r.sponsoring_agency || '',
+            })),
+          },
+          {
+            title: 'Extension Activities',
+            columns: [
+              { key: 'no', header: 'No.', widthFraction: 0.05 },
+              { key: 'title', header: 'Title of Extension PPAs', widthFraction: 0.4 },
+              { key: 'date', header: 'Date of Implementation', widthFraction: 0.15 },
+              { key: 'beneficiary', header: 'Beneficiary', widthFraction: 0.22 },
+              { key: 'location', header: 'Location', widthFraction: 0.18 },
+            ],
+            rows: extensions.map((e: any, i: number) => ({
+              no: String(i + 1),
+              title: e.title || '',
+              date: formatDate(e.date),
+              beneficiary: e.beneficiary || '',
+              location: e.location || '',
+            })),
+          },
+        ]);
       })
       .catch((error) => {
         console.error('Error generating PDF:', error);
@@ -114,384 +178,6 @@ export class DeanFacultyManagement implements OnInit {
           confirmButtonColor: '#2563eb',
         });
       });
-  }
-
-  private createHTMLPDF(faculty: Faculty, seminars: any[], research: any[], extensions: any[]) {
-    const currentYear = new Date().getFullYear();
-    const facultyName = `${faculty.last_name.toUpperCase()}, ${faculty.first_name.toUpperCase()} ${faculty.middle_name?.toUpperCase() || ''}`;
-
-    const formatDate = (date: string) => {
-      if (!date) return '';
-      const d = new Date(date);
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    };
-
-    let htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Faculty Activities Report</title>
-        <style>
-          @media print {
-            @page { margin: 0.5in; size: letter; }
-            body { margin: 0; }
-          }
-          body {
-            font-family: Arial, sans-serif;
-            font-size: 9pt;
-            line-height: 1.2;
-          }
-          .page-break { page-break-after: always; }
-          .header {
-            text-align: center;
-            margin-bottom: 15px;
-          }
-          .title {
-            font-size: 11pt;
-            font-weight: bold;
-            margin-bottom: 5px;
-          }
-          .subtitle {
-            font-size: 10pt;
-            margin-bottom: 10px;
-          }
-          .faculty-name {
-            text-align: left;
-            font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 10pt;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-          }
-          th, td {
-            border: 1px solid black;
-            padding: 4px;
-            text-align: left;
-            vertical-align: top;
-            word-wrap: break-word;
-            font-size: 8pt;
-          }
-          th {
-            background-color: #f0f0f0;
-            font-weight: bold;
-          }
-          .col-no { width: 5%; }
-          .col-title { width: 40%; }
-          .col-category { width: 15%; }
-          .col-date { width: 15%; }
-          .col-agency { width: 25%; }
-          .col-beneficiary { width: 22%; }
-          .col-location { width: 18%; }
-        </style>
-      </head>
-      <body>
-    `;
-
-    // Seminars Section
-    if (seminars.length > 0) {
-      htmlContent += `
-        <div class="header">
-          <div class="title">Seminars/Trainings/Conferences Attended</div>
-          <div class="subtitle">FY ${currentYear}-${currentYear + 1}</div>
-        </div>
-        <div class="faculty-name">Faculty Name: ${facultyName}</div>
-        <table>
-          <thead>
-            <tr>
-              <th class="col-no">No.</th>
-              <th class="col-title">Title of Seminar/Workshop/Training/Conference Attended</th>
-              <th class="col-category">Category (Local, National, International)</th>
-              <th class="col-date">Date</th>
-              <th class="col-agency">Sponsoring Agency</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      seminars.forEach((seminar, index) => {
-        htmlContent += `
-          <tr>
-            <td class="col-no">${index + 1}</td>
-            <td class="col-title">${seminar.title || ''}</td>
-            <td class="col-category">${seminar.category || ''}</td>
-            <td class="col-date">${formatDate(seminar.date)}</td>
-            <td class="col-agency">${seminar.sponsoring_agency || ''}</td>
-          </tr>
-        `;
-      });
-
-      htmlContent += `
-          </tbody>
-        </table>
-        <div class="page-break"></div>
-      `;
-    }
-
-    // Research Section
-    if (research.length > 0) {
-      htmlContent += `
-        <div class="header">
-          <div class="title">Research Activities</div>
-          <div class="subtitle">FY ${currentYear}-${currentYear + 1}</div>
-        </div>
-        <div class="faculty-name">Faculty Name: ${facultyName}</div>
-        <table>
-          <thead>
-            <tr>
-              <th class="col-no">No.</th>
-              <th class="col-title">Title of Research</th>
-              <th class="col-category">Category</th>
-              <th class="col-date">Date</th>
-              <th class="col-agency">Sponsoring Agency</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      research.forEach((item, index) => {
-        htmlContent += `
-          <tr>
-            <td class="col-no">${index + 1}</td>
-            <td class="col-title">${item.title || ''}</td>
-            <td class="col-category">${item.category || ''}</td>
-            <td class="col-date">${formatDate(item.date)}</td>
-            <td class="col-agency">${item.sponsoring_agency || ''}</td>
-          </tr>
-        `;
-      });
-
-      htmlContent += `
-          </tbody>
-        </table>
-        <div class="page-break"></div>
-      `;
-    }
-
-    // Extension Section
-    if (extensions.length > 0) {
-      htmlContent += `
-        <div class="header">
-          <div class="title">Extension Activities</div>
-          <div class="subtitle">FY ${currentYear}-${currentYear + 1}</div>
-        </div>
-        <div class="faculty-name">Faculty Name: ${facultyName}</div>
-        <table>
-          <thead>
-            <tr>
-              <th class="col-no">No.</th>
-              <th class="col-title">Title of Extension PPAs</th>
-              <th class="col-date">Date of Implementation</th>
-              <th class="col-beneficiary">Beneficiary</th>
-              <th class="col-location">Location</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      extensions.forEach((item, index) => {
-        htmlContent += `
-          <tr>
-            <td class="col-no">${index + 1}</td>
-            <td class="col-title">${item.title || ''}</td>
-            <td class="col-date">${formatDate(item.date_from)}</td>
-            <td class="col-beneficiary">${item.beneficiary || ''}</td>
-            <td class="col-location">${item.location || ''}</td>
-          </tr>
-        `;
-      });
-
-      htmlContent += `
-          </tbody>
-        </table>
-      `;
-    }
-
-    htmlContent += `
-      </body>
-      </html>
-    `;
-
-    // Open print dialog
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-      }, 250);
-    }
-  }
-
-  private createPDF(data: any, type: string, faculty: Faculty) {
-    const { jsPDF } = (window as any).jspdf;
-    const doc = new jsPDF();
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 15;
-    let yPosition = margin;
-
-    // Title
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    const title = data.title;
-    const titleLines = doc.splitTextToSize(title, pageWidth - 2 * margin);
-    doc.text(titleLines, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += titleLines.length * 6 + 5;
-
-    // Academic Year
-    const currentYear = new Date().getFullYear();
-    doc.setFontSize(11);
-    doc.text(`FY ${currentYear}-${currentYear + 1}`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 10;
-
-    // Faculty Name
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Faculty Name: ${data.facultyList[0].faculty_name.toUpperCase()}`, margin, yPosition);
-    yPosition += 8;
-
-    // Table headers
-    const headers = this.getTableHeaders(type);
-    const columnWidths = this.getColumnWidths(type, pageWidth, margin);
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.rect(margin, yPosition, pageWidth - 2 * margin, 7);
-
-    let xPosition = margin + 2;
-    headers.forEach((header: string, index: number) => {
-      doc.text(header, xPosition, yPosition + 5);
-      xPosition += columnWidths[index];
-    });
-    yPosition += 7;
-
-    // Table rows
-    doc.setFont('helvetica', 'normal');
-    data.facultyList[0].activities.forEach((activity: any, activityIndex: number) => {
-      const rowData = this.getRowData(activity, type, activityIndex + 1);
-      const rowHeight = this.calculateRowHeight(doc, rowData, columnWidths, pageWidth, margin);
-
-      // Check if we need a new page
-      if (yPosition + rowHeight > pageHeight - margin) {
-        doc.addPage();
-        yPosition = margin;
-      }
-
-      doc.rect(margin, yPosition, pageWidth - 2 * margin, rowHeight);
-
-      xPosition = margin + 2;
-      rowData.forEach((cellData: string, index: number) => {
-        const cellLines = doc.splitTextToSize(cellData, columnWidths[index] - 4);
-        doc.text(cellLines, xPosition, yPosition + 4);
-        xPosition += columnWidths[index];
-      });
-
-      yPosition += rowHeight;
-    });
-
-    // Save PDF
-    const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
-    const facultyName = `${faculty.last_name}_${faculty.first_name}`.replace(/\s+/g, '_');
-    const fileName = `${facultyName}_${typeLabel}_Report_${currentYear}.pdf`;
-    doc.save(fileName);
-  }
-
-  private getTableHeaders(type: string): string[] {
-    switch (type) {
-      case 'extension':
-        return [
-          'No.',
-          'Title of Extension PPAs',
-          'Date of Implementation',
-          'Beneficiary',
-          'Location',
-        ];
-      case 'research':
-        return ['No.', 'Title of Research', 'Category', 'Date', 'Sponsoring Agency'];
-      case 'seminars':
-        return [
-          'No.',
-          'Title of Seminar/Workshop/Training/Conference Attended',
-          'Category (Local, National, International)',
-          'Date',
-          'Sponsoring Agency',
-        ];
-      default:
-        return [];
-    }
-  }
-
-  private getColumnWidths(type: string, pageWidth: number, margin: number): number[] {
-    const totalWidth = pageWidth - 2 * margin;
-    switch (type) {
-      case 'extension':
-        return [12, totalWidth * 0.35, totalWidth * 0.18, totalWidth * 0.22, totalWidth * 0.13];
-      case 'research':
-      case 'seminars':
-        return [12, totalWidth * 0.4, totalWidth * 0.15, totalWidth * 0.15, totalWidth * 0.18];
-      default:
-        return [];
-    }
-  }
-
-  private getRowData(activity: any, type: string, rowNumber: number): string[] {
-    const formatDate = (date: string) => {
-      if (!date) return '';
-      const d = new Date(date);
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    };
-
-    switch (type) {
-      case 'extension':
-        const dateRange = activity.date_to
-          ? `${formatDate(activity.date_from)} - ${formatDate(activity.date_to)}`
-          : formatDate(activity.date_from);
-        return [
-          rowNumber.toString(),
-          activity.title || '',
-          dateRange,
-          activity.beneficiary || '',
-          activity.location || '',
-        ];
-      case 'research':
-        return [
-          rowNumber.toString(),
-          activity.title || '',
-          activity.category || '',
-          formatDate(activity.date),
-          activity.sponsoring_agency || '',
-        ];
-      case 'seminars':
-        return [
-          rowNumber.toString(),
-          activity.title || '',
-          activity.category || '',
-          formatDate(activity.date),
-          activity.sponsoring_agency || '',
-        ];
-      default:
-        return [];
-    }
-  }
-
-  private calculateRowHeight(
-    doc: any,
-    rowData: string[],
-    columnWidths: number[],
-    pageWidth: number,
-    margin: number,
-  ): number {
-    let maxLines = 1;
-    rowData.forEach((cellData: string, index: number) => {
-      const lines = doc.splitTextToSize(cellData, columnWidths[index] - 4);
-      maxLines = Math.max(maxLines, lines.length);
-    });
-    return Math.max(7, maxLines * 4 + 3);
   }
 
   ngOnInit() {
@@ -862,7 +548,6 @@ export class DeanFacultyManagement implements OnInit {
       cancelButtonText: 'Cancel',
     }).then((result) => {
       if (result.isConfirmed) {
-        // Show loading
         Swal.fire({
           title: 'Generating PDF...',
           text: 'Please wait while we fetch the profile data',
@@ -872,11 +557,26 @@ export class DeanFacultyManagement implements OnInit {
           },
         });
 
-        // Fetch faculty profile data
         this.facultyProfileService.getFacultyFullProfile(faculty.faculty_id).subscribe({
-          next: (profileData) => {
-            Swal.close();
-            this.generateFacultyProfilePDF(faculty, profileData);
+          next: async (profileData) => {
+            try {
+              await this.facultyProfilePdfService.generateAndDownload({
+                faculty,
+                personal: profileData.personal,
+                academic: profileData.academic,
+                employment: profileData.employment,
+                coursesHandled: profileData.coursesHandled,
+              });
+              Swal.close();
+            } catch (error) {
+              console.error('Error generating faculty profile PDF:', error);
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to generate the profile PDF. Please try again.',
+                confirmButtonColor: '#2563eb',
+              });
+            }
           },
           error: (error) => {
             console.error('Error fetching faculty profile:', error);
@@ -890,468 +590,6 @@ export class DeanFacultyManagement implements OnInit {
         });
       }
     });
-  }
-
-  private generateFacultyProfilePDF(faculty: Faculty, profileData: any) {
-    // Helper function to format date
-    const formatDate = (dateStr: string | null | undefined): string => {
-      if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    };
-
-    // Helper function to calculate age
-    const calculateAge = (birthDate: string | null | undefined): number => {
-      if (!birthDate) return 0;
-      const today = new Date();
-      const birth = new Date(birthDate);
-      let age = today.getFullYear() - birth.getFullYear();
-      const monthDiff = today.getMonth() - birth.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-        age--;
-      }
-      return age;
-    };
-
-    // Extract data from profile
-    const personal = profileData.personal || {};
-    const academic = profileData.academic || [];
-    const employment = profileData.employment || [];
-    const eligibilities = profileData.eligibilities || [];
-    const coursesHandled = profileData.coursesHandled || [];
-
-    // Get education by level
-    const undergraduate = academic.find((edu: any) => edu.level === 'Undergraduate');
-    const masters = academic.find((edu: any) => edu.level === 'Masters');
-    const doctorate = academic.find((edu: any) => edu.level === 'Doctorate');
-
-    // Get current employment
-    const currentEmployment = employment.find((emp: any) => emp.is_current) || employment[0];
-
-    // Determine role (Research Coordinator or Instructor)
-    const role = currentEmployment?.position_title || 'Instructor';
-
-    // Format faculty name for header (FIRST MIDDLE-INITIAL. LAST)
-    const middleInitial = (faculty.middle_name || personal.middle_name || '').charAt(0);
-    const headerName = `${(faculty.first_name || personal.first_name || '').toUpperCase()} ${middleInitial ? middleInitial.toUpperCase() + '.' : ''} ${(faculty.last_name || personal.last_name || '').toUpperCase()}`.trim();
-
-    // Get birth date and age
-    const birthDate = personal.date_of_birth;
-    const age = calculateAge(birthDate);
-    const formattedBirthDate = formatDate(birthDate);
-
-    const facultyName = `${faculty.first_name} ${faculty.middle_name || ''} ${faculty.last_name}`.trim();
-    
-    // Create HTML template matching the exact design from the image
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Faculty Profile - ${facultyName}</title>
-        <style>
-          @page {
-            size: 8.5in 13in;
-            margin: 0;
-          }
-          
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-          
-          body {
-            font-family: 'Arial', sans-serif;
-            font-size: 11pt;
-            line-height: 1.3;
-            color: #000;
-            background: white;
-          }
-          
-          .page {
-            width: 8.5in;
-            height: 13in;
-            position: relative;
-            background: white;
-          }
-          
-          /* Top colored design */
-          .top-design {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 120px;
-            overflow: hidden;
-          }
-          
-          .orange-section {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 50%;
-            height: 120px;
-            background: #FF6B35;
-            clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
-          }
-          
-          .blue-section {
-            position: absolute;
-            top: 0;
-            left: 35%;
-            width: 40%;
-            height: 120px;
-            background: #1E88E5;
-            clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%);
-          }
-          
-          .red-section {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 35%;
-            height: 120px;
-            background: #E53935;
-            clip-path: polygon(15% 0, 100% 0, 100% 100%, 0 100%);
-          }
-          
-          /* Header content */
-          .header-content {
-            position: relative;
-            padding: 30px 40px;
-            display: flex;
-            align-items: flex-start;
-            gap: 25px;
-            z-index: 10;
-          }
-          
-          .photo-box {
-            width: 180px;
-            height: 220px;
-            background: #2C2C2C;
-            border: 3px solid white;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 60px;
-            font-weight: bold;
-          }
-          
-          .header-text {
-            flex: 1;
-            padding-top: 10px;
-          }
-          
-          .faculty-title {
-            font-size: 36px;
-            font-weight: bold;
-            color: #8B0000;
-            margin-bottom: 8px;
-            letter-spacing: 2px;
-          }
-          
-          .faculty-name {
-            font-size: 22px;
-            font-weight: bold;
-            color: #000;
-            margin-bottom: 4px;
-          }
-          
-          .faculty-position {
-            font-size: 14px;
-            color: #000;
-            margin-bottom: 10px;
-          }
-          
-          .faculty-role {
-            font-size: 13px;
-            font-weight: bold;
-            color: #000;
-            margin-bottom: 2px;
-          }
-          
-          .faculty-department {
-            font-size: 12px;
-            color: #000;
-            margin-bottom: 12px;
-          }
-          
-          .contact-info {
-            font-size: 11px;
-            color: #000;
-          }
-          
-          .contact-info div {
-            margin-bottom: 2px;
-          }
-          
-          .contact-label {
-            font-weight: bold;
-          }
-          
-          /* Divider line */
-          .divider {
-            margin: 0 40px;
-            height: 3px;
-            background: #8B0000;
-          }
-          
-          /* Content sections */
-          .content {
-            padding: 25px 40px;
-          }
-          
-          .section {
-            margin-bottom: 25px;
-          }
-          
-          .section-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #8B0000;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-          
-          .info-row {
-            display: flex;
-            margin-bottom: 8px;
-          }
-          
-          .info-label {
-            width: 200px;
-            font-weight: bold;
-            color: #000;
-            text-transform: uppercase;
-            font-size: 10pt;
-          }
-          
-          .info-value {
-            flex: 1;
-            color: #000;
-            font-size: 10pt;
-          }
-          
-          .education-item {
-            margin-bottom: 15px;
-          }
-          
-          .education-level {
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 11pt;
-            margin-bottom: 3px;
-          }
-          
-          .education-details {
-            font-size: 10pt;
-            color: #333;
-            line-height: 1.4;
-          }
-          
-          .list-item {
-            margin-bottom: 5px;
-            padding-left: 20px;
-            position: relative;
-            font-size: 10pt;
-          }
-          
-          .list-item:before {
-            content: "•";
-            position: absolute;
-            left: 5px;
-            font-weight: bold;
-          }
-          
-          /* Footer */
-          .footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 50px;
-            background: #1E88E5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12pt;
-            font-weight: bold;
-            letter-spacing: 2px;
-          }
-          
-          @media print {
-            body {
-              print-color-adjust: exact;
-              -webkit-print-color-adjust: exact;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="page">
-          <!-- Top colored design -->
-          <div class="top-design">
-            <div class="orange-section"></div>
-            <div class="blue-section"></div>
-            <div class="red-section"></div>
-          </div>
-          
-          <!-- Header with photo and info -->
-          <div class="header-content">
-            <div class="photo-box">
-              ${faculty.first_name.charAt(0)}${faculty.last_name.charAt(0)}
-            </div>
-            <div class="header-text">
-              <div class="faculty-title">FACULTY PROFILE</div>
-              <div class="faculty-name">${headerName}</div>
-              <div class="faculty-position">${faculty.position_level || 'Assistant Professor IV'}</div>
-              <div class="faculty-role">${role}</div>
-              <div class="faculty-department">College of Engineering Technology</div>
-              <div class="contact-info">
-                <div><span class="contact-label">Contact Number:</span> ${personal.mobile_primary || faculty.contact_number || 'N/A'}</div>
-                <div><span class="contact-label">Email Address:</span> ${personal.email_primary || faculty.email || 'N/A'}</div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Divider -->
-          <div class="divider"></div>
-          
-          <!-- Content -->
-          <div class="content">
-            <!-- Personal Information -->
-            <div class="section">
-              <div class="section-title">PERSONAL INFORMATION</div>
-              <div class="info-row">
-                <div class="info-label">FIRST NAME</div>
-                <div class="info-value">${personal.first_name || faculty.first_name || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">MIDDLE NAME</div>
-                <div class="info-value">${personal.middle_name || faculty.middle_name || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">LAST NAME</div>
-                <div class="info-value">${personal.last_name || faculty.last_name || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">ACADEMIC RANK</div>
-                <div class="info-value">${faculty.position_level || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">EMPLOYMENT STATUS</div>
-                <div class="info-value">${currentEmployment?.employment_status || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">BIRTH DATE</div>
-                <div class="info-value">${formattedBirthDate || 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">AGE</div>
-                <div class="info-value">${age > 0 ? age + ' years old' : 'N/A'}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">CIVIL STATUS</div>
-                <div class="info-value">${personal.civil_status || 'N/A'}</div>
-              </div>
-            </div>
-            
-            <!-- Education -->
-            <div class="section">
-              <div class="section-title">EDUCATION</div>
-              ${undergraduate ? `
-              <div class="education-item">
-                <div class="education-level">UNDERGRADUATE</div>
-                <div class="education-details">
-                  <strong>${undergraduate.degree_course || 'N/A'}</strong><br>
-                  ${undergraduate.school_name || 'N/A'}<br>
-                  ${undergraduate.year_graduated || 'N/A'}
-                </div>
-              </div>
-              ` : '<div class="education-item"><div class="education-level">UNDERGRADUATE</div><div class="education-details">No data available</div></div>'}
-              
-              ${masters ? `
-              <div class="education-item">
-                <div class="education-level">MASTER\'S</div>
-                <div class="education-details">
-                  <strong>${masters.degree_course || 'N/A'}</strong><br>
-                  ${masters.school_name || 'N/A'}<br>
-                  ${masters.year_graduated || 'N/A'}
-                </div>
-              </div>
-              ` : '<div class="education-item"><div class="education-level">MASTER\'S</div><div class="education-details">No data available</div></div>'}
-              
-              ${doctorate ? `
-              <div class="education-item">
-                <div class="education-level">DOCTORATE</div>
-                <div class="education-details">
-                  <strong>${doctorate.degree_course || 'N/A'}</strong><br>
-                  ${doctorate.school_name || 'N/A'}<br>
-                  ${doctorate.year_graduated ? doctorate.year_graduated : '(Complete Academic Requirements)'}
-                </div>
-              </div>
-              ` : '<div class="education-item"><div class="education-level">DOCTORATE</div><div class="education-details">No data available</div></div>'}
-            </div>
-            
-            <!-- Eligibilities -->
-            <div class="section">
-              <div class="section-title">ELIGIBILITIES</div>
-              ${eligibilities.length > 0 
-                ? eligibilities.map((elig: any) => `<div class="list-item">${elig.career_service || elig.title || elig.name || 'N/A'}</div>`).join('')
-                : '<div class="list-item">No eligibilities recorded</div>'}
-            </div>
-            
-            <!-- Courses Handled -->
-            <div class="section">
-              <div class="section-title">COURSES HANDLED</div>
-              ${coursesHandled.length > 0 
-                ? coursesHandled.map((course: string) => `<div class="list-item">${course}</div>`).join('')
-                : '<div class="list-item">No courses recorded</div>'}
-            </div>
-          </div>
-          
-          <!-- Footer -->
-          <div class="footer">
-            FACULTY PROFILE
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    // Create a hidden iframe to print
-    const printFrame = document.createElement('iframe');
-    printFrame.style.position = 'fixed';
-    printFrame.style.right = '0';
-    printFrame.style.bottom = '0';
-    printFrame.style.width = '0';
-    printFrame.style.height = '0';
-    printFrame.style.border = 'none';
-    document.body.appendChild(printFrame);
-
-    const frameDoc = printFrame.contentWindow?.document;
-    if (frameDoc) {
-      frameDoc.open();
-      frameDoc.write(htmlContent);
-      frameDoc.close();
-
-      // Wait for content to load then print
-      printFrame.onload = () => {
-        setTimeout(() => {
-          printFrame.contentWindow?.print();
-          
-          // Remove iframe after printing
-          setTimeout(() => {
-            document.body.removeChild(printFrame);
-          }, 1000);
-        }, 500);
-      };
-    }
   }
 
   // Switch between active and disabled tabs

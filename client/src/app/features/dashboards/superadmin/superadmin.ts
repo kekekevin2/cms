@@ -32,7 +32,7 @@ import {
   styles: [],
 })
 export class SuperadminDashboard implements OnInit {
-  isSidebarOpen = signal(true);
+  isSidebarOpen = signal(false);
   activeTab = signal<string>('dashboard');
   isUserMenuOpen = signal(false);
   isChangePasswordOpen = signal(false);

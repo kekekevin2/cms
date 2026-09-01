@@ -2,7 +2,6 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
 import {
   OrganizationService,
   OrganizationMember,
@@ -13,6 +12,7 @@ import {
   AcademicYearsResponse,
 } from '../../../services/core/academic-year.service';
 import { DropdownService } from '../../../services/core/dropdown.service';
+import { downloadFromUrl } from '../../../shared/utils/download.util';
 import Swal from 'sweetalert2';
 @Component({
   selector: 'app-organization-members',
@@ -1149,14 +1149,7 @@ export class OrganizationMembersComponent implements OnInit {
 
   downloadUpload(upload: any) {
     this.organizationService.downloadBulkUpload(upload.upload_id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = upload.file_name;
-        link.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: ({ url }) => downloadFromUrl(url, upload.file_name),
       error: (error) => {
         Swal.fire({
           icon: 'error',
@@ -1410,12 +1403,8 @@ export class OrganizationMembersComponent implements OnInit {
 
   getPhotoUrl(photoUrl: string | undefined): string | null {
     if (!photoUrl) return null;
-    // If it's already a full URL, return as-is
-    if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
-      return photoUrl;
-    }
-    // Otherwise, prepend the backend base URL
-    return `${environment.serverUrl}${photoUrl}`;
+    // The backend now returns an absolute, presigned URL — use it as-is.
+    return photoUrl;
   }
 
   onImageError(event: Event): void {
@@ -1462,13 +1451,15 @@ export class OrganizationMembersComponent implements OnInit {
   }
 
   downloadTemplate() {
+    // The template is a static backend asset streamed as bytes, not a stored
+    // upload behind a presigned URL — so this one keeps the blob pattern.
     this.organizationService.downloadMembersTemplate().subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'organization-members-template.csv';
-        link.click();
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'organization-members-template.csv';
+        a.click();
         window.URL.revokeObjectURL(url);
       },
       error: (error) => {

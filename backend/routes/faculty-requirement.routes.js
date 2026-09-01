@@ -3,7 +3,13 @@ const router = express.Router();
 const requirementController = require("../controllers/faculty-requirement.controller");
 const verifyToken = require("../middleware/auth.middleware");
 const checkRole = require("../middleware/role.middleware");
-const upload = require("../utils/upload");
+const { makeUpload, MB, DOCUMENT_TYPES } = require("../utils/upload");
+
+const upload = makeUpload({
+	folder: "requirements",
+	allowedTypes: DOCUMENT_TYPES,
+	maxSize: 25 * MB,
+});
 
 router.use(verifyToken);
 router.use(checkRole("faculty"));
