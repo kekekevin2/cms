@@ -433,7 +433,11 @@
                   @for (career of careerOpportunities(); track $index) {
                     <div class="p-3 border border-gray-100 rounded-sm">
                       <p class="text-xs font-semibold text-gray-800 mb-1.5">{{ career.program }}</p>
-                      <p class="text-xs text-gray-500 leading-relaxed">{{ career.careers }}</p>
+                      <ul class="list-disc list-inside space-y-1">
+                        @for (line of getCareerLines(career.careers); track $index) {
+                          <li class="text-xs text-gray-500 leading-relaxed">{{ line }}</li>
+                        }
+                      </ul>
                     </div>
                   }
                 </div>
@@ -450,13 +454,13 @@
                         placeholder="Program name"
                         class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300"
                       />
-                      <input
-                        type="text"
+                      <textarea
+                        rows="3"
                         [ngModel]="career.careers"
                         (ngModelChange)="updateCareer(i, 'careers', $event)"
-                        placeholder="Career paths"
-                        class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300"
-                      />
+                        placeholder="Career paths (press Enter for new line)"
+                        class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                      ></textarea>
                     </div>
                     <button
                       (click)="removeCareer(i)"

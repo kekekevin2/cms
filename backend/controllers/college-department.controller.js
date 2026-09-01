@@ -101,18 +101,34 @@ exports.createCollegeDepartment = async (req, res) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Check email not already used for a college_department account
+    // Check if email is already used for an ACTIVE college_department account
     const existingUser = await db.User.findOne({
       where: { email: normalizedEmail, role: "college_department" },
+      include: [
+        {
+          model: db.CollegeDepartment,
+          as: "college_department",
+          required: false,
+        },
+      ],
     });
+
     if (existingUser) {
-      await transaction.rollback();
-      return res
-        .status(400)
-        .json({
+      // If user exists AND has a college department profile, it's truly a duplicate
+      if (existingUser.college_department) {
+        await transaction.rollback();
+        return res.status(400).json({
           message:
             "A college department account with this email already exists",
         });
+      }
+
+      // If user exists but NO college department profile (orphaned), delete the orphaned user
+      console.log(
+        `⚠️  Found orphaned user record (user_id: ${existingUser.user_id}, email: ${normalizedEmail}). Cleaning up...`,
+      );
+      await existingUser.destroy({ transaction });
+      console.log(`✅ Orphaned user record deleted. Proceeding with creation.`);
     }
 
     const generatedPassword = generatePassword();

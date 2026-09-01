@@ -4,10 +4,8 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { jsPDF } from 'jspdf';
 import { PersonalDataSheet, PDSEducation } from './pds.service';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
+// Use CDN for worker to avoid Vite dynamic import warning
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
 
 interface Overlay {
   page: number;
@@ -40,7 +38,7 @@ export class PdsPdfService {
     if (!this.templateDoc) {
       this.templateDoc = pdfjsLib.getDocument('/pds-template.pdf').promise;
     }
-    return this.templateDoc;
+    return this.templateDoc!;
   }
 
   async generateAndDownload(pds: PersonalDataSheet): Promise<void> {

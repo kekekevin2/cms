@@ -191,4 +191,9 @@ export class DeanMyProfile implements OnInit {
   scrollTo(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+
+  getCareerLines(careers: string): string[] {
+    if (!careers) return [];
+    return careers.split('\n').filter(line => line.trim()).map(line => line.trim());
+  }
 }
