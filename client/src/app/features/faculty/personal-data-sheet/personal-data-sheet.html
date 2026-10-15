@@ -5,12 +5,12 @@
     </div>
   } @else {
     <!-- Top Header Bar -->
-    <div class="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-gray-100">
       <div>
         <h2 class="text-sm font-semibold text-gray-900">Personal Data Sheet</h2>
         <p class="text-xs text-gray-400">CS Form No. 212 (Revised 2025)</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <span
           class="px-2 py-1 rounded-sm border text-xs font-semibold"
           [ngClass]="getStatusBadgeClass()"
@@ -22,21 +22,21 @@
         @if (!isFormReadonly() && !isEditMode()) {
           <button
             (click)="autoFillFromProfile()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition whitespace-nowrap"
           >
             <i class="pi pi-sync text-xs"></i> Sync Profile
           </button>
           <button
             (click)="savePDS()"
             [disabled]="loading()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50 whitespace-nowrap"
           >
             <i class="pi pi-save text-xs"></i> Save Draft
           </button>
           <button
             (click)="submitPDS()"
             [disabled]="loading()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50 whitespace-nowrap"
           >
             <i class="pi pi-send text-xs"></i> Submit
           </button>
@@ -44,7 +44,7 @@
         @if (isFormReadonly() && !isEditMode()) {
           <button
             (click)="enableEditMode()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-sm hover:bg-blue-700 transition"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-sm hover:bg-blue-700 transition whitespace-nowrap"
           >
             <i class="pi pi-pencil text-xs"></i> Edit
           </button>
@@ -52,27 +52,27 @@
         @if (isEditMode()) {
           <button
             (click)="autoFillFromProfile()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition whitespace-nowrap"
           >
             <i class="pi pi-sync text-xs"></i> Sync Profile
           </button>
           <button
             (click)="cancelEditMode()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition whitespace-nowrap"
           >
             <i class="pi pi-times text-xs"></i> Cancel
           </button>
           <button
             (click)="savePDS()"
             [disabled]="loading()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50 whitespace-nowrap"
           >
             <i class="pi pi-save text-xs"></i> Save Changes
           </button>
           <button
             (click)="submitPDS()"
             [disabled]="loading()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50 whitespace-nowrap"
           >
             <i class="pi pi-send text-xs"></i> Resubmit
           </button>
@@ -80,7 +80,7 @@
         <button
           (click)="previewPDF()"
           [disabled]="loading()"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50 whitespace-nowrap"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs"></i>
@@ -92,7 +92,7 @@
         <button
           (click)="downloadPDF()"
           [disabled]="loading()"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition disabled:opacity-50 whitespace-nowrap"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs"></i>
@@ -113,13 +113,13 @@
               <button
                 (click)="downloadPDF()"
                 [disabled]="loading()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition disabled:opacity-50 whitespace-nowrap"
               >
                 <i class="pi pi-file-pdf text-xs"></i> Download
               </button>
               <button
                 (click)="closePdfPreview()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition whitespace-nowrap"
               >
                 <i class="pi pi-times text-xs"></i> Close
               </button>
@@ -134,72 +134,74 @@
       </div>
     }
 
-    <div class="flex gap-5 items-start">
+    <div class="flex flex-col sm:flex-row gap-3 sm:gap-5 items-start">
       <!-- Left Nav -->
-      <div class="w-44 shrink-0 space-y-0.5 sticky top-20">
+      <div
+        class="w-full sm:w-44 shrink-0 flex sm:block gap-1 sm:gap-0 sm:space-y-0.5 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 sm:sticky sm:top-20"
+      >
         <button
           (click)="scrollTo('section-personal')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-user text-xs text-gray-400 w-4 text-center"></i> Personal Info
         </button>
         <button
           (click)="scrollTo('section-family')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-users text-xs text-gray-400 w-4 text-center"></i> Family Background
         </button>
         <button
           (click)="scrollTo('section-education')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-graduation-cap text-xs text-gray-400 w-4 text-center"></i> Education
         </button>
         <button
           (click)="scrollTo('section-eligibility')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-verified text-xs text-gray-400 w-4 text-center"></i> Eligibility
         </button>
         <button
           (click)="scrollTo('section-work')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-briefcase text-xs text-gray-400 w-4 text-center"></i> Work Experience
         </button>
         <button
           (click)="scrollTo('section-voluntary')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-heart text-xs text-gray-400 w-4 text-center"></i> Voluntary Work
         </button>
         <button
           (click)="scrollTo('section-training')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-book text-xs text-gray-400 w-4 text-center"></i> Training
         </button>
         <button
           (click)="scrollTo('section-other')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-star text-xs text-gray-400 w-4 text-center"></i> Other Info
         </button>
         <button
           (click)="scrollTo('section-references')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-address-book text-xs text-gray-400 w-4 text-center"></i> References
         </button>
         <button
           (click)="scrollTo('section-questionnaire')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-list-check text-xs text-gray-400 w-4 text-center"></i> Questionnaire
         </button>
         <button
           (click)="scrollTo('section-photo')"
-          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition w-full text-left"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-camera text-xs text-gray-400 w-4 text-center"></i> Photo & Signature
         </button>
@@ -1249,7 +1251,7 @@
                   @for (info of pds.other_info; track info; let i = $index) {
                     @if (info.info_type === 'SKILL') {
                       <span
-                        class="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-sm border border-blue-100"
+                        class="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-sm border border-blue-100 whitespace-nowrap"
                       >
                         {{ info.details }}
                         @if (!isFormReadonly()) {
@@ -1994,7 +1996,7 @@
                       />
                       <label
                         for="photoInput"
-                        class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+                        class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition whitespace-nowrap"
                       >
                         <i class="pi pi-upload text-xs"></i> Choose Photo
                       </label>
@@ -2049,7 +2051,7 @@
                       />
                       <label
                         for="signatureInput"
-                        class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+                        class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-sm hover:bg-green-700 transition whitespace-nowrap"
                       >
                         <i class="pi pi-upload text-xs"></i> Choose File
                       </label>
@@ -2092,7 +2094,7 @@
 <!-- Add Child Modal -->
 @if (showAddChildModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Child</p>
         <button (click)="showAddChildModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2118,16 +2120,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddChildModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addChild(); showAddChildModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Child
         </button>
@@ -2139,7 +2141,7 @@
 <!-- Add Education Modal -->
 @if (showAddEducationModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Education</p>
         <button (click)="showAddEducationModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2223,16 +2225,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddEducationModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addEducation(); showAddEducationModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Education
         </button>
@@ -2244,7 +2246,7 @@
 <!-- Add Eligibility Modal -->
 @if (showAddEligibilityModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Eligibility</p>
         <button (click)="showAddEligibilityModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2303,16 +2305,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddEligibilityModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addEligibility(); showAddEligibilityModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Eligibility
         </button>
@@ -2324,7 +2326,7 @@
 <!-- Add Work Experience Modal -->
 @if (showAddWorkExperienceModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Work Experience</p>
         <button (click)="showAddWorkExperienceModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2420,16 +2422,16 @@
           </div>
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddWorkExperienceModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addWorkExperience(); showAddWorkExperienceModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Work Experience
         </button>
@@ -2441,7 +2443,7 @@
 <!-- Add Voluntary Work Modal -->
 @if (showAddVoluntaryModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Voluntary Work</p>
         <button (click)="showAddVoluntaryModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2494,16 +2496,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddVoluntaryModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addVoluntaryWork(); showAddVoluntaryModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add
         </button>
@@ -2515,7 +2517,7 @@
 <!-- Add Training Modal -->
 @if (showAddTrainingModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Training / Seminar</p>
         <button (click)="showAddTrainingModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2573,16 +2575,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddTrainingModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addTraining(); showAddTrainingModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Training
         </button>
@@ -2594,7 +2596,7 @@
 <!-- Add Reference Modal -->
 @if (showAddReferenceModal) {
   <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <p class="text-xs font-semibold text-gray-700">Add Reference</p>
         <button (click)="showAddReferenceModal = false" class="text-gray-400 hover:text-gray-600">
@@ -2627,16 +2629,16 @@
           />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-4 py-3 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="showAddReferenceModal = false"
-          class="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
         <button
           (click)="addReference(); showAddReferenceModal = false"
-          class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
+          class="w-full sm:w-auto px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-sm hover:bg-green-700 transition"
         >
           Add Reference
         </button>

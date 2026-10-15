@@ -1,7 +1,7 @@
 const db = require("../models");
 const { Op } = require("sequelize");
 const path = require("path");
-const fs = require("fs").promises;
+const storage = require("../utils/storage");
 
 // Get faculty's requirement submissions (per academic year/semester)
 exports.getMyRequirements = async (req, res) => {
@@ -148,15 +148,6 @@ exports.submitRequirement = async (req, res) => {
 			return res.status(400).json({ message: "At least one file is required" });
 		}
 
-		// Check file sizes
-		const maxSize = 200 * 1024 * 1024; // 200MB
-		const oversizedFiles = req.files.filter(f => f.size > maxSize);
-		if (oversizedFiles.length > 0) {
-			return res.status(400).json({ 
-				message: `File size exceeds 200MB limit: ${oversizedFiles.map(f => f.originalname).join(', ')}` 
-			});
-		}
-
 		// Get faculty profile
 		const faculty = await db.Faculty.findOne({
 			where: { user_id: facultyUserId },
@@ -166,27 +157,49 @@ exports.submitRequirement = async (req, res) => {
 			return res.status(404).json({ message: "Faculty profile not found" });
 		}
 
-		// Create new submission (keep first file in main record for backward compatibility)
-		const firstFile = req.files[0];
-		const newSubmission = await db.RequirementSubmission.create({
-			faculty_id: faculty.faculty_id,
-			academic_year_id,
-			semester,
-			requirement_name,
-			file_path: firstFile.path,
-			file_name: firstFile.originalname,
-			file_size: firstFile.size,
-		});
+		// Upload every file to storage BEFORE writing any DB row, so a storage
+		// failure can never leave a row pointing at a nonexistent object.
+		const uploaded = [];
+		try {
+			for (const file of req.files) {
+				const key = await storage.put(file.buffer, {
+					folder: "requirements",
+					originalname: file.originalname,
+					mimetype: file.mimetype,
+				});
+				uploaded.push({ key, name: file.originalname, size: file.size });
+			}
+		} catch (uploadError) {
+			await Promise.all(uploaded.map((u) => storage.remove(u.key).catch(() => {})));
+			console.error("Requirement upload error:", uploadError);
+			return res.status(500).json({ message: "Error uploading files" });
+		}
 
-		// Create file records for all uploaded files
-		const fileRecords = req.files.map((file) => ({
-			submission_id: newSubmission.submission_id,
-			file_path: file.path,
-			file_name: file.originalname,
-			file_size: file.size,
-		}));
+		let newSubmission;
+		try {
+			const first = uploaded[0];
+			newSubmission = await db.RequirementSubmission.create({
+				faculty_id: faculty.faculty_id,
+				academic_year_id,
+				semester,
+				requirement_name,
+				file_path: first.key,
+				file_name: first.name,
+				file_size: first.size,
+			});
 
-		await db.RequirementFile.bulkCreate(fileRecords);
+			const fileRecords = uploaded.map((u) => ({
+				submission_id: newSubmission.submission_id,
+				file_path: u.key,
+				file_name: u.name,
+				file_size: u.size,
+			}));
+
+			await db.RequirementFile.bulkCreate(fileRecords);
+		} catch (dbError) {
+			await Promise.all(uploaded.map((u) => storage.remove(u.key).catch(() => {})));
+			throw dbError;
+		}
 
 		// Fetch the created submission with associations
 		const submission = await db.RequirementSubmission.findOne({
@@ -216,14 +229,6 @@ exports.submitRequirement = async (req, res) => {
 		});
 	} catch (error) {
 		console.error("Submit requirement error:", error);
-		
-		// Handle multer file size error
-		if (error.code === 'LIMIT_FILE_SIZE') {
-			return res.status(400).json({ 
-				message: "File size exceeds the 200MB limit. Please upload smaller files." 
-			});
-		}
-		
 		res.status(500).json({ message: "Error submitting requirement" });
 	}
 };
@@ -267,23 +272,44 @@ exports.addFiles = async (req, res) => {
 			});
 		}
 
-		// Create file records for all uploaded files
-		const fileRecords = req.files.map((file) => ({
+		const uploaded = [];
+		try {
+			for (const file of req.files) {
+				const key = await storage.put(file.buffer, {
+					folder: "requirements",
+					originalname: file.originalname,
+					mimetype: file.mimetype,
+				});
+				uploaded.push({ key, name: file.originalname, size: file.size });
+			}
+		} catch (uploadError) {
+			await Promise.all(uploaded.map((u) => storage.remove(u.key).catch(() => {})));
+			console.error("Requirement add-files upload error:", uploadError);
+			return res.status(500).json({ message: "Error uploading files" });
+		}
+
+		const fileRecords = uploaded.map((u) => ({
 			submission_id: submission.submission_id,
-			file_path: file.path,
-			file_name: file.originalname,
-			file_size: file.size,
+			file_path: u.key,
+			file_name: u.name,
+			file_size: u.size,
 		}));
 
-		const newFiles = await db.RequirementFile.bulkCreate(fileRecords);
+		let newFiles;
+		try {
+			newFiles = await db.RequirementFile.bulkCreate(fileRecords);
 
-		// Reset status to pending
-		submission.status = "pending";
-		submission.dean_remarks = null;
-		submission.validated_by = null;
-		submission.validated_date = null;
-		submission.submission_date = new Date();
-		await submission.save();
+			// Reset status to pending
+			submission.status = "pending";
+			submission.dean_remarks = null;
+			submission.validated_by = null;
+			submission.validated_date = null;
+			submission.submission_date = new Date();
+			await submission.save();
+		} catch (dbError) {
+			await Promise.all(uploaded.map((u) => storage.remove(u.key).catch(() => {})));
+			throw dbError;
+		}
 
 		res.json({
 			message: "Files added successfully",
@@ -357,7 +383,7 @@ exports.deleteFile = async (req, res) => {
 
 		// Delete physical file
 		try {
-			await fs.unlink(file.file_path);
+			await storage.remove(file.file_path);
 		} catch (err) {
 			console.error("Error deleting file:", err);
 		}
@@ -416,7 +442,7 @@ exports.deleteRequirement = async (req, res) => {
 		if (submission.files && submission.files.length > 0) {
 			for (const file of submission.files) {
 				try {
-					await fs.unlink(file.file_path);
+					await storage.remove(file.file_path);
 				} catch (err) {
 					console.error("Error deleting file:", err);
 				}
@@ -426,7 +452,7 @@ exports.deleteRequirement = async (req, res) => {
 		// Delete legacy file if exists
 		if (submission.file_path) {
 			try {
-				await fs.unlink(submission.file_path);
+				await storage.remove(submission.file_path);
 			} catch (err) {
 				console.error("Error deleting file:", err);
 			}
@@ -469,15 +495,11 @@ exports.downloadRequirement = async (req, res) => {
 			return res.status(404).json({ message: "Submission not found" });
 		}
 
-		// Check if file exists
-		try {
-			await fs.access(submission.file_path);
-		} catch (err) {
-			return res.status(404).json({ message: "File not found" });
-		}
-
-		// Send file
-		res.download(submission.file_path, submission.file_name);
+		const url = await storage.getUrl(submission.file_path, {
+			download: true,
+			filename: submission.file_name,
+		});
+		res.json({ url });
 	} catch (error) {
 		console.error("Download requirement error:", error);
 		res.status(500).json({ message: "Error downloading requirement" });
@@ -517,14 +539,11 @@ exports.downloadFile = async (req, res) => {
 			return res.status(404).json({ message: "File not found" });
 		}
 
-		// Check file exists on disk
-		try {
-			await fs.access(file.file_path);
-		} catch (err) {
-			return res.status(404).json({ message: "File not found on disk" });
-		}
-
-		res.download(file.file_path, file.file_name);
+		const url = await storage.getUrl(file.file_path, {
+			download: true,
+			filename: file.file_name,
+		});
+		res.json({ url });
 	} catch (error) {
 		console.error("Download file error:", error);
 		res.status(500).json({ message: "Error downloading file" });

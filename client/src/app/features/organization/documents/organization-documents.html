@@ -49,6 +49,7 @@
   <!-- Documents Table -->
   @if (loading()) {
     <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
       <table class="w-full text-xs">
         <tbody>
           <tr>
@@ -61,9 +62,11 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
   } @else if (documents().length === 0) {
     <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
       <table class="w-full text-xs">
         <tbody>
           <tr>
@@ -76,10 +79,12 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
   } @else {
     <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-      <table class="w-full text-xs table-fixed">
+      <div class="overflow-x-auto">
+      <table class="w-full min-w-[640px] text-xs table-fixed">
         <thead>
           <tr class="border-b border-gray-100 bg-gray-50">
             <th
@@ -196,6 +201,7 @@
           }
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- Pagination -->
@@ -242,7 +248,7 @@
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div class="mb-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Select Term to View Requirements</h3>
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
             <select
@@ -414,7 +420,7 @@
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">
                 Date <span class="text-red-500">*</span>
@@ -456,7 +462,7 @@
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">
                 Academic Year <span class="text-red-500">*</span>
@@ -498,7 +504,7 @@
               Sustainable Development Goals (SDGs) <span class="text-red-500">*</span>
             </label>
             <p class="text-xs text-gray-400 mb-2">Select at least one SDG that this activity addresses</p>
-            <div class="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto p-3 bg-gray-50 border border-gray-200 rounded-sm">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto p-3 bg-gray-50 border border-gray-200 rounded-sm">
               @for (sdg of sdgList; track sdg.id) {
                 <label class="flex items-start space-x-2 cursor-pointer hover:bg-white p-2 rounded-sm transition">
                   <input
@@ -549,11 +555,11 @@
           }
         </form>
       </div>
-      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           type="button"
           (click)="closeModals()"
-          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
@@ -561,7 +567,7 @@
           type="submit"
           (click)="submitDocument()"
           [disabled]="loading()"
-          class="px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+          class="w-full sm:w-auto px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs mr-2"></i>
@@ -597,7 +603,7 @@
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">
                 Date <span class="text-red-500">*</span>
@@ -639,7 +645,7 @@
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">
                 Academic Year <span class="text-red-500">*</span>
@@ -681,7 +687,7 @@
               Sustainable Development Goals (SDGs) <span class="text-red-500">*</span>
             </label>
             <p class="text-xs text-gray-400 mb-2">Select at least one SDG that this activity addresses</p>
-            <div class="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto p-3 bg-gray-50 border border-gray-200 rounded-sm">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto p-3 bg-gray-50 border border-gray-200 rounded-sm">
               @for (sdg of sdgList; track sdg.id) {
                 <label class="flex items-start space-x-2 cursor-pointer hover:bg-white p-2 rounded-sm transition">
                   <input
@@ -731,11 +737,11 @@
           }
         </form>
       </div>
-      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           type="button"
           (click)="closeModals()"
-          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Cancel
         </button>
@@ -743,7 +749,7 @@
           type="submit"
           (click)="updateDocument()"
           [disabled]="loading()"
-          class="px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+          class="w-full sm:w-auto px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs mr-2"></i>
@@ -765,7 +771,7 @@
       </div>
       <div class="p-6 overflow-y-auto flex-1">
         <div class="space-y-4">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1">Academic Year</label>
               <p class="text-xs text-gray-900">
@@ -784,7 +790,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1">Submitted Date</label>
               <p class="text-xs text-gray-900">{{ formatDate(selectedDocument()!.submitted_date) }}</p>
@@ -852,11 +858,11 @@
           }
         </div>
       </div>
-      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           type="button"
           (click)="closeModals()"
-          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
         >
           Close
         </button>
@@ -867,7 +873,7 @@
               selectedDocument()!.original_filename
             )
           "
-          class="px-4 py-2 text-xs font-medium text-white bg-green-600 rounded-sm hover:bg-green-700 transition inline-flex items-center gap-1.5"
+          class="w-full sm:w-auto px-4 py-2 text-xs font-medium text-white bg-green-600 rounded-sm hover:bg-green-700 transition inline-flex items-center justify-center gap-1.5"
         >
           <i class="pi pi-download text-xs"></i>Download
         </button>

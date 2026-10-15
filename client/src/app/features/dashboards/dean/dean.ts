@@ -57,7 +57,7 @@ export class DeanDashboard implements OnInit, AfterViewInit {
 
   private route = inject(ActivatedRoute);
 
-  isSidebarOpen = signal(true);
+  isSidebarOpen = signal(false);
   activeTab = signal<string>('dashboard');
   dashboardSubTab = signal<string>('overview');
   isUserMenuOpen = signal(false);

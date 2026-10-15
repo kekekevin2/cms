@@ -14,7 +14,7 @@ import Swal from 'sweetalert2';
       (click)="onBackdropClick($event)"
     >
       <div
-        class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6"
+        class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto"
         (click)="$event.stopPropagation()"
       >
         <!-- Header -->
@@ -172,11 +172,11 @@ import Swal from 'sweetalert2';
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-end gap-3 mt-6">
+        <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
           <button
             (click)="close.emit()"
             type="button"
-            class="px-5 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-gray-700"
+            class="w-full sm:w-auto px-5 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-gray-700"
           >
             Cancel
           </button>
@@ -190,7 +190,7 @@ import Swal from 'sweetalert2';
               newPassword !== confirmPassword
             "
             type="button"
-            class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full sm:w-auto px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             @if (submitting()) {
               <i class="fas fa-spinner fa-spin mr-2"></i>Saving...

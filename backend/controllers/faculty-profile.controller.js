@@ -12,8 +12,8 @@ async function getDepartmentForUser(userId) {
   return null;
 }
 
-const path = require("path");
-const fs = require("fs").promises;
+const storage = require("../utils/storage");
+const { presignFields } = require("../utils/presign");
 
 // ==================== PERSONAL PROFILE ====================
 
@@ -22,9 +22,11 @@ exports.getPersonalProfile = async (req, res) => {
   try {
     const facultyId = req.user.faculty_id || req.params.facultyId;
 
-    const profile = await db.FacultyPersonalProfile.findOne({
+    const record = await db.FacultyPersonalProfile.findOne({
       where: { faculty_id: facultyId },
     });
+
+    const profile = await presignFields(record, ["profile_picture", "passport_photo"]);
 
     res.json({ profile });
   } catch (error) {
@@ -39,20 +41,60 @@ exports.upsertPersonalProfile = async (req, res) => {
     const facultyId = req.user.faculty_id;
     const profileData = req.body;
 
-    // Handle file uploads
-    if (req.files) {
-      if (req.files.profile_picture && req.files.profile_picture[0]) {
-        profileData.profile_picture = `/uploads/profile-pictures/${req.files.profile_picture[0].filename}`;
+    const existing = await db.FacultyPersonalProfile.findOne({
+      where: { faculty_id: facultyId },
+    });
+
+    // Upload new files to storage BEFORE writing any DB row/column, so a
+    // storage failure can never leave a row pointing at a nonexistent object.
+    const newlyUploaded = [];
+    const oldKeys = {};
+
+    try {
+      if (req.files?.profile_picture?.[0]) {
+        const f = req.files.profile_picture[0];
+        profileData.profile_picture = await storage.put(f.buffer, {
+          folder: "profile-pictures",
+          originalname: f.originalname,
+          mimetype: f.mimetype,
+        });
+        newlyUploaded.push(profileData.profile_picture);
+        oldKeys.profile_picture = existing?.profile_picture;
       }
-      if (req.files.passport_photo && req.files.passport_photo[0]) {
-        profileData.passport_photo = `/uploads/profile-pictures/${req.files.passport_photo[0].filename}`;
+      if (req.files?.passport_photo?.[0]) {
+        const f = req.files.passport_photo[0];
+        profileData.passport_photo = await storage.put(f.buffer, {
+          folder: "profile-pictures",
+          originalname: f.originalname,
+          mimetype: f.mimetype,
+        });
+        newlyUploaded.push(profileData.passport_photo);
+        oldKeys.passport_photo = existing?.passport_photo;
       }
+    } catch (uploadError) {
+      await Promise.all(newlyUploaded.map((key) => storage.remove(key).catch(() => {})));
+      console.error("Error uploading personal profile files:", uploadError);
+      return res.status(500).json({ message: "Error saving personal profile" });
     }
 
-    const [profile, created] = await db.FacultyPersonalProfile.upsert({
-      ...profileData,
-      faculty_id: facultyId,
-    });
+    let profile, created;
+    try {
+      [profile, created] = await db.FacultyPersonalProfile.upsert({
+        ...profileData,
+        faculty_id: facultyId,
+      });
+    } catch (dbError) {
+      await Promise.all(newlyUploaded.map((key) => storage.remove(key).catch(() => {})));
+      throw dbError;
+    }
+
+    // Row committed with the new keys; now it's safe to delete the old files.
+    if (oldKeys.profile_picture) {
+      await storage.remove(oldKeys.profile_picture).catch(() => {});
+    }
+    if (oldKeys.passport_photo) {
+      await storage.remove(oldKeys.passport_photo).catch(() => {});
+    }
 
     res.json({
       message: created
@@ -349,10 +391,12 @@ exports.getAwards = async (req, res) => {
   try {
     const facultyId = req.user.faculty_id || req.params.facultyId;
 
-    const awards = await db.FacultyAwards.findAll({
+    const rows = await db.FacultyAwards.findAll({
       where: { faculty_id: facultyId },
       order: [["date_received", "DESC"]],
     });
+
+    const awards = await presignFields(rows, ["certificate_file"]);
 
     res.json({ awards });
   } catch (error) {
@@ -368,14 +412,26 @@ exports.createAward = async (req, res) => {
     const awardData = req.body;
 
     // Handle certificate file upload
+    let newKey;
     if (req.file) {
-      awardData.certificate_file = `/uploads/awards/${req.file.filename}`;
+      newKey = await storage.put(req.file.buffer, {
+        folder: "awards",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+      awardData.certificate_file = newKey;
     }
 
-    const award = await db.FacultyAwards.create({
-      ...awardData,
-      faculty_id: facultyId,
-    });
+    let award;
+    try {
+      award = await db.FacultyAwards.create({
+        ...awardData,
+        faculty_id: facultyId,
+      });
+    } catch (dbError) {
+      if (newKey) await storage.remove(newKey).catch(() => {});
+      throw dbError;
+    }
 
     res.status(201).json({
       message: "Award created successfully",
@@ -402,12 +458,29 @@ exports.updateAward = async (req, res) => {
       return res.status(404).json({ message: "Award not found" });
     }
 
-    // Handle certificate file upload
+    // Handle certificate file upload: upload new -> update row -> delete old
+    let oldCertificateFile;
+    let newKey;
     if (req.file) {
-      awardData.certificate_file = `/uploads/awards/${req.file.filename}`;
+      oldCertificateFile = award.certificate_file;
+      newKey = await storage.put(req.file.buffer, {
+        folder: "awards",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+      awardData.certificate_file = newKey;
     }
 
-    await award.update(awardData);
+    try {
+      await award.update(awardData);
+    } catch (dbError) {
+      if (newKey) await storage.remove(newKey).catch(() => {});
+      throw dbError;
+    }
+
+    if (req.file && oldCertificateFile) {
+      await storage.remove(oldCertificateFile).catch(() => {});
+    }
 
     res.json({
       message: "Award updated successfully",
@@ -449,10 +522,12 @@ exports.getSeminarsTrainings = async (req, res) => {
   try {
     const facultyId = req.user.faculty_id || req.params.facultyId;
 
-    const seminars = await db.FacultySeminarsTrainings.findAll({
+    const rows = await db.FacultySeminarsTrainings.findAll({
       where: { faculty_id: facultyId },
       order: [["date", "DESC"]],
     });
+
+    const seminars = await presignFields(rows, ["certificate_file"]);
 
     res.json({ seminars });
   } catch (error) {
@@ -468,14 +543,26 @@ exports.createSeminarTraining = async (req, res) => {
     const seminarData = req.body;
 
     // Handle certificate file upload
+    let newKey;
     if (req.file) {
-      seminarData.certificate_file = `/uploads/seminars/${req.file.filename}`;
+      newKey = await storage.put(req.file.buffer, {
+        folder: "seminars",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+      seminarData.certificate_file = newKey;
     }
 
-    const seminar = await db.FacultySeminarsTrainings.create({
-      ...seminarData,
-      faculty_id: facultyId,
-    });
+    let seminar;
+    try {
+      seminar = await db.FacultySeminarsTrainings.create({
+        ...seminarData,
+        faculty_id: facultyId,
+      });
+    } catch (dbError) {
+      if (newKey) await storage.remove(newKey).catch(() => {});
+      throw dbError;
+    }
 
     res.status(201).json({
       message: "Seminar/training created successfully",
@@ -502,12 +589,29 @@ exports.updateSeminarTraining = async (req, res) => {
       return res.status(404).json({ message: "Seminar/training not found" });
     }
 
-    // Handle certificate file upload
+    // Handle certificate file upload: upload new -> update row -> delete old
+    let oldCertificateFile;
+    let newKey;
     if (req.file) {
-      seminarData.certificate_file = `/uploads/seminars/${req.file.filename}`;
+      oldCertificateFile = seminar.certificate_file;
+      newKey = await storage.put(req.file.buffer, {
+        folder: "seminars",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+      seminarData.certificate_file = newKey;
     }
 
-    await seminar.update(seminarData);
+    try {
+      await seminar.update(seminarData);
+    } catch (dbError) {
+      if (newKey) await storage.remove(newKey).catch(() => {});
+      throw dbError;
+    }
+
+    if (req.file && oldCertificateFile) {
+      await storage.remove(oldCertificateFile).catch(() => {});
+    }
 
     res.json({
       message: "Seminar/training updated successfully",
@@ -549,10 +653,12 @@ exports.getResearchActivities = async (req, res) => {
   try {
     const facultyId = req.user.faculty_id || req.params.facultyId;
 
-    const activities = await db.FacultyResearchActivities.findAll({
+    const rows = await db.FacultyResearchActivities.findAll({
       where: { faculty_id: facultyId },
       order: [["date", "DESC"]],
     });
+
+    const activities = await presignFields(rows, ["certificate_file"]);
 
     res.json({ activities });
   } catch (error) {
@@ -568,14 +674,26 @@ exports.createResearchActivity = async (req, res) => {
     const activityData = req.body;
 
     // Handle certificate file upload
+    let newKey;
     if (req.file) {
-      activityData.certificate_file = `/uploads/research/${req.file.filename}`;
+      newKey = await storage.put(req.file.buffer, {
+        folder: "research",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+      activityData.certificate_file = newKey;
     }
 
-    const activity = await db.FacultyResearchActivities.create({
-      ...activityData,
-      faculty_id: facultyId,
-    });
+    let activity;
+    try {
+      activity = await db.FacultyResearchActivities.create({
+        ...activityData,
+        faculty_id: facultyId,
+      });
+    } catch (dbError) {
+      if (newKey) await storage.remove(newKey).catch(() => {});
+      throw dbError;
+    }
 
     res.status(201).json({
       message: "Research activity created successfully",
@@ -602,12 +720,29 @@ exports.updateResearchActivity = async (req, res) => {
       return res.status(404).json({ message: "Research activity not found" });
     }
 
-    // Handle certificate file upload
+    // Handle certificate file upload: upload new -> update row -> delete old
+    let oldCertificateFile;
+    let newKey;
     if (req.file) {
-      activityData.certificate_file = `/uploads/research/${req.file.filename}`;
+      oldCertificateFile = activity.certificate_file;
+      newKey = await storage.put(req.file.buffer, {
+        folder: "research",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+      activityData.certificate_file = newKey;
     }
 
-    await activity.update(activityData);
+    try {
+      await activity.update(activityData);
+    } catch (dbError) {
+      if (newKey) await storage.remove(newKey).catch(() => {});
+      throw dbError;
+    }
+
+    if (req.file && oldCertificateFile) {
+      await storage.remove(oldCertificateFile).catch(() => {});
+    }
 
     res.json({
       message: "Research activity updated successfully",
@@ -649,10 +784,12 @@ exports.getExtensionActivities = async (req, res) => {
   try {
     const facultyId = req.user.faculty_id || req.params.facultyId;
 
-    const activities = await db.FacultyExtensionActivities.findAll({
+    const rows = await db.FacultyExtensionActivities.findAll({
       where: { faculty_id: facultyId },
       order: [["date_of_implementation", "DESC"]],
     });
+
+    const activities = await presignFields(rows, ["documentation_file"]);
 
     res.json({ activities });
   } catch (error) {
@@ -668,14 +805,26 @@ exports.createExtensionActivity = async (req, res) => {
     const activityData = req.body;
 
     // Handle documentation file upload
+    let newKey;
     if (req.file) {
-      activityData.documentation_file = `/uploads/extension/${req.file.filename}`;
+      newKey = await storage.put(req.file.buffer, {
+        folder: "extension",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+      activityData.documentation_file = newKey;
     }
 
-    const activity = await db.FacultyExtensionActivities.create({
-      ...activityData,
-      faculty_id: facultyId,
-    });
+    let activity;
+    try {
+      activity = await db.FacultyExtensionActivities.create({
+        ...activityData,
+        faculty_id: facultyId,
+      });
+    } catch (dbError) {
+      if (newKey) await storage.remove(newKey).catch(() => {});
+      throw dbError;
+    }
 
     res.status(201).json({
       message: "Extension activity created successfully",
@@ -702,12 +851,29 @@ exports.updateExtensionActivity = async (req, res) => {
       return res.status(404).json({ message: "Extension activity not found" });
     }
 
-    // Handle documentation file upload
+    // Handle documentation file upload: upload new -> update row -> delete old
+    let oldDocumentationFile;
+    let newKey;
     if (req.file) {
-      activityData.documentation_file = `/uploads/extension/${req.file.filename}`;
+      oldDocumentationFile = activity.documentation_file;
+      newKey = await storage.put(req.file.buffer, {
+        folder: "extension",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+      activityData.documentation_file = newKey;
     }
 
-    await activity.update(activityData);
+    try {
+      await activity.update(activityData);
+    } catch (dbError) {
+      if (newKey) await storage.remove(newKey).catch(() => {});
+      throw dbError;
+    }
+
+    if (req.file && oldDocumentationFile) {
+      await storage.remove(oldDocumentationFile).catch(() => {});
+    }
 
     res.json({
       message: "Extension activity updated successfully",
@@ -790,7 +956,23 @@ exports.getCompleteProfile = async (req, res) => {
       return res.status(404).json({ message: "Faculty not found" });
     }
 
-    res.json({ profile: faculty });
+    const profile = faculty.toJSON();
+    profile.personal_profile = await presignFields(profile.personal_profile, [
+      "profile_picture",
+      "passport_photo",
+    ]);
+    profile.awards = await presignFields(profile.awards, ["certificate_file"]);
+    profile.seminars_trainings = await presignFields(profile.seminars_trainings, [
+      "certificate_file",
+    ]);
+    profile.research_activities = await presignFields(profile.research_activities, [
+      "certificate_file",
+    ]);
+    profile.extension_activities = await presignFields(profile.extension_activities, [
+      "documentation_file",
+    ]);
+
+    res.json({ profile });
   } catch (error) {
     console.error("Get complete profile error:", error);
     res.status(500).json({ message: "Error fetching complete profile" });
@@ -860,7 +1042,23 @@ exports.getFacultyCompleteProfileByDean = async (req, res) => {
         .json({ message: "Faculty not found or not in your department" });
     }
 
-    res.json({ profile: faculty });
+    const profile = faculty.toJSON();
+    profile.personal_profile = await presignFields(profile.personal_profile, [
+      "profile_picture",
+      "passport_photo",
+    ]);
+    profile.awards = await presignFields(profile.awards, ["certificate_file"]);
+    profile.seminars_trainings = await presignFields(profile.seminars_trainings, [
+      "certificate_file",
+    ]);
+    profile.research_activities = await presignFields(profile.research_activities, [
+      "certificate_file",
+    ]);
+    profile.extension_activities = await presignFields(profile.extension_activities, [
+      "documentation_file",
+    ]);
+
+    res.json({ profile });
   } catch (error) {
     console.error("Get faculty complete profile by dean error:", error);
     res
@@ -906,7 +1104,17 @@ exports.getAllFacultyProfilesByDean = async (req, res) => {
       ],
     });
 
-    res.json({ faculty });
+    const facultyList = await Promise.all(
+      faculty.map(async (f) => {
+        const plain = f.toJSON();
+        plain.personal_profile = await presignFields(plain.personal_profile, [
+          "profile_picture",
+        ]);
+        return plain;
+      }),
+    );
+
+    res.json({ faculty: facultyList });
   } catch (error) {
     console.error("Get all faculty profiles by dean error:", error);
     res.status(500).json({ message: "Error fetching faculty profiles" });

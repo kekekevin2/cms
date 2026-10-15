@@ -105,6 +105,7 @@
   @if (viewMode() === 'list') {
     @if (loading()) {
       <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
         <table class="w-full text-xs">
           <tbody>
             <tr>
@@ -117,6 +118,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     } @else if (bulkUploads().length === 0) {
       @if (errorMessage()) {
@@ -125,6 +127,7 @@
         </div>
       } @else {
         <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto">
           <table class="w-full text-xs">
             <tbody>
               <tr>
@@ -137,10 +140,12 @@
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       }
     } @else if (filteredBulkUploads().length === 0) {
       <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
         <table class="w-full text-xs">
           <tbody>
             <tr>
@@ -153,10 +158,12 @@
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     } @else {
       <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-        <table class="w-full text-xs">
+        <div class="overflow-x-auto">
+        <table class="w-full min-w-[720px] text-xs">
           <thead>
             <tr class="border-b border-gray-100 bg-gray-50">
               <th
@@ -248,6 +255,7 @@
             }
           </tbody>
         </table>
+        </div>
       </div>
 
       <!-- Pagination -->
@@ -808,121 +816,121 @@
           <!-- Left Side - Member Details -->
           <div class="flex-1 space-y-0 bg-white rounded-sm border border-gray-200">
             <!-- First Name -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 First Name:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.first_name || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Middle Name -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Middle Name:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.middle_name || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Family Name -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Family Name:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.last_name || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Position -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Position:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.position || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- SR Code -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 SR Code:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.sr_code || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Course -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Course:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.course || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Year -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Year:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.year_level || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- GWA (Previous sem) -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 GWA (Previous sem):
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.gwa || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Campus -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Campus:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.campus || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Mobile No -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Mobile No.:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.contact_number || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Telephone No -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Telephone No.:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.telephone_number || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Birth Date -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Birth Date:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">
                   @if (selectedMember()!.birth_date) {
                     {{ selectedMember()!.birth_date | date: 'MMMM d, yyyy' }}
@@ -934,51 +942,51 @@
             </div>
 
             <!-- Age -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Age:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.age || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Civil Status -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Civil Status:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.civil_status || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Email Address -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Email Address:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.email || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Home Address -->
-            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                 Home Address:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 <p class="text-xs font-medium text-gray-900">{{ selectedMember()!.home_address || 'N/A' }}</p>
               </div>
             </div>
 
             <!-- Signature -->
-            <div class="grid grid-cols-12 items-start border-b border-gray-200 py-3 px-4">
-              <label class="col-span-4 text-xs font-semibold text-gray-900 pt-2">
+            <div class="grid grid-cols-1 sm:grid-cols-12 items-start border-b border-gray-200 py-3 px-4">
+              <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900 pt-2">
                 Signature:
               </label>
-              <div class="col-span-8">
+              <div class="col-span-1 sm:col-span-8">
                 @if (selectedMember()!.signature_url) {
                   <img
                     [src]="getPhotoUrl(selectedMember()!.signature_url)"
@@ -1044,11 +1052,11 @@
             <!-- Left Side - Form Fields -->
             <div class="flex-1 space-y-0 bg-white rounded-sm border border-gray-200">
               <!-- First Name -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   First Name:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="memberForm().first_name"
@@ -1061,11 +1069,11 @@
               </div>
 
               <!-- Middle Name -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Middle Name:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="memberForm().middle_name"
@@ -1078,11 +1086,11 @@
               </div>
 
               <!-- Family Name -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Family Name:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="memberForm().last_name"
@@ -1095,11 +1103,11 @@
               </div>
 
               <!-- Position -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Position:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <select
                     [ngModel]="memberForm().position"
                     (ngModelChange)="updateMemberForm('position', $event)"
@@ -1129,11 +1137,11 @@
               </div>
 
               <!-- SR Code -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   SR Code:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="memberForm().sr_code"
@@ -1146,11 +1154,11 @@
               </div>
 
               <!-- Course -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Course:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().educational_attainment"
@@ -1163,11 +1171,11 @@
               </div>
 
               <!-- Year -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Year:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <select
                     [ngModel]="memberForm().year_level"
                     (ngModelChange)="updateMemberForm('year_level', $event)"
@@ -1184,11 +1192,11 @@
               </div>
 
               <!-- GWA (Previous sem) -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   GWA (Previous sem):
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().notes"
@@ -1201,11 +1209,11 @@
               </div>
 
               <!-- Campus -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Campus:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().campus"
@@ -1218,11 +1226,11 @@
               </div>
 
               <!-- Mobile No -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Mobile No.:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="memberForm().contact_number"
@@ -1235,11 +1243,11 @@
               </div>
 
               <!-- Telephone No -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Telephone No.:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().telephone_number"
@@ -1252,11 +1260,11 @@
               </div>
 
               <!-- Birth Date -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Birth Date:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="date"
                     [ngModel]="adviserForm().birth_date"
@@ -1268,11 +1276,11 @@
               </div>
 
               <!-- Age -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Age:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().age"
@@ -1285,11 +1293,11 @@
               </div>
 
               <!-- Civil Status -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Civil Status:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <select
                     [ngModel]="adviserForm().civil_status"
                     (ngModelChange)="updateAdviserForm('civil_status', $event)"
@@ -1306,11 +1314,11 @@
               </div>
 
               <!-- Email Address -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Email Address:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="email"
                     [ngModel]="memberForm().email"
@@ -1323,11 +1331,11 @@
               </div>
 
               <!-- Home Address -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Home Address:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().home_address"
@@ -1340,11 +1348,11 @@
               </div>
 
               <!-- Signature -->
-              <div class="grid grid-cols-12 items-start border-b border-gray-200 py-3">
-                <label class="col-span-4 text-xs font-semibold text-gray-900 pt-2">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start border-b border-gray-200 py-3">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900 pt-2">
                   Signature:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <div class="flex flex-col gap-2">
                     @if (signaturePreview()) {
                       <!-- Visible preview of the uploaded / existing e-signature -->
@@ -1452,11 +1460,11 @@
           }
         </form>
       </div>
-      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
+      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           type="button"
           (click)="closeModals()"
-          class="px-4 py-2 text-xs text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-100 transition"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-100 transition"
         >
           Cancel
         </button>
@@ -1464,7 +1472,7 @@
           type="submit"
           (click)="saveMember()"
           [disabled]="loading()"
-          class="px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+          class="w-full sm:w-auto px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs mr-2"></i>
@@ -1489,11 +1497,11 @@
             <!-- Left Side - Form Fields -->
             <div class="flex-1 space-y-0">
               <!-- First Name -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   First Name:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="memberForm().first_name"
@@ -1506,11 +1514,11 @@
               </div>
 
               <!-- Middle Name -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Middle Name:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="memberForm().middle_name"
@@ -1523,11 +1531,11 @@
               </div>
 
               <!-- Family Name -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Family Name:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="memberForm().last_name"
@@ -1540,11 +1548,11 @@
               </div>
 
               <!-- Position -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Position:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <select
                     [ngModel]="memberForm().position"
                     (ngModelChange)="updateMemberForm('position', $event)"
@@ -1574,11 +1582,11 @@
               </div>
 
               <!-- SR Code -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   SR Code:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="memberForm().sr_code"
@@ -1591,11 +1599,11 @@
               </div>
 
               <!-- Course -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Course:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().educational_attainment"
@@ -1608,11 +1616,11 @@
               </div>
 
               <!-- Year -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Year:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <select
                     [ngModel]="memberForm().year_level"
                     (ngModelChange)="updateMemberForm('year_level', $event)"
@@ -1629,11 +1637,11 @@
               </div>
 
               <!-- GWA (Previous sem) -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   GWA (Previous sem):
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().notes"
@@ -1646,11 +1654,11 @@
               </div>
 
               <!-- Campus -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Campus:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().campus"
@@ -1663,11 +1671,11 @@
               </div>
 
               <!-- Mobile No -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Mobile No.:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="memberForm().contact_number"
@@ -1680,11 +1688,11 @@
               </div>
 
               <!-- Telephone No -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Telephone No.:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().telephone_number"
@@ -1697,11 +1705,11 @@
               </div>
 
               <!-- Birth Date -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Birth Date:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="date"
                     [ngModel]="adviserForm().birth_date"
@@ -1713,11 +1721,11 @@
               </div>
 
               <!-- Age -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Age:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().age"
@@ -1730,11 +1738,11 @@
               </div>
 
               <!-- Civil Status -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Civil Status:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <select
                     [ngModel]="adviserForm().civil_status"
                     (ngModelChange)="updateAdviserForm('civil_status', $event)"
@@ -1751,11 +1759,11 @@
               </div>
 
               <!-- Email Address -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Email Address:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="email"
                     [ngModel]="memberForm().email"
@@ -1768,11 +1776,11 @@
               </div>
 
               <!-- Home Address -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Home Address:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().home_address"
@@ -1785,11 +1793,11 @@
               </div>
 
               <!-- Signature -->
-              <div class="grid grid-cols-12 items-start border-b border-gray-200 py-3">
-                <label class="col-span-4 text-xs font-semibold text-gray-900 pt-2">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start border-b border-gray-200 py-3">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900 pt-2">
                   Signature:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <div class="flex flex-col gap-2">
                     @if (signaturePreview()) {
                       <!-- Visible preview of the uploaded / existing e-signature -->
@@ -1897,11 +1905,11 @@
           }
         </div>
       </div>
-      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
+      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           type="button"
           (click)="closeModals()"
-          class="px-4 py-2 text-xs text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-100 transition"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-100 transition"
         >
           Cancel
         </button>
@@ -1909,7 +1917,7 @@
           type="button"
           (click)="updateMember()"
           [disabled]="loading()"
-          class="px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
+          class="w-full sm:w-auto px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs mr-2"></i>
@@ -1934,11 +1942,11 @@
             <!-- Left Side - Form Fields -->
             <div class="flex-1 space-y-0 bg-white rounded-sm border border-gray-200">
               <!-- First Name -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   First Name:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [(ngModel)]="memberForm().first_name"
@@ -1951,11 +1959,11 @@
               </div>
 
               <!-- Middle Name -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Middle Name:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [(ngModel)]="memberForm().middle_name"
@@ -1967,11 +1975,11 @@
               </div>
 
               <!-- Family Name -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Family Name:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [(ngModel)]="memberForm().last_name"
@@ -1984,11 +1992,11 @@
               </div>
 
               <!-- Position -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Position:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     value="ADVISER"
@@ -1999,11 +2007,11 @@
               </div>
 
               <!-- Academic Rank -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Academic Rank:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <select
                     [ngModel]="adviserForm().academic_rank"
                     (ngModelChange)="updateAdviserForm('academic_rank', $event)"
@@ -2035,11 +2043,11 @@
               </div>
 
               <!-- Employment Status -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Employment Status:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().employment_status"
@@ -2052,11 +2060,11 @@
               </div>
 
               <!-- Length of Service -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Length of Service:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().length_of_service"
@@ -2069,11 +2077,11 @@
               </div>
 
               <!-- Educational Attainment Course -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Educational Attainment:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().educational_attainment"
@@ -2086,11 +2094,11 @@
               </div>
 
               <!-- Campus -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Campus:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().campus"
@@ -2103,11 +2111,11 @@
               </div>
 
               <!-- Mobile No -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Mobile No.:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().contact_number"
@@ -2120,11 +2128,11 @@
               </div>
 
               <!-- Telephone No -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Telephone No.:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().telephone_number"
@@ -2137,11 +2145,11 @@
               </div>
 
               <!-- Birth Date -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Birth Date:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="date"
                     [ngModel]="adviserForm().birth_date"
@@ -2153,11 +2161,11 @@
               </div>
 
               <!-- Age -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Age:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().age"
@@ -2170,11 +2178,11 @@
               </div>
 
               <!-- Civil Status -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Civil Status:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <select
                     [ngModel]="adviserForm().civil_status"
                     (ngModelChange)="updateAdviserForm('civil_status', $event)"
@@ -2191,11 +2199,11 @@
               </div>
 
               <!-- Email Address -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Email Address:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="email"
                     [ngModel]="adviserForm().email"
@@ -2208,11 +2216,11 @@
               </div>
 
               <!-- Home Address -->
-              <div class="grid grid-cols-12 items-center border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-1 sm:gap-0 border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900">
                   Home Address:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <input
                     type="text"
                     [ngModel]="adviserForm().home_address"
@@ -2225,11 +2233,11 @@
               </div>
 
               <!-- Signature -->
-              <div class="grid grid-cols-12 items-start border-b border-gray-200 py-3 px-4">
-                <label class="col-span-4 text-xs font-semibold text-gray-900 pt-2">
+              <div class="grid grid-cols-1 sm:grid-cols-12 items-start border-b border-gray-200 py-3 px-4">
+                <label class="col-span-1 sm:col-span-4 text-xs font-semibold text-gray-900 pt-2">
                   Signature:
                 </label>
-                <div class="col-span-8">
+                <div class="col-span-1 sm:col-span-8">
                   <div class="flex flex-col gap-2">
                     @if (selectedAdviser()?.Faculty?.signature_url && !selectedSignature()) {
                       <div class="flex items-center gap-3">
@@ -2352,11 +2360,11 @@
           }
         </div>
       </div>
-      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
+      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           type="button"
           (click)="closeModals()"
-          class="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 transition-colors"
+          class="w-full sm:w-auto px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 transition-colors"
         >
           Cancel
         </button>
@@ -2364,7 +2372,7 @@
           type="button"
           (click)="updateAdviser()"
           [disabled]="loading()"
-          class="px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-sm hover:bg-blue-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+          class="w-full sm:w-auto justify-center px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-sm hover:bg-blue-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs"></i>
@@ -2497,7 +2505,7 @@
           </div>
 
           <!-- Academic Year and Semester (side by side) -->
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">
                 Academic Year <span class="text-red-500">*</span>
@@ -2535,7 +2543,7 @@
           </div>
 
           <!-- Year Level and Section (side by side) -->
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">
                 Year Level <span class="text-red-500">*</span>
@@ -2617,12 +2625,12 @@
           }
         </form>
       </div>
-      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
+      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           type="button"
           (click)="closeModals()"
           [disabled]="loading()"
-          class="px-4 py-2 text-xs text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-100 transition disabled:opacity-50"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-100 transition disabled:opacity-50"
         >
           Close
         </button>
@@ -2630,7 +2638,7 @@
           type="button"
           (click)="uploadMembers()"
           [disabled]="loading() || !bulkUploadForm().academic_year_id || !bulkUploadForm().section || !bulkUploadForm().year_level || !bulkUploadForm().department || !bulkUploadForm().semester || (!bulkUploadEditMode() && !bulkUploadForm().file)"
-          class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-white bg-red-500 rounded-sm hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           @if (loading()) {
             <i class="pi pi-spin pi-spinner text-xs"></i>

@@ -50,7 +50,6 @@ export class FacultyMyProfile implements OnInit {
   private sweetAlert = inject(SweetAlertService);
 
   apiUrl = environment.apiUrl;
-  baseUrl = environment.apiUrl.replace('/api', ''); // For serving static files
   loading = signal(false);
   activeSection = signal<string>('personal');
 

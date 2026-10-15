@@ -35,12 +35,12 @@ interface Assignment {
     <aside
       [class.translate-x-0]="isSidebarOpen()"
       [class.-translate-x-full]="!isSidebarOpen()"
-      class="fixed top-0 left-0 z-50 w-64 h-full transition-transform bg-white border-r border-gray-200"
+      class="fixed top-0 left-0 z-50 w-64 max-w-[85vw] h-full transition-transform sm:translate-x-0 bg-white border-r border-gray-200"
     >
       <div class="h-full px-3 py-4 overflow-y-auto">
         <!-- Logo/Brand -->
         <div class="mb-6 px-2 flex flex-col items-center">
-          <img src="/assets/logo.png" alt="Logo" class="h-24 mb-3" />
+          <img src="/assets/logo.png" alt="Logo" class="h-10 sm:h-24 w-auto mb-2 sm:mb-3" />
           <h2 class="text-lg font-bold text-gray-900 text-center">Faculty Portal</h2>
           @if (authService.currentUser()?.profile?.department) {
             <p class="text-xs text-gray-500 text-center mt-0.5">
@@ -105,32 +105,33 @@ interface Assignment {
       </div>
     </aside>
 
+    @if (isSidebarOpen()) {
+      <div class="fixed inset-0 z-30 bg-black/50 sm:hidden" (click)="toggleSidebar()"></div>
+    }
+
     <!-- Top Bar -->
     <div
-      class="fixed top-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300"
-      [class.left-64]="isSidebarOpen()"
-      [class.left-0]="!isSidebarOpen()"
-      [class.right-0]="true"
+      class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300 sm:left-64"
     >
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 min-w-0">
         <button
           (click)="toggleSidebar()"
           type="button"
-          class="text-gray-900 bg-transparent hover:bg-gray-200 font-medium rounded-lg text-sm p-2 focus:outline-none"
+          class="text-gray-900 bg-transparent hover:bg-gray-200 font-medium rounded-lg text-sm p-2 focus:outline-none shrink-0"
         >
           <i class="pi pi-bars text-lg"></i>
         </button>
-        <h1 class="text-sm font-semibold text-gray-900">{{ getPageTitle() }}</h1>
+        <h1 class="text-sm font-semibold text-gray-900 truncate">{{ getPageTitle() }}</h1>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 shrink-0">
         <div class="relative">
           <button
             (click)="toggleUserMenu()"
             class="inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
           >
             <i class="pi pi-user text-sm"></i>
-            <span class="text-xs font-medium">
+            <span class="text-xs font-medium hidden sm:inline">
               {{ authService.currentUser()?.profile?.first_name }}
               {{ authService.currentUser()?.profile?.last_name }}
             </span>
@@ -177,7 +178,7 @@ interface Assignment {
     </div>
 
     <!-- Main Content -->
-    <div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300" [class.ml-64]="isSidebarOpen()">
+    <div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300 sm:ml-64">
       @if (activeTab() === 'dashboard') {
         <div class="space-y-4">
           <!-- Filters -->
@@ -316,7 +317,7 @@ interface Assignment {
           </div>
 
           <!-- Status mini-cards row -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <div class="bg-white border border-gray-100 rounded-sm p-3">
               <div class="flex items-center gap-2 mb-1">
                 <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
@@ -406,7 +407,7 @@ interface Assignment {
                   </div>
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <p class="text-xs text-gray-600 flex items-center gap-1.5">
                   <span class="w-2.5 h-2.5 rounded-sm bg-green-500 shrink-0"></span
                   >{{ dashboardStats().cleared }} Cleared
@@ -518,7 +519,7 @@ interface Assignment {
   styles: [],
 })
 export class FacultyDashboard implements OnInit {
-  isSidebarOpen = signal(true);
+  isSidebarOpen = signal(false);
   activeTab = signal<string>('dashboard');
   isUserMenuOpen = signal(false);
   isChangePasswordOpen = signal(false);

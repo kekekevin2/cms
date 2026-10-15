@@ -442,7 +442,7 @@
               <label class="block text-sm font-semibold text-gray-800 mb-3">5. SEX AT BIRTH</label>
             </div>
             <div class="border-b p-4">
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -471,7 +471,7 @@
               <label class="block text-sm font-semibold text-gray-800 mb-3">6. CIVIL STATUS</label>
             </div>
             <div class="p-4">
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -512,7 +512,7 @@
                   />
                   <span class="text-gray-700">Separated</span>
                 </label>
-                <label class="flex items-center gap-2 cursor-pointer col-span-2">
+                <label class="flex items-center gap-2 cursor-pointer sm:col-span-2">
                   <input
                     type="checkbox"
                     [checked]="pds.civil_status === 'Others'"
@@ -1336,7 +1336,7 @@
                     </button>
                   }
                 </div>
-                <div class="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
                   @if (elig.rating) {
                     <p><strong>Rating:</strong> {{ elig.rating }}</p>
                   }
@@ -1384,7 +1384,7 @@
                   <h4 class="font-semibold text-lg text-gray-800">{{ work.position_title }}</h4>
                   <p class="text-gray-700">{{ work.department_agency }}</p>
                 </div>
-                <div class="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
                   <p>
                     <strong>Period:</strong> {{ work.date_from | date:'MM/dd/yyyy' }} to {{ work.date_to ? (work.date_to | date:'MM/dd/yyyy') : 'Present' }}
                   </p>

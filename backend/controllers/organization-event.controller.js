@@ -1,4 +1,5 @@
 const db = require("../models");
+const storage = require("../utils/storage");
 
 // Get all events for an organization
 exports.getEvents = async (req, res) => {
@@ -155,71 +156,82 @@ exports.createEvent = async (req, res) => {
     let fileSize = null;
 
     if (req.file) {
-      filePath = req.file.path;
+      filePath = await storage.put(req.file.buffer, {
+        folder: "event-files",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
       originalFilename = req.file.originalname;
       fileSize = req.file.size;
     }
 
-    // Insert event
-    const [result] = await db.sequelize.query(
-      `INSERT INTO organization_events 
-        (organization_id, title, date_implemented, status, start_time, end_time, description, file_path, original_filename, file_size, uploaded_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-      {
-        replacements: [
-          organization.organization_id,
-          title,
-          date_implemented,
-          status || "Planned",
-          start_time || null,
-          end_time || null,
-          description || null,
-          filePath,
-          originalFilename,
-          fileSize,
-        ],
-        type: db.sequelize.QueryTypes.INSERT,
-      },
-    );
+    try {
+      // Insert event
+      const [result] = await db.sequelize.query(
+        `INSERT INTO organization_events
+          (organization_id, title, date_implemented, status, start_time, end_time, description, file_path, original_filename, file_size, uploaded_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        {
+          replacements: [
+            organization.organization_id,
+            title,
+            date_implemented,
+            status || "Planned",
+            start_time || null,
+            end_time || null,
+            description || null,
+            filePath,
+            originalFilename,
+            fileSize,
+          ],
+          type: db.sequelize.QueryTypes.INSERT,
+        },
+      );
 
-    const eventId = result;
-    console.log("Event created with ID:", eventId);
+      const eventId = result;
+      console.log("Event created with ID:", eventId);
 
-    // Insert SDGs
-    if (sdgs && sdgs.length > 0) {
-      for (const sdg of sdgs) {
-        await db.sequelize.query(
-          `INSERT INTO organization_event_sdgs (event_id, sdg_number) VALUES (?, ?)`,
-          {
-            replacements: [eventId, sdg],
-            type: db.sequelize.QueryTypes.INSERT,
-          },
-        );
+      // Insert SDGs
+      if (sdgs && sdgs.length > 0) {
+        for (const sdg of sdgs) {
+          await db.sequelize.query(
+            `INSERT INTO organization_event_sdgs (event_id, sdg_number) VALUES (?, ?)`,
+            {
+              replacements: [eventId, sdg],
+              type: db.sequelize.QueryTypes.INSERT,
+            },
+          );
+        }
       }
-    }
 
-    // Insert Guests
-    if (guests && guests.length > 0) {
-      for (const guest of guests) {
-        await db.sequelize.query(
-          `INSERT INTO organization_event_guests (event_id, guest_name, guest_title, guest_affiliation) 
-          VALUES (?, ?, ?, ?)`,
-          {
-            replacements: [
-              eventId,
-              guest.guest_name,
-              guest.guest_title || null,
-              guest.guest_affiliation || null,
-            ],
-            type: db.sequelize.QueryTypes.INSERT,
-          },
-        );
+      // Insert Guests
+      if (guests && guests.length > 0) {
+        for (const guest of guests) {
+          await db.sequelize.query(
+            `INSERT INTO organization_event_guests (event_id, guest_name, guest_title, guest_affiliation)
+            VALUES (?, ?, ?, ?)`,
+            {
+              replacements: [
+                eventId,
+                guest.guest_name,
+                guest.guest_title || null,
+                guest.guest_affiliation || null,
+              ],
+              type: db.sequelize.QueryTypes.INSERT,
+            },
+          );
+        }
       }
-    }
 
-    res
-      .status(201)
-      .json({ message: "Event created successfully", id: eventId });
+      res
+        .status(201)
+        .json({ message: "Event created successfully", id: eventId });
+    } catch (dbError) {
+      if (filePath) {
+        await storage.remove(filePath).catch(() => {});
+      }
+      throw dbError;
+    }
   } catch (error) {
     console.error("Create event error:", error);
     console.error("Error stack:", error.stack);
@@ -294,93 +306,102 @@ exports.updateEvent = async (req, res) => {
     }
 
     // Handle file upload
+    const oldFilePath = event.file_path;
     let filePath = event.file_path;
     let originalFilename = event.original_filename;
     let fileSize = event.file_size;
 
     if (req.file) {
-      // Delete old file if exists
-      if (event.file_path) {
-        const fs = require("fs");
-        if (fs.existsSync(event.file_path)) {
-          fs.unlinkSync(event.file_path);
-        }
-      }
-      filePath = req.file.path;
+      filePath = await storage.put(req.file.buffer, {
+        folder: "event-files",
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
       originalFilename = req.file.originalname;
       fileSize = req.file.size;
     }
 
-    // Update event
-    await db.sequelize.query(
-      `UPDATE organization_events 
-      SET title = ?, date_implemented = ?, status = ?, start_time = ?, end_time = ?, description = ?,
-          file_path = ?, original_filename = ?, file_size = ?, uploaded_at = IF(? IS NOT NULL, NOW(), uploaded_at)
-      WHERE id = ?`,
-      {
-        replacements: [
-          title,
-          date_implemented,
-          status,
-          start_time || null,
-          end_time || null,
-          description || null,
-          filePath,
-          originalFilename,
-          fileSize,
-          req.file ? 'yes' : null,
-          id,
-        ],
-        type: db.sequelize.QueryTypes.UPDATE,
-      },
-    );
+    try {
+      // Update event
+      await db.sequelize.query(
+        `UPDATE organization_events
+        SET title = ?, date_implemented = ?, status = ?, start_time = ?, end_time = ?, description = ?,
+            file_path = ?, original_filename = ?, file_size = ?, uploaded_at = IF(? IS NOT NULL, NOW(), uploaded_at)
+        WHERE id = ?`,
+        {
+          replacements: [
+            title,
+            date_implemented,
+            status,
+            start_time || null,
+            end_time || null,
+            description || null,
+            filePath,
+            originalFilename,
+            fileSize,
+            req.file ? 'yes' : null,
+            id,
+          ],
+          type: db.sequelize.QueryTypes.UPDATE,
+        },
+      );
 
-    // Update SDGs - delete and re-insert
-    await db.sequelize.query(
-      `DELETE FROM organization_event_sdgs WHERE event_id = ?`,
-      {
-        replacements: [id],
-        type: db.sequelize.QueryTypes.DELETE,
-      },
-    );
+      // Update SDGs - delete and re-insert
+      await db.sequelize.query(
+        `DELETE FROM organization_event_sdgs WHERE event_id = ?`,
+        {
+          replacements: [id],
+          type: db.sequelize.QueryTypes.DELETE,
+        },
+      );
 
-    if (sdgs && sdgs.length > 0) {
-      for (const sdg of sdgs) {
-        await db.sequelize.query(
-          `INSERT INTO organization_event_sdgs (event_id, sdg_number) VALUES (?, ?)`,
-          {
-            replacements: [id, sdg],
-            type: db.sequelize.QueryTypes.INSERT,
-          },
-        );
+      if (sdgs && sdgs.length > 0) {
+        for (const sdg of sdgs) {
+          await db.sequelize.query(
+            `INSERT INTO organization_event_sdgs (event_id, sdg_number) VALUES (?, ?)`,
+            {
+              replacements: [id, sdg],
+              type: db.sequelize.QueryTypes.INSERT,
+            },
+          );
+        }
       }
+
+      // Update Guests - delete and re-insert
+      await db.sequelize.query(
+        `DELETE FROM organization_event_guests WHERE event_id = ?`,
+        {
+          replacements: [id],
+          type: db.sequelize.QueryTypes.DELETE,
+        },
+      );
+
+      if (guests && guests.length > 0) {
+        for (const guest of guests) {
+          await db.sequelize.query(
+            `INSERT INTO organization_event_guests (event_id, guest_name, guest_title, guest_affiliation)
+            VALUES (?, ?, ?, ?)`,
+            {
+              replacements: [
+                id,
+                guest.guest_name,
+                guest.guest_title || null,
+                guest.guest_affiliation || null,
+              ],
+              type: db.sequelize.QueryTypes.INSERT,
+            },
+          );
+        }
+      }
+    } catch (dbError) {
+      if (req.file) {
+        await storage.remove(filePath).catch(() => {});
+      }
+      throw dbError;
     }
 
-    // Update Guests - delete and re-insert
-    await db.sequelize.query(
-      `DELETE FROM organization_event_guests WHERE event_id = ?`,
-      {
-        replacements: [id],
-        type: db.sequelize.QueryTypes.DELETE,
-      },
-    );
-
-    if (guests && guests.length > 0) {
-      for (const guest of guests) {
-        await db.sequelize.query(
-          `INSERT INTO organization_event_guests (event_id, guest_name, guest_title, guest_affiliation) 
-          VALUES (?, ?, ?, ?)`,
-          {
-            replacements: [
-              id,
-              guest.guest_name,
-              guest.guest_title || null,
-              guest.guest_affiliation || null,
-            ],
-            type: db.sequelize.QueryTypes.INSERT,
-          },
-        );
-      }
+    if (req.file && oldFilePath) {
+      await storage.remove(oldFilePath).catch(() => {});
     }
 
     res.json({ message: "Event updated successfully" });
@@ -424,10 +445,7 @@ exports.deleteEvent = async (req, res) => {
 
     // Delete file if exists
     if (event.file_path) {
-      const fs = require("fs");
-      if (fs.existsSync(event.file_path)) {
-        fs.unlinkSync(event.file_path);
-      }
+      await storage.remove(event.file_path).catch(() => {});
     }
 
     await db.sequelize.query(`DELETE FROM organization_events WHERE id = ?`, {
@@ -474,12 +492,11 @@ exports.downloadEventFile = async (req, res) => {
       return res.status(404).json({ message: "No file uploaded for this event" });
     }
 
-    const fs = require("fs");
-    if (!fs.existsSync(event.file_path)) {
-      return res.status(404).json({ message: "File not found on server" });
-    }
-
-    res.download(event.file_path, event.original_filename);
+    const url = await storage.getUrl(event.file_path, {
+      download: true,
+      filename: event.original_filename,
+    });
+    res.json({ url });
   } catch (error) {
     console.error("Download event file error:", error);
     res.status(500).json({ message: "Error downloading file" });

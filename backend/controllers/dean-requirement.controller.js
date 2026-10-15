@@ -1,7 +1,7 @@
 const db = require("../models");
 const { Op } = require("sequelize");
 const path = require("path");
-const fs = require("fs").promises;
+const storage = require("../utils/storage");
 
 // Helper: resolve department name for Dean or CollegeDepartment user
 async function getDepartmentForUser(userId) {
@@ -526,15 +526,11 @@ exports.downloadRequirement = async (req, res) => {
       return res.status(404).json({ message: "Submission not found" });
     }
 
-    // Check if file exists
-    try {
-      await fs.access(submission.file_path);
-    } catch (err) {
-      return res.status(404).json({ message: "File not found" });
-    }
-
-    // Send file
-    res.download(submission.file_path, submission.file_name);
+    const url = await storage.getUrl(submission.file_path, {
+      download: true,
+      filename: submission.file_name,
+    });
+    res.json({ url });
   } catch (error) {
     console.error("Download requirement error:", error);
     res.status(500).json({ message: "Error downloading requirement" });

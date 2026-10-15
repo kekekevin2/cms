@@ -11,6 +11,7 @@ module.exports = (sequelize, Sequelize) => {
       email: {
         type: Sequelize.STRING,
         allowNull: false,
+        field: 'email', // Explicitly set field name
         // Removed unique: true to allow same email for different roles
         validate: {
           isEmail: true,
@@ -19,6 +20,7 @@ module.exports = (sequelize, Sequelize) => {
       password: {
         type: Sequelize.STRING,
         allowNull: false,
+        field: 'password', // Explicitly set field name
       },
       role: {
         type: Sequelize.ENUM(
@@ -31,16 +33,20 @@ module.exports = (sequelize, Sequelize) => {
         ),
         allowNull: false,
         defaultValue: "faculty",
+        field: 'role', // Explicitly set field name
       },
       is_active: {
         type: Sequelize.BOOLEAN,
         defaultValue: true,
         allowNull: false,
+        field: 'is_active', // Explicitly set field name
         comment:
           "Account status: true=active (can login), false=disabled (cannot login)",
       },
     },
     {
+      tableName: 'users', // Explicitly set table name
+      timestamps: true, // Keep timestamps
       // Add composite unique constraint: one email per role
       indexes: [
         {

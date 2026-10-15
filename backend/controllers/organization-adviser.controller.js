@@ -1,4 +1,6 @@
 const db = require("../models");
+const storage = require("../utils/storage");
+const { presignFields } = require("../utils/presign");
 
 // Helper: resolve department for Dean or CollegeDepartment user
 async function getDepartmentForUser(userId) {
@@ -71,7 +73,19 @@ exports.getAdvisers = async (req, res) => {
       order: [["assigned_date", "ASC"]],
     });
 
-    res.json({ advisers });
+    const advisersJson = advisers.map((adviser) => adviser.toJSON());
+    await Promise.all(
+      advisersJson.map(async (adviser) => {
+        if (adviser.Faculty) {
+          adviser.Faculty = await presignFields(adviser.Faculty, [
+            "photo_url",
+            "signature_url",
+          ]);
+        }
+      }),
+    );
+
+    res.json({ advisers: advisersJson });
   } catch (error) {
     console.error("Get advisers error:", error);
     console.error("Error details:", error.message);
@@ -130,7 +144,19 @@ exports.deanGetOrganizationAdvisers = async (req, res) => {
       ],
     });
 
-    res.json({ advisers });
+    const advisersJson = advisers.map((adviser) => adviser.toJSON());
+    await Promise.all(
+      advisersJson.map(async (adviser) => {
+        if (adviser.Faculty) {
+          adviser.Faculty = await presignFields(adviser.Faculty, [
+            "photo_url",
+            "signature_url",
+          ]);
+        }
+      }),
+    );
+
+    res.json({ advisers: advisersJson });
   } catch (error) {
     console.error("Dean get organization advisers error:", error);
     res.status(500).json({ message: "Error fetching advisers" });
@@ -394,15 +420,39 @@ exports.updateAdviser = async (req, res) => {
     }
 
     // Handle photo upload if provided
-    if (req.files && req.files.photo) {
-      const photoUrl = req.files.photo[0].path.replace(/\\/g, '/').replace('uploads/', '/uploads/');
-      await faculty.update({ photo_url: photoUrl });
+    if (req.files?.photo?.[0]) {
+      const f = req.files.photo[0];
+      const oldPhotoKey = faculty.photo_url;
+      const photoKey = await storage.put(f.buffer, {
+        folder: "member-photos",
+        originalname: f.originalname,
+        mimetype: f.mimetype,
+      });
+      try {
+        await faculty.update({ photo_url: photoKey });
+      } catch (dbError) {
+        await storage.remove(photoKey).catch(() => {});
+        throw dbError;
+      }
+      if (oldPhotoKey) await storage.remove(oldPhotoKey).catch(() => {});
     }
 
     // Handle signature upload if provided
-    if (req.files && req.files.signature) {
-      const signatureUrl = req.files.signature[0].path.replace(/\\/g, '/').replace('uploads/', '/uploads/');
-      await faculty.update({ signature_url: signatureUrl });
+    if (req.files?.signature?.[0]) {
+      const f = req.files.signature[0];
+      const oldSignatureKey = faculty.signature_url;
+      const signatureKey = await storage.put(f.buffer, {
+        folder: "member-signatures",
+        originalname: f.originalname,
+        mimetype: f.mimetype,
+      });
+      try {
+        await faculty.update({ signature_url: signatureKey });
+      } catch (dbError) {
+        await storage.remove(signatureKey).catch(() => {});
+        throw dbError;
+      }
+      if (oldSignatureKey) await storage.remove(oldSignatureKey).catch(() => {});
     }
 
     // Update length of service in the adviser assignment if provided

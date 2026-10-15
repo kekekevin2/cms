@@ -15,7 +15,6 @@ import {
   PDSReference,
 } from '../../../services/dean/dean-pds.service';
 import { PdsPdfService } from '../../../services/core/pds-pdf.service';
-import { environment } from '../../../environments/environment';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -116,10 +115,10 @@ export class DeanPersonalDataSheetComponent implements OnInit {
       next: (data) => {
         this.pds = data;
         if (data.photo_path) {
-          this.photoPreview.set(`${environment.apiUrl}/../${data.photo_path}`);
+          this.photoPreview.set(data.photo_path);
         }
         if (data.signature_path) {
-          this.signaturePreview.set(`${environment.apiUrl}/../${data.signature_path}`);
+          this.signaturePreview.set(data.signature_path);
         }
         this.loading.set(false);
       },

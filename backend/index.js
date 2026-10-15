@@ -7,10 +7,17 @@ const app = express();
 
 const db = require("./models");
 
-// Enhanced CORS configuration
+// In production, only the real frontend domains may call this API with
+// credentials. Development stays permissive (origin: true) since the client
+// can run on any localhost port.
+const PRODUCTION_ORIGINS = [
+	"https://batstateu-cmp.online",
+	"https://www.batstateu-cmp.online",
+];
+
 app.use(
 	cors({
-		origin: true, // Allow all origins in development
+		origin: process.env.NODE_ENV === "production" ? PRODUCTION_ORIGINS : true,
 		credentials: true,
 		methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 		allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
@@ -37,8 +44,16 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Serve uploads from local disk only under the disk driver. Under STORAGE_DRIVER=s3
+// every file is reached through a short-lived presigned URL instead, so mounting
+// this would reopen an unauthenticated public read path alongside it.
+const storage = require("./utils/storage");
+if (storage.driver === "disk") {
+	app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+	console.log("Serving /uploads from local disk (STORAGE_DRIVER=disk)");
+} else {
+	console.log(`Storage driver: ${storage.driver} — /uploads static route disabled`);
+}
 
 // Routes
 const authRoutes = require("./routes/auth.routes");
@@ -148,6 +163,11 @@ app.get("/api/hello", (req, res) => {
 	res.json({ message: "Hello from the backend!" });
 });
 
+// Global multer error handler — must be mounted after all route mounts so
+// next(err) from any upload middleware reaches it, and before app.listen.
+const { handleUploadError } = require("./utils/upload");
+app.use(handleUploadError);
+
 const PORT = process.env.PORT;
 
 // Test database connection and sync models
@@ -162,6 +182,11 @@ db.sequelize
 	})
 	.then(() => {
 		console.log("Database tables synced!");
+		// Seed the first superadmin when none exists. No-op unless
+		// SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD are set, and no-op once any
+		// superadmin exists — so a redeploy never overwrites or duplicates it.
+		const { bootstrapSuperadmin } = require("./utils/bootstrap-superadmin");
+		return bootstrapSuperadmin();
 	})
 	.catch((err) => {
 		console.error("Database error:", err.message);

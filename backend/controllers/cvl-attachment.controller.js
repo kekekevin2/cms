@@ -1,5 +1,5 @@
 const db = require("../models");
-const fs = require("fs").promises;
+const storage = require("../utils/storage");
 
 // Helper function to get attachment title
 const getAttachmentTitle = (attachmentType) => {
@@ -58,6 +58,8 @@ exports.getCVLAttachments = async (req, res) => {
 
 // Create new CVL attachment (upload)
 exports.createCVLAttachment = async (req, res) => {
+	const uploadedKeys = [];
+	const createdIds = [];
 	try {
 		const userId = req.user.user_id;
 
@@ -83,20 +85,33 @@ exports.createCVLAttachment = async (req, res) => {
 			return res.status(400).json({ message: "Semester is required" });
 		}
 
+		// Upload every file to storage first
+		const uploadedFiles = [];
+		for (const file of req.files) {
+			const key = await storage.put(file.buffer, {
+				folder: "organization-documents",
+				originalname: file.originalname,
+				mimetype: file.mimetype,
+			});
+			uploadedKeys.push(key);
+			uploadedFiles.push({ key, file });
+		}
+
 		// Create records for each uploaded file
 		const attachments = [];
-		for (const file of req.files) {
+		for (const { key, file } of uploadedFiles) {
 			const attachment = await db.CVLAttachment.create({
 				organization_id: organization.organization_id,
 				attachment_type,
 				date_created: date_created || null,
 				semester: semester,
 				academic_year_id: academic_year_id || null,
-				document_path: file.path,
+				document_path: key,
 				original_filename: file.originalname,
 				file_size: file.size,
 				mime_type: file.mimetype,
 			});
+			createdIds.push(attachment.cvl_attachment_id);
 			attachments.push(attachment);
 		}
 
@@ -106,22 +121,20 @@ exports.createCVLAttachment = async (req, res) => {
 		});
 	} catch (error) {
 		console.error("Create CVL attachment error:", error);
-		// Delete uploaded files if database operation fails
-		if (req.files) {
-			for (const file of req.files) {
-				try {
-					await fs.unlink(file.path);
-				} catch (unlinkError) {
-					console.error("Error deleting file:", unlinkError);
-				}
-			}
+		// Roll back storage and DB together: destroy any rows that DID commit
+		// before the failure, then remove every newly-uploaded object.
+		if (createdIds.length > 0) {
+			await db.CVLAttachment.destroy({ where: { cvl_attachment_id: createdIds } }).catch(() => {});
 		}
+		await Promise.all(uploadedKeys.map((key) => storage.remove(key).catch(() => {})));
 		res.status(500).json({ message: "Error uploading CVL attachment" });
 	}
 };
 
 // Update CVL attachment
 exports.updateCVLAttachment = async (req, res) => {
+	const uploadedKeys = [];
+	const createdIds = [];
 	try {
 		const userId = req.user.user_id;
 		const { attachment_type } = req.params;
@@ -148,33 +161,52 @@ exports.updateCVLAttachment = async (req, res) => {
 			return res.status(404).json({ message: "CVL attachment not found" });
 		}
 
-		// If new files are uploaded, delete old ones and create new records
+		// If new files are uploaded, upload them first, create new records,
+		// then delete the old ones only after DB success.
 		if (req.files && req.files.length > 0) {
-			// Delete old files
-			for (const attachment of existingAttachments) {
-				try {
-					await fs.unlink(attachment.document_path);
-					await attachment.destroy();
-				} catch (error) {
-					console.error("Error deleting old file:", error);
-				}
+			const uploadedFiles = [];
+			for (const file of req.files) {
+				const key = await storage.put(file.buffer, {
+					folder: "organization-documents",
+					originalname: file.originalname,
+					mimetype: file.mimetype,
+				});
+				uploadedKeys.push(key);
+				uploadedFiles.push({ key, file });
 			}
 
 			// Create new records
 			const newAttachments = [];
-			for (const file of req.files) {
+			for (const { key, file } of uploadedFiles) {
 				const attachment = await db.CVLAttachment.create({
 					organization_id: organization.organization_id,
 					attachment_type: decodeURIComponent(attachment_type),
 					date_created: date_created || existingAttachments[0].date_created,
 					semester: semester || existingAttachments[0].semester,
 					academic_year_id: academic_year_id || existingAttachments[0].academic_year_id,
-					document_path: file.path,
+					document_path: key,
 					original_filename: file.originalname,
 					file_size: file.size,
 					mime_type: file.mimetype,
 				});
+				createdIds.push(attachment.cvl_attachment_id);
 				newAttachments.push(attachment);
+			}
+
+			// New rows are committed at this point. Deleting the old
+			// attachments is best-effort cleanup, not part of the
+			// upload/create transaction above -- a failure here must NOT
+			// trigger the catch block's rollback of the now-valid new rows,
+			// so it is isolated in its own try/catch.
+			for (const attachment of existingAttachments) {
+				try {
+					await storage.remove(attachment.document_path).catch((error) => {
+						console.error("Error deleting old file:", error);
+					});
+					await attachment.destroy();
+				} catch (cleanupError) {
+					console.error("Error deleting old attachment record:", cleanupError);
+				}
 			}
 
 			res.json({
@@ -201,6 +233,12 @@ exports.updateCVLAttachment = async (req, res) => {
 		}
 	} catch (error) {
 		console.error("Update CVL attachment error:", error);
+		// Roll back storage and DB together: destroy any rows that DID commit
+		// before the failure, then remove every newly-uploaded object.
+		if (createdIds.length > 0) {
+			await db.CVLAttachment.destroy({ where: { cvl_attachment_id: createdIds } }).catch(() => {});
+		}
+		await Promise.all(uploadedKeys.map((key) => storage.remove(key).catch(() => {})));
 		res.status(500).json({ message: "Error updating CVL attachment" });
 	}
 };
@@ -233,11 +271,9 @@ exports.deleteCVLAttachment = async (req, res) => {
 
 		// Delete all files and records
 		for (const attachment of attachments) {
-			try {
-				await fs.unlink(attachment.document_path);
-			} catch (error) {
+			await storage.remove(attachment.document_path).catch((error) => {
 				console.error("Error deleting file:", error);
-			}
+			});
 			await attachment.destroy();
 		}
 
@@ -274,11 +310,9 @@ exports.deleteCVLAttachmentById = async (req, res) => {
 		}
 
 		// Delete file and record
-		try {
-			await fs.unlink(attachment.document_path);
-		} catch (error) {
+		await storage.remove(attachment.document_path).catch((error) => {
 			console.error("Error deleting file:", error);
-		}
+		});
 		await attachment.destroy();
 
 		res.json({ message: "CVL attachment deleted successfully" });
@@ -314,18 +348,17 @@ exports.downloadCVLAttachment = async (req, res) => {
 			return res.status(404).json({ message: "CVL attachment not found" });
 		}
 
-		// If single file, download directly
-		if (attachments.length === 1) {
-			return res.download(attachments[0].document_path, attachments[0].original_filename);
-		}
-
-		// Multiple files - return file list for frontend to handle
-		const files = attachments.map(att => ({
-			id: att.cvl_attachment_id,
-			filename: att.original_filename,
-			path: att.document_path,
-			size: att.file_size,
-		}));
+		const files = await Promise.all(
+			attachments.map(async (att) => ({
+				id: att.cvl_attachment_id,
+				filename: att.original_filename,
+				size: att.file_size,
+				url: await storage.getUrl(att.document_path, {
+					download: true,
+					filename: att.original_filename,
+				}),
+			})),
+		);
 
 		res.json({ files });
 	} catch (error) {
@@ -359,7 +392,11 @@ exports.downloadCVLFile = async (req, res) => {
 			return res.status(404).json({ message: "File not found" });
 		}
 
-		res.download(attachment.document_path, attachment.original_filename);
+		const url = await storage.getUrl(attachment.document_path, {
+			download: true,
+			filename: attachment.original_filename,
+		});
+		res.json({ url });
 	} catch (error) {
 		console.error("Download CVL file error:", error);
 		res.status(500).json({ message: "Error downloading file" });

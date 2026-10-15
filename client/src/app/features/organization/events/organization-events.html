@@ -50,7 +50,7 @@
   <!-- Events Table -->
   @else {
     <div class="overflow-x-auto">
-      <table class="w-full">
+      <table class="w-full min-w-[768px]">
         <thead class="bg-gray-50 border-b border-gray-200">
           <tr>
             <th
@@ -243,7 +243,7 @@
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
               <input
@@ -269,7 +269,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
               <input
@@ -435,17 +435,17 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-end gap-3 pt-4 border-t">
+        <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t">
           <button
             type="button"
             (click)="showEventModal.set(false)"
-            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+            class="w-full sm:w-auto px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
           >
             Cancel
           </button>
           <button
             type="submit"
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
           >
             {{ isEditing() ? 'Update Event' : 'Create Event' }}
           </button>

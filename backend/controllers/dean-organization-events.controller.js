@@ -1,4 +1,5 @@
 const db = require("../models");
+const storage = require("../utils/storage");
 
 // Helper: resolve department for Dean or CollegeDepartment user
 async function getDepartmentForUser(userId) {
@@ -108,12 +109,11 @@ exports.downloadEventFile = async (req, res) => {
         .json({ message: "No file uploaded for this event" });
     }
 
-    const fs = require("fs");
-    if (!fs.existsSync(event.file_path)) {
-      return res.status(404).json({ message: "File not found on server" });
-    }
-
-    res.download(event.file_path, event.original_filename);
+    const url = await storage.getUrl(event.file_path, {
+      download: true,
+      filename: event.original_filename,
+    });
+    res.json({ url });
   } catch (error) {
     console.error("Download event file error:", error);
     res.status(500).json({ message: "Error downloading file" });

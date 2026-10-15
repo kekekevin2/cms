@@ -25,7 +25,8 @@
 
   <!-- Table Card -->
   <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-    <table class="w-full text-xs">
+    <div class="overflow-x-auto">
+    <table class="w-full min-w-[640px] text-xs">
       <thead>
         <tr class="border-b border-gray-100 bg-gray-50">
           <th
@@ -132,6 +133,7 @@
         }
       </tbody>
     </table>
+    </div>
 
     <!-- Pagination -->
     @if (totalPages() > 1) {
@@ -204,7 +206,7 @@
       </div>
 
       <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1.5">
               Year Start <span class="text-red-500">*</span>
@@ -247,16 +249,16 @@
         </label>
       </div>
 
-      <div class="flex justify-end gap-2 mt-6">
+      <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6">
         <button
           (click)="closeCreateModal()"
-          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors"
         >
           Cancel
         </button>
         <button
           (click)="submitCreate()"
-          class="px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition-colors"
+          class="w-full sm:w-auto px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition-colors"
         >
           Create
         </button>
@@ -275,7 +277,7 @@
       </div>
 
       <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1.5">
               Year Start <span class="text-red-500">*</span>
@@ -318,16 +320,16 @@
         </label>
       </div>
 
-      <div class="flex justify-end gap-2 mt-6">
+      <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6">
         <button
           (click)="closeEditModal()"
-          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors"
         >
           Cancel
         </button>
         <button
           (click)="submitEdit()"
-          class="px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition-colors"
+          class="w-full sm:w-auto px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition-colors"
         >
           Save Changes
         </button>

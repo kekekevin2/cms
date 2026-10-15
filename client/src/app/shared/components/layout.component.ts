@@ -38,13 +38,13 @@ import { ThemeService } from '../../services/theme/theme.service';
     <aside
       [class.translate-x-0]="isSidebarOpen()"
       [class.-translate-x-full]="!isSidebarOpen()"
-      class="fixed top-0 left-0 z-40 w-64 h-full transition-transform sm:translate-x-0 bg-white border-r border-gray-200"
+      class="fixed top-0 left-0 z-40 w-64 max-w-[85vw] h-full transition-transform sm:translate-x-0 bg-white border-r border-gray-200"
       aria-label="Sidebar"
     >
       <div class="h-full px-3 py-4 overflow-y-auto">
         <!-- Logo/Brand -->
         <div class="mb-6 px-2 flex flex-col items-center">
-          <img src="/assets/logo.png" alt="Logo" class="h-24 mb-3" />
+          <img src="/assets/logo.png" alt="Logo" class="h-10 sm:h-24 w-auto mb-2 sm:mb-3" />
           @if (authService.currentUser()?.role === 'admin') {
             <h2 class="text-xl font-bold text-gray-900 text-center">Admin Portal</h2>
           } @else {
@@ -350,6 +350,7 @@ import { ThemeService } from '../../services/theme/theme.service';
               <a
                 [routerLink]="['/' + authService.currentUser()?.role + '/dashboard']"
                 routerLinkActive="bg-green-50 text-green-600"
+                (click)="isSidebarOpen.set(false)"
                 class="flex items-center px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
               >
                 <i class="pi pi-chart-pie shrink-0 text-sm w-5 text-center"></i>
@@ -364,6 +365,7 @@ import { ThemeService } from '../../services/theme/theme.service';
                 <a
                   routerLink="/faculty/requirements"
                   routerLinkActive="bg-green-50 text-green-600"
+                  (click)="isSidebarOpen.set(false)"
                   class="flex items-center px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
                 >
                   <i class="fas fa-award shrink-0 text-sm w-5 text-center"></i>
@@ -374,6 +376,7 @@ import { ThemeService } from '../../services/theme/theme.service';
                 <a
                   routerLink="/faculty/announcements"
                   routerLinkActive="bg-green-50 text-green-600"
+                  (click)="isSidebarOpen.set(false)"
                   class="flex items-center px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
                 >
                   <i class="pi pi-bell shrink-0 text-sm w-5 text-center"></i>
@@ -384,6 +387,7 @@ import { ThemeService } from '../../services/theme/theme.service';
                 <a
                   routerLink="/faculty/personal-data-sheet"
                   routerLinkActive="bg-green-50 text-green-600"
+                  (click)="isSidebarOpen.set(false)"
                   class="flex items-center px-2 py-1.5 text-gray-700 rounded-lg hover:bg-gray-100 group"
                 >
                   <i class="pi pi-id-card shrink-0 text-sm w-5 text-center"></i>
@@ -447,6 +451,10 @@ import { ThemeService } from '../../services/theme/theme.service';
         }
       </div>
     </aside>
+
+    @if (isSidebarOpen()) {
+      <div class="fixed inset-0 z-30 bg-black/50 sm:hidden" (click)="toggleSidebar()"></div>
+    }
 
     <!-- Main Content -->
     <div class="p-4 sm:ml-64 bg-gray-50 min-h-screen">

@@ -24,7 +24,8 @@
 
   <!-- Table Card -->
   <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-    <table class="w-full text-xs table-fixed">
+    <div class="overflow-x-auto">
+    <table class="w-full min-w-[800px] text-xs table-fixed">
       <thead>
         <tr class="border-b border-gray-100 bg-gray-50">
           <th
@@ -150,6 +151,7 @@
         }
       </tbody>
     </table>
+    </div>
 
     @if (totalPages() > 1) {
       <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
@@ -309,16 +311,16 @@
           <span class="text-xs text-gray-600">Active</span>
         </label>
       </div>
-      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="closeCreateModal()"
-          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors"
         >
           Cancel
         </button>
         <button
           (click)="submitCreate()"
-          class="px-4 py-2 text-xs text-white bg-red-500 rounded-sm hover:bg-red-600 transition-colors"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-white bg-red-500 rounded-sm hover:bg-red-600 transition-colors"
         >
           Create
         </button>
@@ -439,16 +441,16 @@
           <span class="text-xs text-gray-600">Active</span>
         </label>
       </div>
-      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+      <div class="px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button
           (click)="closeEditModal()"
-          class="px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition-colors"
         >
           Cancel
         </button>
         <button
           (click)="submitEdit()"
-          class="px-4 py-2 text-xs text-white bg-red-500 rounded-sm hover:bg-red-600 transition-colors"
+          class="w-full sm:w-auto px-4 py-2 text-xs text-white bg-red-500 rounded-sm hover:bg-red-600 transition-colors"
         >
           Save Changes
         </button>

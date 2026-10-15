@@ -14,7 +14,8 @@ const dbConfig = {
   },
   dialectOptions: {
     connectTimeout: 60000,
-  },
+    ssl: false // Disable SSL for local development or non-SSL RDS
+  }
 };
 
 module.exports = { dbConfig };

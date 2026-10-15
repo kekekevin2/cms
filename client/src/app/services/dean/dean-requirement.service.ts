@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { RequirementSubmission } from '../faculty/faculty-requirement.service';
+import { downloadFromUrl } from '../../shared/utils/download.util';
 
 export interface RequirementsResponse {
   requirements: RequirementSubmission[];
@@ -145,26 +146,10 @@ export class DeanRequirementService {
 
   // Download a requirement file (authenticated)
   downloadRequirement(submission_id: number, fileName?: string): void {
-    this.http
-      .get(`${this.apiUrl}/${submission_id}/download`, { responseType: 'blob', observe: 'response' })
-      .subscribe({
-        next: (response) => {
-          const blob = response.body!;
-          const disposition = response.headers.get('Content-Disposition');
-          let name = fileName ?? `requirement_${submission_id}`;
-          if (disposition) {
-            const match = disposition.match(/filename[^;=\n]*=(?:(['"]))?(.*?)\1/);
-            if (match?.[2]) name = match[2];
-          }
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = name;
-          a.click();
-          window.URL.revokeObjectURL(url);
-        },
-        error: (err) => console.error('Download failed', err),
-      });
+    this.http.get<{ url: string }>(`${this.apiUrl}/${submission_id}/download`).subscribe({
+      next: ({ url }) => downloadFromUrl(url, fileName),
+      error: (err) => console.error('Download failed', err),
+    });
   }
 
   // Set faculty clearance status (manual override)

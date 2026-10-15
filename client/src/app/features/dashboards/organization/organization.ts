@@ -11,6 +11,7 @@ import { OrganizationMembersComponent } from '../../organization/members/organiz
 import { OrganizationDocumentsComponent } from '../../organization/documents/organization-documents';
 import { ChangePasswordModal } from '../../../shared/components/change-password-modal/change-password-modal';
 import { SDGEventsChartComponent } from '../../../shared/components/sdg-events-chart/sdg-events-chart';
+import { downloadFromUrl } from '../../../shared/utils/download.util';
 import Swal from 'sweetalert2';
 
 interface OrganizationStats {
@@ -50,7 +51,7 @@ export class OrganizationDashboard implements OnInit {
 
   activeTab = signal<'dashboard' | 'members' | 'documents' | 'advisers' | 'events' | 'cvl-attachments'>('dashboard');
   dashboardTab = signal<'analytics' | 'demographics'>('analytics');
-  isSidebarOpen = signal(true);
+  isSidebarOpen = signal(false);
   isUserMenuOpen = signal(false);
   isChangePasswordOpen = signal(false);
 
@@ -511,14 +512,7 @@ export class OrganizationDashboard implements OnInit {
 
   downloadCVLAttachment(attachment: CVLAttachment) {
     this.cvlAttachmentService.downloadCVLFile(attachment.id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = attachment.filename;
-        link.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: ({ url }) => downloadFromUrl(url, attachment.filename),
       error: (error) => {
         console.error('Download failed:', error);
         Swal.fire({
@@ -535,14 +529,7 @@ export class OrganizationDashboard implements OnInit {
   downloadExistingFile(file: any) {
     if (file.id) {
       this.cvlAttachmentService.downloadCVLFile(file.id).subscribe({
-        next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = file.name;
-          link.click();
-          window.URL.revokeObjectURL(url);
-        },
+        next: ({ url }) => downloadFromUrl(url, file.name),
         error: (error) => {
           console.error('Download failed:', error);
           Swal.fire({

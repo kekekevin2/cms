@@ -495,12 +495,12 @@ interface Certificate {
           </div>
 
           <!-- Action Buttons -->
-          <div class="flex justify-end gap-3">
+          <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
             @if (isEditing()) {
               <button
                 type="button"
                 (click)="cancelEditing()"
-                class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                class="w-full sm:w-auto px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
               >
                 Cancel
               </button>
@@ -508,14 +508,14 @@ interface Certificate {
             <button
               type="button"
               (click)="resetForm()"
-              class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              class="w-full sm:w-auto px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
             >
               Reset
             </button>
             <button
               type="submit"
               [disabled]="isSubmitting()"
-              class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+              class="w-full sm:w-auto px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               @if (isSubmitting()) {
                 <i class="fas fa-spinner fa-spin"></i>

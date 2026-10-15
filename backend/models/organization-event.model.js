@@ -35,6 +35,22 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+      file_path: {
+        type: Sequelize.STRING(500),
+        allowNull: true,
+      },
+      original_filename: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+      },
+      file_size: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+      uploaded_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
     },
     {
       timestamps: true,

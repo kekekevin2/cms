@@ -8,6 +8,8 @@ node_modules/
 .env*.local
 **/.env
 **/.env.local
+.env.*
+**/.env.*
 
 # Build outputs
 dist/
@@ -71,3 +73,11 @@ backend/logs/
 # Windows reserved device names
 nul
 **/nul
+
+# Superpowers SDD scratch (ledger, briefs, review packages)
+.superpowers/
+
+.worktrees/
+
+# Claude Code personal/local overrides (not shared with the team)
+.claude/settings.local.json
