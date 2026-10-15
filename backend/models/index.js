@@ -167,6 +167,9 @@ const DeanExtensionActivities = require("./dean-extension-activities.model")(
 // CVL Attachments Model
 const CVLAttachment = require("./cvl-attachment.model")(sequelize, Sequelize);
 
+// PDS Template Config Model
+const PDSTemplateConfig = require("./pds-template-config.model")(sequelize, Sequelize);
+
 /* User → Admin (1:1) */
 User.hasOne(Admin, {
   foreignKey: "user_id",
@@ -692,5 +695,8 @@ db.DeanExtensionActivities = DeanExtensionActivities;
 
 // CVL Attachments
 db.CVLAttachment = CVLAttachment;
+
+// PDS Template Config
+db.PDSTemplateConfig = PDSTemplateConfig;
 
 module.exports = db;

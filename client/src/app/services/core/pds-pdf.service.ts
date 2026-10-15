@@ -3,6 +3,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { jsPDF } from 'jspdf';
 import { PersonalDataSheet, PDSEducation } from './pds.service';
+import { PDSTemplateConfigService, PDSTemplateConfigData } from './pds-template-config.service';
+import { firstValueFrom } from 'rxjs';
 
 // Use CDN for worker to avoid Vite dynamic import warning
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
@@ -33,6 +35,10 @@ const CHECK = '✓';
 @Injectable({ providedIn: 'root' })
 export class PdsPdfService {
   private templateDoc: Promise<PDFDocumentProxy> | null = null;
+  private configData: PDSTemplateConfigData | null = null;
+  private configLoaded: boolean = false;
+
+  constructor(private configService: PDSTemplateConfigService) {}
 
   private getTemplate(): Promise<PDFDocumentProxy> {
     if (!this.templateDoc) {
@@ -41,7 +47,27 @@ export class PdsPdfService {
     return this.templateDoc!;
   }
 
+  /** Load the active configuration from the backend */
+  private async loadConfig(): Promise<void> {
+    if (this.configLoaded) return;
+    
+    try {
+      const response = await firstValueFrom(this.configService.getActiveConfig());
+      if (response.config && response.config.config_data) {
+        this.configData = response.config.config_data;
+        console.log('PDS Template Configuration loaded:', this.configData);
+      } else {
+        console.log('No active PDS template configuration found, using defaults');
+      }
+    } catch (error) {
+      console.error('Error loading PDS template configuration, using defaults:', error);
+    }
+    
+    this.configLoaded = true;
+  }
+
   async generateAndDownload(pds: PersonalDataSheet): Promise<void> {
+    await this.loadConfig();
     const pdf = await this.buildPdf(pds);
     if (!pdf) return;
     const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
@@ -50,6 +76,7 @@ export class PdsPdfService {
 
   /** Builds the same PDF and returns a blob: URL for in-app preview instead of downloading it. */
   async generatePreviewUrl(pds: PersonalDataSheet): Promise<string | null> {
+    await this.loadConfig();
     const pdf = await this.buildPdf(pds);
     if (!pdf) return null;
     return pdf.output('bloburl').toString();
@@ -62,7 +89,10 @@ export class PdsPdfService {
       this.loadImage(pds.signature_path),
     ]);
 
-    const overlays = buildOverlays(pds);
+    // Use configuration if available, otherwise build default overlays
+    const overlays = this.configData 
+      ? this.buildOverlaysFromConfig(pds, this.configData)
+      : buildOverlays(pds);
     let pdf: jsPDF | null = null;
 
     for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
@@ -114,6 +144,232 @@ export class PdsPdfService {
     }
 
     return pdf;
+  }
+
+  /** Build overlays from saved configuration data */
+  private buildOverlaysFromConfig(pds: PersonalDataSheet, config: PDSTemplateConfigData): Overlay[] {
+    const overlays: Overlay[] = [];
+    
+    // Map PDS data keys to their values
+    const dataMap = this.buildPDSDataMap(pds);
+    
+    // Process each position from the configuration
+    config.positions.forEach((position) => {
+      const value = dataMap[position.key];
+      if (value !== undefined && value !== null && value !== '') {
+        overlays.push({
+          page: position.page || 1,
+          x: position.x,
+          y: position.y,
+          text: String(value),
+          size: position.size,
+          center: position.center,
+        });
+      }
+    });
+    
+    return overlays;
+  }
+
+  /** Build a map of all PDS data with keys matching the configuration */
+  private buildPDSDataMap(pds: PersonalDataSheet): Record<string, string | number> {
+    const map: Record<string, string | number> = {
+      // Personal Information
+      surname: pds.surname || '',
+      first_name: pds.first_name || '',
+      middle_name: pds.middle_name || '',
+      name_extension: pds.name_extension || '',
+      date_of_birth: formatDMY(pds.date_of_birth),
+      place_of_birth: pds.place_of_birth || '',
+      sex: pds.sex || '',
+      sex_check_male: pds.sex === 'Male' ? CHECK : '',
+      sex_check_female: pds.sex === 'Female' ? CHECK : '',
+      civil_status: pds.civil_status || '',
+      civil_status_check_single: pds.civil_status === 'Single' ? CHECK : '',
+      civil_status_check_married: pds.civil_status === 'Married' ? CHECK : '',
+      civil_status_check_widowed: pds.civil_status === 'Widowed' ? CHECK : '',
+      civil_status_check_separated: pds.civil_status === 'Separated' ? CHECK : '',
+      civil_status_other: civilStatusOther(pds.civil_status),
+      height: pds.height != null ? String(pds.height) : '',
+      weight: pds.weight != null ? String(pds.weight) : '',
+      blood_type: pds.blood_type || '',
+      gsis_id_no: pds.gsis_id_no || '',
+      pag_ibig_id_no: pds.pag_ibig_id_no || '',
+      philhealth_no: pds.philhealth_no || '',
+      sss_no: pds.sss_no || '',
+      tin_no: pds.tin_no || '',
+      agency_employee_no: pds.agency_employee_no || '',
+      
+      // Citizenship
+      citizenship_check_filipino: pds.citizenship_type === 'Filipino' ? CHECK : '',
+      citizenship_check_dual: pds.citizenship_type !== 'Filipino' ? CHECK : '',
+      citizenship_check_by_naturalization: pds.citizenship_type === 'By Naturalization' ? CHECK : '',
+      dual_citizenship_country: pds.dual_citizenship_country || '',
+      
+      // Residential Address
+      residential_house_no: pds.residential_house_no || '',
+      residential_street: pds.residential_street || '',
+      residential_subdivision: pds.residential_subdivision || '',
+      residential_barangay: pds.residential_barangay || '',
+      residential_city: pds.residential_city || '',
+      residential_province: pds.residential_province || '',
+      residential_zip_code: pds.residential_zip_code || '',
+      
+      // Permanent Address
+      permanent_house_no: pds.permanent_house_no || '',
+      permanent_street: pds.permanent_street || '',
+      permanent_subdivision: pds.permanent_subdivision || '',
+      permanent_barangay: pds.permanent_barangay || '',
+      permanent_city: pds.permanent_city || '',
+      permanent_province: pds.permanent_province || '',
+      permanent_zip_code: pds.permanent_zip_code || '',
+      
+      // Contact
+      telephone_no: pds.telephone_no || '',
+      mobile_no: pds.mobile_no || '',
+      email_address: pds.email_address || '',
+      
+      // Spouse
+      spouse_surname: pds.spouse_surname || '',
+      spouse_first_name: pds.spouse_first_name || '',
+      spouse_middle_name: pds.spouse_middle_name || '',
+      spouse_name_ext: pds.spouse_name_ext || '',
+      spouse_occupation: pds.spouse_occupation || '',
+      spouse_employer: pds.spouse_employer || '',
+      spouse_business_address: pds.spouse_business_address || '',
+      spouse_telephone: pds.spouse_telephone || '',
+      
+      // Father
+      father_surname: pds.father_surname || '',
+      father_first_name: pds.father_first_name || '',
+      father_middle_name: pds.father_middle_name || '',
+      father_name_ext: pds.father_name_ext || '',
+      
+      // Mother
+      mother_surname: pds.mother_surname || '',
+      mother_first_name: pds.mother_first_name || '',
+      mother_middle_name: pds.mother_middle_name || '',
+      
+      // Government ID
+      government_issued_id: pds.government_issued_id || '',
+      government_id_number: pds.government_id_number || '',
+      government_id_date_issued: formatDMY(pds.government_id_date_issued),
+      
+      // Questions Yes/No checkmarks
+      q34_a_yes: yn(pds.q34_a_answer),
+      q34_a_no: yn(pds.q34_a_answer === false),
+      q34_b_yes: yn(pds.q34_b_answer),
+      q34_b_no: yn(pds.q34_b_answer === false),
+      q35_a_yes: yn(pds.q35_a_answer),
+      q35_a_no: yn(pds.q35_a_answer === false),
+      q35_b_yes: yn(pds.q35_b_answer),
+      q35_b_no: yn(pds.q35_b_answer === false),
+      q36_yes: yn(pds.q36_answer),
+      q36_no: yn(pds.q36_answer === false),
+      q37_yes: yn(pds.q37_answer),
+      q37_no: yn(pds.q37_answer === false),
+      q38_yes: yn(pds.q38_answer),
+      q38_no: yn(pds.q38_answer === false),
+      q39_yes: yn(pds.q39_answer),
+      q39_no: yn(pds.q39_answer === false),
+      q40_yes: yn(pds.q40_answer),
+      q40_no: yn(pds.q40_answer === false),
+      q41_yes: yn(pds.q41_answer),
+      q41_no: yn(pds.q41_answer === false),
+      q43_yes: yn(pds.q43_answer),
+      q43_no: yn(pds.q43_answer === false),
+      q44_yes: yn(pds.q44_answer),
+      q44_no: yn(pds.q44_answer === false),
+      
+      // Date filled
+      submitted_at: formatDMY(pds.submitted_at),
+    };
+    
+    // Children
+    (pds.children || []).forEach((child, i) => {
+      map[`child_${i}_name`] = child.child_name || '';
+      map[`child_${i}_date_of_birth`] = formatDMY(child.date_of_birth);
+    });
+    
+    // Education
+    (pds.education || []).forEach((edu) => {
+      const prefix = edu.level.toLowerCase().replace(/ /g, '_');
+      map[`${prefix}_school_name`] = edu.school_name || '';
+      map[`${prefix}_degree_course`] = edu.degree_course || '';
+      map[`${prefix}_period_from`] = edu.period_from != null ? String(edu.period_from) : '';
+      map[`${prefix}_period_to`] = edu.period_to != null ? String(edu.period_to) : '';
+      map[`${prefix}_year_graduated`] = edu.year_graduated != null ? String(edu.year_graduated) : '';
+      map[`${prefix}_scholarship_honors`] = edu.scholarship_honors || '';
+    });
+    
+    // Eligibilities
+    (pds.eligibilities || []).forEach((e, i) => {
+      map[`eligibility_${i}_career_service`] = e.career_service || '';
+      map[`eligibility_${i}_rating`] = e.rating || '';
+      map[`eligibility_${i}_date_of_examination`] = formatDMY(e.date_of_examination);
+      map[`eligibility_${i}_place_of_examination`] = e.place_of_examination || '';
+      map[`eligibility_${i}_license_number`] = e.license_number || '';
+      map[`eligibility_${i}_license_validity`] = e.license_validity || '';
+    });
+    
+    // Work Experience
+    (pds.work_experiences || []).forEach((w, i) => {
+      map[`work_${i}_date_from`] = formatDMY(w.date_from);
+      map[`work_${i}_date_to`] = w.date_to
+        ? w.date_to.toLowerCase() === 'present'
+          ? 'Present'
+          : formatDMY(w.date_to)
+        : '';
+      map[`work_${i}_position_title`] = w.position_title || '';
+      map[`work_${i}_department_agency`] = w.department_agency || '';
+      map[`work_${i}_status_of_appointment`] = w.status_of_appointment || '';
+      map[`work_${i}_is_government_service`] = w.is_government_service ? 'Y' : 'N';
+    });
+    
+    // Voluntary Work
+    (pds.voluntary_works || []).forEach((v, i) => {
+      map[`voluntary_${i}_organization_name`] = v.organization_name || '';
+      map[`voluntary_${i}_date_from`] = formatDMY(v.date_from);
+      map[`voluntary_${i}_date_to`] = formatDMY(v.date_to);
+      map[`voluntary_${i}_number_of_hours`] = v.number_of_hours != null ? String(v.number_of_hours) : '';
+      map[`voluntary_${i}_position_nature_of_work`] = v.position_nature_of_work || '';
+    });
+    
+    // Trainings
+    (pds.trainings || []).forEach((t, i) => {
+      map[`training_${i}_title`] = t.title || '';
+      map[`training_${i}_date_from`] = formatDMY(t.date_from);
+      map[`training_${i}_date_to`] = formatDMY(t.date_to);
+      map[`training_${i}_number_of_hours`] = t.number_of_hours != null ? String(t.number_of_hours) : '';
+      map[`training_${i}_type_of_ld`] = t.type_of_ld || '';
+      map[`training_${i}_conducted_by`] = t.conducted_by || '';
+    });
+    
+    // Other Info
+    const skills = (pds.other_info || []).filter((o) => o.info_type === 'SKILL');
+    const recognitions = (pds.other_info || []).filter((o) => o.info_type === 'RECOGNITION');
+    const memberships = (pds.other_info || []).filter((o) => o.info_type === 'MEMBERSHIP');
+    
+    skills.forEach((s, i) => {
+      map[`skill_${i}`] = s.details;
+    });
+    
+    recognitions.forEach((r, i) => {
+      map[`recognition_${i}`] = r.details;
+    });
+    
+    memberships.forEach((m, i) => {
+      map[`membership_${i}`] = m.details;
+    });
+    
+    // References
+    (pds.references || []).forEach((r, i) => {
+      map[`reference_${i}_name`] = r.name || '';
+      map[`reference_${i}_address`] = r.address || '';
+      map[`reference_${i}_telephone_number`] = r.telephone_number || '';
+    });
+    
+    return map;
   }
 
   private loadImage(path: string | undefined): Promise<HTMLImageElement | null> {

@@ -9,6 +9,7 @@ import { SuperadminDepartmentManagement } from '../../superadmin/department-mana
 import { SuperadminCollegeDepartmentManagement } from '../../superadmin/college-department-management/college-department-management';
 import { SuperadminFacultyView } from '../../superadmin/faculty-view/faculty-view';
 import { SuperadminOrganizationView } from '../../superadmin/organization-view/organization-view';
+import { PDSTemplateEditor } from '../../superadmin/pds-template-editor/pds-template-editor';
 import { ChangePasswordModal } from '../../../shared/components/change-password-modal/change-password-modal';
 import {
   SuperadminDashboardService,
@@ -26,6 +27,7 @@ import {
     SuperadminCollegeDepartmentManagement,
     SuperadminFacultyView,
     SuperadminOrganizationView,
+    PDSTemplateEditor,
     ChangePasswordModal,
   ],
   templateUrl: './superadmin.html',
@@ -104,6 +106,7 @@ export class SuperadminDashboard implements OnInit {
       'academic-year': 'Academic Year Settings',
       campus: 'Campus Management',
       department: 'Department Management',
+      'pds-template-editor': 'PDS Template Editor',
     };
     return titles[this.activeTab()] || 'Dashboard';
   }

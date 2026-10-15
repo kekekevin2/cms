@@ -1,0 +1,368 @@
+<div class="p-3 space-y-5">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-gray-800">PDS Template Editor</h1>
+    <div class="flex gap-2">
+      <button
+        (click)="resetPositions()"
+        [disabled]="loading() || !pdfUploaded()"
+        class="px-4 py-2 bg-gray-500 text-white text-xs font-medium rounded-sm hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <i class="pi pi-refresh mr-2"></i>
+        Reset Positions
+      </button>
+      <button
+        (click)="savePositions()"
+        [disabled]="loading() || saving() || !pdfUploaded()"
+        class="px-4 py-2 bg-green-600 text-white text-xs font-medium rounded-sm hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        @if (saving()) {
+          <i class="pi pi-spin pi-spinner mr-2"></i>
+          Saving...
+        } @else {
+          <i class="pi pi-save mr-2"></i>
+          Save Positions
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- Upload PDF Section -->
+  @if (!pdfUploaded()) {
+    <div class="bg-white border border-gray-300 rounded-lg p-6">
+      <div class="text-center">
+        <i class="pi pi-file-pdf text-4xl text-red-500 mb-3"></i>
+        <h2 class="text-lg font-semibold text-gray-800 mb-1">Upload PDS Template</h2>
+        <p class="text-xs text-gray-600 mb-4">
+          Select the CS Form No. 212 PDF template to start editing field positions
+        </p>
+        <label class="inline-block">
+          <input
+            type="file"
+            accept="application/pdf"
+            (change)="onPdfFileSelected($event)"
+            class="hidden"
+            #fileInput
+          />
+          <span class="px-5 py-2 bg-red-600 text-white text-xs font-medium rounded-sm hover:bg-red-700 transition-colors cursor-pointer inline-flex items-center">
+            <i class="pi pi-upload mr-2 text-xs"></i>
+            Choose PDF File
+          </span>
+        </label>
+      </div>
+    </div>
+  }
+
+  <!-- Instructions -->
+  @if (pdfUploaded()) {
+    <!-- Uploaded PDFs List -->
+    <div class="bg-white border border-gray-200 rounded-sm p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-gray-800">Uploaded Templates ({{ uploadedPDFs().length }})</h3>
+        <label class="inline-block">
+          <input
+            type="file"
+            accept="application/pdf"
+            (change)="onPdfFileSelected($event)"
+            class="hidden"
+            #fileInput2
+          />
+          <span class="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-sm hover:bg-red-700 transition-colors cursor-pointer inline-flex items-center">
+            <i class="pi pi-plus mr-1 text-xs"></i>
+            Add PDF
+          </span>
+        </label>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        @for (pdf of uploadedPDFs(); track pdf.id) {
+          <div 
+            (click)="selectPDF(pdf.id)"
+            [class.bg-red-50]="selectedPdfId() === pdf.id"
+            [class.border-red-500]="selectedPdfId() === pdf.id"
+            [class.border-2]="selectedPdfId() === pdf.id"
+            class="border border-gray-200 rounded-sm p-3 hover:bg-gray-50 cursor-pointer transition-colors relative group"
+          >
+            <div class="flex items-start gap-2">
+              <i class="pi pi-file-pdf text-red-500 text-lg flex-shrink-0"></i>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-medium text-gray-800 truncate" [title]="pdf.name">
+                  {{ pdf.name }}
+                </p>
+                <p class="text-xs text-gray-500 mt-0.5">
+                  {{ pdf.uploadedAt | date:'short' }}
+                </p>
+              </div>
+            </div>
+            
+            <button
+              (click)="deletePDF(pdf.id); $event.stopPropagation()"
+              class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded"
+            >
+              <i class="pi pi-trash text-red-600 text-xs"></i>
+            </button>
+            
+            @if (selectedPdfId() === pdf.id) {
+              <div class="absolute top-2 right-2">
+                <i class="pi pi-check-circle text-red-600 text-sm"></i>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="bg-blue-50 border border-blue-200 rounded-sm p-4">
+      <div class="flex items-start gap-3">
+        <i class="pi pi-info-circle text-blue-600 mt-0.5"></i>
+        <div class="text-sm text-blue-800">
+          <p class="font-semibold mb-1">How to use:</p>
+          <ul class="list-disc list-inside space-y-1 text-xs">
+            <li>Click on a PDF template above to view and edit it</li>
+            <li>Click a field from the list on the right to select it</li>
+            <li>Use the locator tool to find exact coordinates on the PDF</li>
+            <li>Adjust the field's position using the editor panel</li>
+            <li>Click "Apply" to update the field position</li>
+            <li>Click "Save Positions" to persist your changes to the database</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="flex items-center justify-center py-12">
+      <div class="text-center">
+        <i class="pi pi-spin pi-spinner text-3xl text-red-600 mb-3"></i>
+        <p class="text-sm text-gray-600">Loading PDS template...</p>
+      </div>
+    </div>
+  }
+  
+  @if (pdfUploaded() && !loading()) {
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <!-- PDF Viewer and Controls -->
+      <div class="lg:col-span-2 space-y-4">
+        <!-- Controls -->
+        <div class="bg-white border border-gray-200 rounded-sm p-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button
+              (click)="prevPage()"
+              [disabled]="currentPage() <= 1"
+              class="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-sm hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i class="pi pi-chevron-left"></i> Prev
+            </button>
+            <span class="text-xs text-gray-700 font-medium px-3">
+              Page {{ currentPage() }} of {{ totalPages() }}
+            </span>
+            <button
+              (click)="nextPage()"
+              [disabled]="currentPage() >= totalPages()"
+              class="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-sm hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next <i class="pi pi-chevron-right"></i>
+            </button>
+          </div>
+
+          <button
+            (click)="toggleLocator()"
+            [class.bg-red-600]="locatorOn()"
+            [class.bg-teal-700]="!locatorOn()"
+            class="px-3 py-1.5 text-white text-xs rounded-sm hover:opacity-90 transition-opacity"
+          >
+            <i class="pi pi-map-marker mr-2"></i>
+            Locator: {{ locatorOn() ? 'ON' : 'OFF' }}
+          </button>
+        </div>
+
+        <!-- PDF Canvas Container -->
+        <div class="bg-white border border-gray-200 rounded-sm overflow-hidden">
+          <div class="relative bg-gray-100 flex items-center justify-center min-h-[600px]">
+            <div class="relative inline-block">
+              <canvas #pdfCanvas class="max-w-full h-auto"></canvas>
+              <canvas #overlayCanvas class="absolute top-0 left-0 max-w-full h-auto pointer-events-none"></canvas>
+              <canvas
+                #locatorCanvas
+                [class.hidden]="!locatorOn()"
+                (mousemove)="onLocatorMove($event)"
+                class="absolute top-0 left-0 max-w-full h-auto cursor-crosshair"
+              ></canvas>
+            </div>
+          </div>
+
+          @if (locatorOn()) {
+            <div class="bg-gray-800 text-white px-4 py-2 text-xs font-mono">
+              📍 x: {{ coordX() }} &nbsp; y: {{ coordY() }}
+            </div>
+          }
+        </div>
+
+        @if (coordLiveText()) {
+          <div class="text-xs text-gray-600 font-mono">
+            {{ coordLiveText() }}
+          </div>
+        }
+      </div>
+
+      <!-- Field List and Editor -->
+      <div class="space-y-4">
+        <!-- Search -->
+        <div class="relative">
+          <i
+            class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"
+          ></i>
+          <input
+            type="text"
+            [(ngModel)]="fieldSearchQuery"
+            (ngModelChange)="onFieldSearch()"
+            placeholder="🔎 Search fields..."
+            class="w-full pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-200"
+          />
+        </div>
+
+        <!-- Field Editor -->
+        @if (fieldEditorVisible()) {
+          <div class="bg-white border border-gray-200 rounded-sm p-4 space-y-3">
+            <div class="text-sm font-semibold text-gray-700 border-b pb-2">
+              {{ fieldEditorKey() }}
+            </div>
+
+            @if (selectedField()?.type !== 'image') {
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Text</label>
+                <input
+                  type="text"
+                  [(ngModel)]="fieldEditorText"
+                  class="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+              </div>
+            }
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">X</label>
+                <input
+                  type="number"
+                  [(ngModel)]="fieldEditorX"
+                  class="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Y</label>
+                <input
+                  type="number"
+                  [(ngModel)]="fieldEditorY"
+                  class="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+              </div>
+            </div>
+
+            @if (selectedField()?.type === 'image') {
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Width</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="fieldEditorW"
+                    class="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Height</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="fieldEditorH"
+                    class="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                </div>
+              </div>
+            } @else {
+              <div class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="centered"
+                  [(ngModel)]="fieldEditorCenter"
+                  class="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                />
+                <label for="centered" class="text-xs text-gray-700">Centered</label>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Max Width</label>
+                <input
+                  type="number"
+                  [(ngModel)]="fieldEditorMaxWidth"
+                  placeholder="none"
+                  class="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+              </div>
+
+              @if (fieldEditorMaxWidth()) {
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Overflow</label>
+                  <select
+                    [(ngModel)]="fieldEditorOverflow"
+                    class="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500"
+                  >
+                    <option value="shrink">Shrink</option>
+                    <option value="wrap">Wrap</option>
+                  </select>
+                </div>
+              }
+            }
+
+            <button
+              (click)="applyFieldEdit()"
+              class="w-full px-4 py-2 bg-red-600 text-white text-xs font-medium rounded-sm hover:bg-red-700 transition-colors"
+            >
+              ✓ Apply
+            </button>
+          </div>
+        }
+
+        <!-- Field List -->
+        <div class="bg-white border border-gray-200 rounded-sm max-h-[600px] overflow-y-auto">
+          <div class="p-3 border-b border-gray-100 bg-gray-50">
+            <p class="text-xs text-gray-600">
+              Click a field to edit its position
+            </p>
+          </div>
+
+          @if (groupedFields().size === 0) {
+            <div class="p-8 text-center text-sm text-gray-500">
+              No fields found
+            </div>
+          } @else {
+            <div class="divide-y divide-gray-100">
+              @for (entry of Array.from(groupedFields().entries()); track entry[0]) {
+                <div>
+                  <div class="px-4 py-2 bg-gray-50 text-xs font-semibold text-gray-700">
+                    {{ entry[0] }}
+                  </div>
+                  @for (field of entry[1]; track field.key) {
+                    <div
+                      (click)="selectField(field)"
+                      [class.bg-blue-50]="selectedField()?.key === field.key"
+                      [class.border-l-4]="selectedField()?.key === field.key"
+                      [class.border-blue-500]="selectedField()?.key === field.key"
+                      class="px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 border-transparent"
+                    >
+                      <div class="text-xs font-medium text-gray-700">
+                        {{ field.key }}
+                      </div>
+                      <div class="text-xs text-gray-500 mt-0.5">
+                        {{ formatCoordText(field) }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

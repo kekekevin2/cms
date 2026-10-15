@@ -1,0 +1,84 @@
+/* PDS Template Editor Styles */
+
+/* Canvas container */
+#canvas-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Ensure canvases stack properly */
+canvas {
+  display: block;
+}
+
+/* Locator canvas crosshair cursor */
+canvas.cursor-crosshair:hover {
+  cursor: crosshair;
+}
+
+/* Field list scrollbar */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Smooth transitions for field selection */
+.transition-colors {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Loading state */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pi-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* PDF viewer responsive */
+@media (max-width: 1024px) {
+  .lg\\:col-span-2 {
+    order: 2;
+  }
+  
+  .space-y-4 > div:last-child {
+    order: 1;
+  }
+}
+
+/* Field editor panel sticky behavior */
+@media (min-width: 1024px) {
+  .space-y-4 > div:has(.field-editor) {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+/* Highlight animation for selected field */
+@keyframes highlight-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  }
+}
+
+.border-blue-500 {
+  animation: highlight-pulse 2s ease-in-out;
+}
