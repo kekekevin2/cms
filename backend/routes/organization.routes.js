@@ -1,8 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
 const verifyToken = require("../middleware/auth.middleware");
 const checkRole = require("../middleware/role.middleware");
 const memberController = require("../controllers/organization-member.controller");
@@ -11,7 +8,8 @@ const adviserController = require("../controllers/organization-adviser.controlle
 const cvlAttachmentController = require("../controllers/cvl-attachment.controller");
 const { makeUpload, MB, DOCUMENT_TYPES, IMAGE_TYPES, SPREADSHEET_TYPES } = require("../utils/upload");
 
-const upload = makeUpload({
+// Configure upload middleware using the utility
+const documentUpload = makeUpload({
   folder: "organization-documents",
   allowedTypes: DOCUMENT_TYPES,
   maxSize: 25 * MB,
@@ -164,14 +162,14 @@ router.post(
   "/documents",
   verifyToken,
   checkRole("organization"),
-  upload.single("document"),
+  documentUpload.single("document"),
   documentController.submitDocument,
 );
 router.put(
   "/documents/:id",
   verifyToken,
   checkRole("organization"),
-  upload.single("document"),
+  documentUpload.single("document"),
   documentController.updateDocument,
 );
 router.delete(
@@ -225,14 +223,14 @@ router.post(
   "/cvl-attachments",
   verifyToken,
   checkRole("organization"),
-  upload.array("documents", 10), // Allow up to 10 files
+  documentUpload.array("documents", 10), // Allow up to 10 files
   cvlAttachmentController.createCVLAttachment,
 );
 router.put(
   "/cvl-attachments/:attachment_type",
   verifyToken,
   checkRole("organization"),
-  upload.array("documents", 10),
+  documentUpload.array("documents", 10),
   cvlAttachmentController.updateCVLAttachment,
 );
 router.delete(

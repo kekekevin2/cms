@@ -95,6 +95,7 @@ const facultyCredentialsRoutes = require("./routes/faculty-credentials.routes");
 const facultyProfileRoutes = require("./routes/faculty-profile.routes");
 const pdsRoutes = require("./routes/pds.routes");
 const announcementRoutes = require("./routes/announcement.routes");
+const pdsTemplateConfigRoutes = require("./routes/pds-template-config.routes");
 
 // Organization specific routes
 const organizationEventRoutes = require("./routes/organization-event.routes");
@@ -151,6 +152,7 @@ app.use("/api/organization/events", organizationEventRoutes);
 // Shared routes (accessible to all authenticated users)
 app.use("/api/academic-years", require("./routes/academic-year-shared.routes"));
 app.use("/api/dean-pds", deanPDSRoutes); // Added: Direct Dean PDS route
+app.use("/api/pds-template-config", pdsTemplateConfigRoutes); // PDS Template Config routes
 
 // Announcement routes (shared between dean and faculty)
 app.use("/api/announcements", announcementRoutes);
