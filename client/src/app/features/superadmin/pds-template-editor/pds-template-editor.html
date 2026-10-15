@@ -81,7 +81,7 @@
             [class.bg-red-50]="selectedPdfId() === pdf.id"
             [class.border-red-500]="selectedPdfId() === pdf.id"
             [class.border-2]="selectedPdfId() === pdf.id"
-            class="border border-gray-200 rounded-sm p-3 hover:bg-gray-50 cursor-pointer transition-colors relative group"
+            class="border border-gray-200 rounded-sm p-3 hover:bg-gray-50 cursor-pointer transition-colors group"
           >
             <div class="flex items-start gap-2">
               <i class="pi pi-file-pdf text-red-500 text-lg flex-shrink-0"></i>
@@ -93,20 +93,20 @@
                   {{ pdf.uploadedAt | date:'short' }}
                 </p>
               </div>
-            </div>
-            
-            <button
-              (click)="deletePDF(pdf.id); $event.stopPropagation()"
-              class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded"
-            >
-              <i class="pi pi-trash text-red-600 text-xs"></i>
-            </button>
-            
-            @if (selectedPdfId() === pdf.id) {
-              <div class="absolute top-2 right-2">
-                <i class="pi pi-check-circle text-red-600 text-sm"></i>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                @if (selectedPdfId() === pdf.id) {
+                  <i class="pi pi-check-circle text-red-600 text-sm" title="Currently open"></i>
+                }
+                <button
+                  type="button"
+                  (click)="deletePDF(pdf.id); $event.stopPropagation()"
+                  class="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded leading-none"
+                  title="Delete PDF"
+                >
+                  <i class="pi pi-trash text-red-600 text-xs"></i>
+                </button>
               </div>
-            }
+            </div>
           </div>
         }
       </div>
@@ -140,8 +140,9 @@
     </div>
   }
   
-  @if (pdfUploaded() && !loading()) {
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+  <!-- Kept in the DOM while loading (only hidden) so the canvases exist when a PDF is rendered into them -->
+  @if (pdfUploaded()) {
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5" [class.hidden]="loading()">
       <!-- PDF Viewer and Controls -->
       <div class="lg:col-span-2 space-y-4">
         <!-- Controls -->
@@ -183,11 +184,16 @@
             <div class="relative inline-block">
               <canvas #pdfCanvas class="max-w-full h-auto"></canvas>
               <canvas #overlayCanvas class="absolute top-0 left-0 max-w-full h-auto pointer-events-none"></canvas>
+              <!-- Top layer: receives all mouse input (drag fields; live coords when the locator is on) -->
               <canvas
                 #locatorCanvas
-                [class.hidden]="!locatorOn()"
+                (mousedown)="onCanvasMouseDown($event)"
                 (mousemove)="onLocatorMove($event)"
-                class="absolute top-0 left-0 max-w-full h-auto cursor-crosshair"
+                (mouseup)="onCanvasMouseUp()"
+                (mouseleave)="onCanvasMouseUp()"
+                [class.cursor-move]="hoveringField()"
+                [class.cursor-crosshair]="!hoveringField() && locatorOn()"
+                class="absolute top-0 left-0 max-w-full h-auto select-none"
               ></canvas>
             </div>
           </div>

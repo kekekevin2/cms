@@ -21,18 +21,33 @@ export interface FieldPosition {
 
 export interface PDSTemplateConfigData {
   positions: FieldPosition[];
+  /** Storage key of the template PDF these positions were set against (see uploadTemplate). */
+  template_key?: string;
+  template_name?: string;
   rowHeights?: Record<string, number>;
 }
 
 export interface PDSTemplateConfig {
   config_id: number;
   config_data: PDSTemplateConfigData;
+  /** Viewable URL of config_data.template_key; only set on the active-config response. */
+  template_url?: string | null;
   version: number;
   is_active: boolean;
   created_by?: number;
   updated_by?: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface PDSTemplateFile {
+  file_id: number;
+  name: string;
+  /** Storage key — what config_data.template_key holds */
+  key: string;
+  /** Viewable URL of the PDF */
+  url: string | null;
+  created_at: string;
 }
 
 export interface ActiveConfigResponse {
@@ -85,6 +100,26 @@ export class PDSTemplateConfigService {
    */
   getActiveConfig(): Observable<ActiveConfigResponse> {
     return this.http.get<ActiveConfigResponse>(`${this.apiUrl}/active`);
+  }
+
+  /**
+   * Upload a template PDF (kept on the server, so it survives logout and other browsers)
+   * Super Admin only
+   */
+  uploadTemplate(file: Blob, filename: string): Observable<{ message: string; template: PDSTemplateFile }> {
+    const form = new FormData();
+    form.append('template', file, filename);
+    return this.http.post<{ message: string; template: PDSTemplateFile }>(`${this.apiUrl}/template`, form);
+  }
+
+  /** Uploaded template PDFs, oldest first. Super Admin only */
+  listTemplates(): Observable<{ templates: PDSTemplateFile[] }> {
+    return this.http.get<{ templates: PDSTemplateFile[] }>(`${this.apiUrl}/templates`);
+  }
+
+  /** Delete an uploaded template PDF (refused while the active config uses it). Super Admin only */
+  deleteTemplate(fileId: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/templates/${fileId}`);
   }
 
   /**

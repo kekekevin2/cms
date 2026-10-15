@@ -169,6 +169,7 @@ const CVLAttachment = require("./cvl-attachment.model")(sequelize, Sequelize);
 
 // PDS Template Config Model
 const PDSTemplateConfig = require("./pds-template-config.model")(sequelize, Sequelize);
+const PDSTemplateFile = require("./pds-template-file.model")(sequelize, Sequelize);
 
 /* User → Admin (1:1) */
 User.hasOne(Admin, {
@@ -698,5 +699,6 @@ db.CVLAttachment = CVLAttachment;
 
 // PDS Template Config
 db.PDSTemplateConfig = PDSTemplateConfig;
+db.PDSTemplateFile = PDSTemplateFile;
 
 module.exports = db;

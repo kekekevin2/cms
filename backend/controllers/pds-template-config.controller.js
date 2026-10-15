@@ -1,4 +1,89 @@
 const db = require("../models");
+const storage = require("../utils/storage");
+
+/** Viewable URL for the template PDF stored with a config, or null if it has none. */
+async function templateUrlFor(configData) {
+  const key = configData && configData.template_key;
+  if (!key) return null;
+  try {
+    return await storage.getUrl(key);
+  } catch (error) {
+    console.error("PDS template URL error:", error.message);
+    return null;
+  }
+}
+
+async function templateFileJson(file) {
+  return {
+    file_id: file.file_id,
+    name: file.name,
+    key: file.file_key,
+    url: await storage.getUrl(file.file_key).catch(() => null),
+    created_at: file.created_at,
+  };
+}
+
+/**
+ * Upload a PDS template PDF in the editor. Stored server-side so it survives logout and is
+ * the same on every browser; the client saves its key as config_data.template_key on Save.
+ */
+exports.uploadTemplate = async (req, res) => {
+  let key;
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No PDF file uploaded" });
+    }
+    key = await storage.put(req.file.buffer, {
+      folder: "pds-templates",
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+    });
+    const file = await db.PDSTemplateFile.create({
+      name: req.file.originalname,
+      file_key: key,
+      uploaded_by: req.user?.user_id,
+    });
+    res.status(201).json({ message: "Template uploaded", template: await templateFileJson(file) });
+  } catch (error) {
+    if (key) await storage.remove(key).catch(() => {});
+    console.error("Upload PDS template error:", error);
+    res.status(500).json({ message: "Error uploading PDS template", error: error.message });
+  }
+};
+
+/** List uploaded template PDFs, oldest first. */
+exports.listTemplates = async (req, res) => {
+  try {
+    const files = await db.PDSTemplateFile.findAll({ order: [["created_at", "ASC"]] });
+    res.json({ templates: await Promise.all(files.map(templateFileJson)) });
+  } catch (error) {
+    console.error("List PDS templates error:", error);
+    res.status(500).json({ message: "Error listing PDS templates", error: error.message });
+  }
+};
+
+/** Delete an uploaded template PDF, unless the active configuration is using it. */
+exports.deleteTemplate = async (req, res) => {
+  try {
+    const file = await db.PDSTemplateFile.findByPk(req.params.id);
+    if (!file) return res.status(404).json({ message: "Template not found" });
+
+    const active = await db.PDSTemplateConfig.findOne({ where: { is_active: true } });
+    if (active?.config_data?.template_key === file.file_key) {
+      return res.status(409).json({
+        message:
+          "This PDF is the template faculty and dean downloads currently use. Save positions on another PDF first.",
+      });
+    }
+
+    await file.destroy();
+    await storage.remove(file.file_key).catch((e) => console.error("Remove PDS template file:", e.message));
+    res.json({ message: "Template deleted" });
+  } catch (error) {
+    console.error("Delete PDS template error:", error);
+    res.status(500).json({ message: "Error deleting PDS template", error: error.message });
+  }
+};
 
 /**
  * Get the active PDS template configuration
@@ -23,6 +108,7 @@ exports.getActiveConfig = async (req, res) => {
       config: {
         config_id: config.config_id,
         config_data: config.config_data,
+        template_url: await templateUrlFor(config.config_data),
         version: config.version,
         created_at: config.created_at,
         updated_at: config.updated_at,

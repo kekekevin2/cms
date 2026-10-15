@@ -30,6 +30,7 @@ Requires `backend/.env` (loaded via `dotenv` in `index.js`, `config/db.config.js
 
 ### Client (`client/`)
 ```
+npm install  # run after pulling — new deps (e.g. jspdf/pdfjs-dist) are often added to package.json
 npm start    # ng serve --port 7283
 npm run build
 npm test     # Karma/Jasmine — no meaningful specs beyond the generated app.spec.ts
@@ -67,7 +68,7 @@ All models are `sequelize.define` factory functions registered and associated ce
 - Requirements/compliance: `requirement-submission`, `requirement-file`, `document-type`, `faculty-credential`, `credential-certificate`, `faculty-clearance`, `cvl-attachment`
 - `announcement` / `announcement-read` — read-receipt pattern (separate join table tracking per-user read state)
 
-**Schema management is inconsistent and needs care.** `index.js` runs `db.sequelize.sync({ alter: true })` on startup even though the comment directly above it claims `alter: false` — so Sequelize *does* mutate the live schema to match the models on every boot. The hand-written scripts in `backend/migrations/` (mix of `.js` Sequelize scripts and raw `.sql`, run manually with `node`/a MySQL client) exist for changes `sync` can't express. When adding a column, know that a model edit alone will alter the dev database on next restart; note `fix-duplicate-indexes.js` exists because `alter` has caused index bloat before.
+**Schema management needs care.** `index.js` runs `db.sequelize.sync({ alter: false })` on startup — it creates missing tables but never alters existing ones, so adding/changing a column on an existing model requires a hand-written script in `backend/migrations/` (mix of `.js` Sequelize scripts and raw `.sql`, run manually with `node`/a MySQL client). Don't flip it back to `alter: true`: on MariaDB every boot re-adds each `unique: true` column's index (`email_2`, `email_3`, …) until the table hits the 64-key limit and startup fails with "Too many keys specified" (this has happened more than once — see `migrations/fix-duplicate-indexes.js`). The local dev DB is MariaDB 10.4 (XAMPP), which also returns `JSON` columns as strings — parse them in a model getter (see `pds-template-config.model.js`).
 
 `backend/public/templates/` holds export templates.
 
@@ -105,6 +106,13 @@ Angular 20 standalone components (no NgModules) with lazy-loaded routes (`loadCo
 
 ### PDS (Personal Data Sheet) tooling
 `pds/` at the repo root is a standalone, unbuilt vanilla HTML/JS/CSS tool (`index.html`/`index.css`/`index.js`) for visually locating field coordinates on `PDS-template.pdf` (CS Form No. 212) — a dev aid for building the PDS export mapping, not part of either app's build. Its `pds/server/` is a small Express 4 app persisting those coordinates to its own SQLite file. `pds/deploy-ec2.sh` deploys the tool standalone. The actual runtime PDS export code lives in `backend/controllers/pds-excel-export.controller.js` and `client/src/app/services/core/pds-pdf.service.ts`.
+
+**PDS PDF export + superadmin PDS Template Editor** (the in-app replacement for the `pds/` tool) form one pipeline:
+- `buildOverlays()` in `pds-pdf.service.ts` is the **single source of truth** for every field drawn on the PDF — each overlay has a unique `key` (`surname`, `work_3_salary_grade`, `q38_b_yes`, `photo`, `c5_training_1_title`, …) and default x/y in PDF points (y from the page bottom; image boxes use x/y as top-left). `buildTemplateFieldPositions()` runs it on a sample PDS (every row filled, every checkbox shown) to give the editor its field list, so adding a field there is all it takes to make it editable.
+- The editor (`features/superadmin/pds-template-editor/`) saves a versioned `pds_template_config` row (`config_data.positions`, keyed by those keys) via `POST /api/pds-template-config`; only the newest `is_active` row is used, and older versions can be restored. Exports call `GET …/active` on every download and replace each default overlay's x/y by key (`applyConfig`).
+- Template PDFs are uploaded in the editor to `pds_template_files` (storage adapter folder `pds-templates/`); `config_data.template_key` is the one the positions were placed on (the PDF open when Save Positions was clicked). The template is the full **11-page CS Form 212 Revised 2026** (A4, 595×842 pt): pages 1–4 plus continuation sheets C5–C11. `CONTINUATION_SHEETS` maps each sheet (`c5` L&D, `c6` work, `c7` children, `c8` extra education, `c9` eligibility, `c10` voluntary, `c11` other info) to its "(Continuation)" heading, rows per sheet and editor page. Exports find those pages by heading (`findContinuationPages`), skip them in the normal page loop, and print each only when its table overflows the main form — once per sheet's worth of rows, after page 4. Their fields are keyed `<id>_…` (e.g. `c6_work_3_position_title`) and carry a `sheet` index for repeated copies. The bundled `client/public/pds-template.pdf` is the same 11-page file and is used when no template is saved.
+- Main-form row counts (`CHILD_ROWS` 13, `ELIGIBILITY_ROWS` 7, `WORK_EXPERIENCE_ROWS` 24, `TRAINING_ROWS` 17, `VOLUNTARY_WORK_ROWS` 9, `OTHER_INFO_ROWS` 7) and every default coordinate come from that file — re-derive them (text baselines + table rules via pdf.js, applying the CTM) if the template layout changes. Question data fields keep older names (e.g. 2026 Q39 immigrant → `q40_*`, Q40a indigenous → `q41_*`; the 2026 UMID/PCN rows print `gsis_id_no`/`sss_no`); the mapping is commented above the page-4 `questions` array.
+- The editor and export share `pdfjs-dist` 4.x — importing it overwrites `window.pdfjsLib`, so the worker URL must match `pdfjsLib.version` exactly.
 
 ## Planning docs
 

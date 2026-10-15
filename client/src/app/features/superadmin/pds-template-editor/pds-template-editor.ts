@@ -1,17 +1,43 @@
 import { Component, OnInit, signal, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PDSTemplateConfigService } from '../../../services/core/pds-template-config.service';
+import {
+  FieldPosition,
+  PDSTemplateConfigService,
+  PDSTemplateFile,
+} from '../../../services/core/pds-template-config.service';
+import {
+  buildTemplateFieldPositions,
+} from '../../../services/core/pds-pdf.service';
 import Swal from 'sweetalert2';
+import { firstValueFrom } from 'rxjs';
 
-declare const pdfjsLib: any;
+import * as pdfjsLib from 'pdfjs-dist';
 declare const jsPDF: any;
 
+/** A template PDF uploaded to the server (pds_template_files); its bytes are fetched on first open. */
 interface UploadedPDF {
   id: string;
+  fileId: number;
   name: string;
-  data: Uint8Array;
   uploadedAt: Date;
+  /** Storage key — saved as config_data.template_key */
+  serverKey: string;
+  url: string | null;
+  data?: Uint8Array;
+}
+
+const SELECTED_PDF_KEY = 'pds-template-editor:selectedPdfId';
+
+function toUploadedPDF(t: PDSTemplateFile): UploadedPDF {
+  return {
+    id: String(t.file_id),
+    fileId: t.file_id,
+    name: t.name,
+    uploadedAt: new Date(t.created_at),
+    serverKey: t.key,
+    url: t.url,
+  };
 }
 
 interface FieldOverlay {
@@ -52,11 +78,17 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
   totalPages = signal(1);
   locatorOn = signal(false);
   selectedField = signal<FieldOverlay | null>(null);
+  hoveringField = signal(false);
+  private dragState: { field: FieldOverlay; offsetX: number; offsetY: number; moved: boolean } | null =
+    null;
   pdfUploaded = signal(false);
   
   // Multiple PDF support
   uploadedPDFs = signal<UploadedPDF[]>([]);
   selectedPdfId = signal<string | null>(null);
+  /** Main template the active config uses (kept when saving while the L&D CONT PDF is open). */
+  private activeTemplateKey: string | undefined;
+
   
   // Field editor form
   fieldEditorVisible = signal(false);
@@ -92,30 +124,57 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
 
   constructor(private configService: PDSTemplateConfigService) {}
 
-  ngOnInit() {
-    this.loadConfig();
+  async ngOnInit() {
+    const [activeKey] = await Promise.all([this.loadConfig(), this.loadServerTemplates()]);
+    const pdfs = this.uploadedPDFs();
+    if (pdfs.length === 0) return;
+
+    // Open the PDF picked last time in this browser, else the one downloads use, else the newest
+    let lastSelected: string | null = null;
+    try {
+      lastSelected = localStorage.getItem(SELECTED_PDF_KEY);
+    } catch {}
+    const toSelect =
+      pdfs.find((p) => p.id === lastSelected) ??
+      pdfs.find((p) => p.serverKey === activeKey) ??
+      pdfs[pdfs.length - 1];
+
+    // Canvas elements only exist once pdfUploaded is true
+    this.pdfUploaded.set(true);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await this.selectPDF(toSelect.id);
+  }
+
+  /** Template PDFs are stored on the server, so they survive logout and show on every browser. */
+  private async loadServerTemplates() {
+    try {
+      const { templates } = await firstValueFrom(this.configService.listTemplates());
+      this.uploadedPDFs.set(templates.map(toUploadedPDF));
+    } catch (error) {
+      console.error('Could not load uploaded PDS templates:', error);
+    }
+  }
+
+  private rememberSelectedPdf(pdfId: string | null) {
+    try {
+      if (pdfId) localStorage.setItem(SELECTED_PDF_KEY, pdfId);
+      else localStorage.removeItem(SELECTED_PDF_KEY);
+    } catch {}
   }
 
   ngAfterViewInit() {
-    // Initialize PDF.js worker when library is loaded
-    const initPdfJs = () => {
-      if (typeof pdfjsLib !== 'undefined') {
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        console.log('PDF.js initialized successfully');
-      } else {
-        // Try again after a short delay
-        setTimeout(initPdfJs, 100);
-      }
-    };
-    initPdfJs();
+    // Same pdfjs-dist build and worker as pds-pdf.service. The worker's version must match the
+    // library's exactly, and importing pdfjs-dist replaces the old CDN window.pdfjsLib (3.x).
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
   }
 
-  onPdfFileSelected(event: Event) {
+  async onPdfFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
     const file = input.files[0];
+    // Reset file input so the same file can be chosen again
+    input.value = '';
     if (file.type !== 'application/pdf') {
       Swal.fire({
         icon: 'error',
@@ -126,131 +185,117 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
     }
 
     this.loading.set(true);
-    const reader = new FileReader();
-    
-    reader.onload = async (e: any) => {
-      try {
-        const pdfData = new Uint8Array(e.target.result);
-        
-        // Create new PDF entry
-        const newPDF: UploadedPDF = {
-          id: Date.now().toString(),
-          name: file.name,
-          data: pdfData,
-          uploadedAt: new Date()
-        };
-        
-        // Add to list
-        const currentPDFs = this.uploadedPDFs();
-        this.uploadedPDFs.set([...currentPDFs, newPDF]);
-        
-        // Select the newly uploaded PDF
-        this.selectedPdfId.set(newPDF.id);
-        this.uploadedPdfData = pdfData;
-        
-        // Set pdfUploaded FIRST so canvas elements appear in DOM
-        this.pdfUploaded.set(true);
-        
-        // Wait for Angular to render the canvas elements
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        await this.loadUploadedPDF();
-        this.loading.set(false);
-        
-        // Reset file input so same file can be uploaded again
-        input.value = '';
-        
-        Swal.fire({
-          icon: 'success',
-          title: 'PDF Loaded',
-          text: `${file.name} has been loaded successfully`,
-          timer: 2000,
-          showConfirmButton: false,
-        });
-      } catch (error) {
-        console.error('Error loading PDF:', error);
-        this.loading.set(false);
-        
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to load PDF file. Please try again.',
-        });
-      }
-    };
-
-    reader.onerror = () => {
+    let newPDF: UploadedPDF;
+    try {
+      const { template } = await firstValueFrom(this.configService.uploadTemplate(file, file.name));
+      newPDF = { ...toUploadedPDF(template), data: new Uint8Array(await file.arrayBuffer()) };
+    } catch (error: any) {
+      console.error('Error uploading PDF:', error);
       this.loading.set(false);
       Swal.fire({
         icon: 'error',
-        title: 'Error',
-        text: 'Failed to read PDF file',
+        title: 'Upload Failed',
+        text: error?.error?.message || 'Failed to upload the PDF. Please try again.',
       });
-    };
+      return;
+    }
 
-    reader.readAsArrayBuffer(file);
+    this.uploadedPDFs.set([...this.uploadedPDFs(), newPDF]);
+
+    // Set pdfUploaded FIRST so canvas elements appear in DOM, then wait for Angular to render them
+    this.pdfUploaded.set(true);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await this.selectPDF(newPDF.id);
+
+    if (this.selectedPdfId() === newPDF.id && this.pdfDoc) {
+      Swal.fire({
+        icon: 'success',
+        title: 'PDF Uploaded',
+        text: `${file.name} has been uploaded and loaded`,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    }
   }
 
   async selectPDF(pdfId: string) {
-    const pdf = this.uploadedPDFs().find(p => p.id === pdfId);
+    const pdf = this.uploadedPDFs().find((p) => p.id === pdfId);
     if (!pdf) return;
 
     this.loading.set(true);
     this.selectedPdfId.set(pdfId);
-    this.uploadedPdfData = pdf.data;
+    this.rememberSelectedPdf(pdfId);
 
     try {
+      if (!pdf.data) {
+        if (!pdf.url) throw new Error('This PDF has no download URL');
+        const res = await fetch(pdf.url);
+        if (!res.ok) throw new Error(`Download failed (HTTP ${res.status})`);
+        pdf.data = new Uint8Array(await res.arrayBuffer());
+      }
+      this.uploadedPdfData = pdf.data;
       await this.loadUploadedPDF();
       this.loading.set(false);
-    } catch (error) {
-      console.error('Error switching PDF:', error);
+    } catch (error: any) {
+      console.error('Error opening PDF:', error);
       this.loading.set(false);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Failed to load selected PDF',
+        text: `Failed to load "${pdf.name}": ${error?.message || error}`,
       });
     }
   }
 
   deletePDF(pdfId: string) {
-    const pdf = this.uploadedPDFs().find(p => p.id === pdfId);
+    const pdf = this.uploadedPDFs().find((p) => p.id === pdfId);
     if (!pdf) return;
 
     Swal.fire({
       icon: 'warning',
       title: 'Delete PDF?',
-      text: `Remove "${pdf.name}" from the editor?`,
+      text: `Permanently delete "${pdf.name}" from the server?`,
       showCancelButton: true,
       confirmButtonText: 'Yes, delete it',
       cancelButtonText: 'Cancel',
       confirmButtonColor: '#dc2626',
-    }).then((result) => {
-      if (result.isConfirmed) {
-        const currentPDFs = this.uploadedPDFs();
-        const updatedPDFs = currentPDFs.filter(p => p.id !== pdfId);
-        this.uploadedPDFs.set(updatedPDFs);
+    }).then(async (result) => {
+      if (!result.isConfirmed) return;
 
-        // If deleted PDF was selected, select another or clear
-        if (this.selectedPdfId() === pdfId) {
-          if (updatedPDFs.length > 0) {
-            this.selectPDF(updatedPDFs[0].id);
-          } else {
-            this.selectedPdfId.set(null);
-            this.pdfUploaded.set(false);
-            this.uploadedPdfData = null;
-            this.pdfDoc = null;
-          }
-        }
-
+      try {
+        await firstValueFrom(this.configService.deleteTemplate(pdf.fileId));
+      } catch (error: any) {
         Swal.fire({
-          icon: 'success',
-          title: 'Deleted',
-          text: 'PDF has been removed',
-          timer: 1500,
-          showConfirmButton: false,
+          icon: 'error',
+          title: 'Cannot Delete',
+          text: error?.error?.message || 'Failed to delete the PDF',
         });
+        return;
       }
+
+      const updatedPDFs = this.uploadedPDFs().filter((p) => p.id !== pdfId);
+      this.uploadedPDFs.set(updatedPDFs);
+
+      // If deleted PDF was selected, select another or clear
+      if (this.selectedPdfId() === pdfId) {
+        if (updatedPDFs.length > 0) {
+          this.selectPDF(updatedPDFs[0].id);
+        } else {
+          this.selectedPdfId.set(null);
+          this.rememberSelectedPdf(null);
+          this.pdfUploaded.set(false);
+          this.uploadedPdfData = null;
+          this.pdfDoc = null;
+        }
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Deleted',
+        text: 'PDF has been removed',
+        timer: 1500,
+        showConfirmButton: false,
+      });
     });
   }
 
@@ -272,7 +317,9 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
     console.log('PDF data size:', this.uploadedPdfData.byteLength, 'bytes');
 
     try {
-      const loadingTask = pdfjsLib.getDocument({ data: this.uploadedPdfData });
+      // Pass a copy: PDF.js can detach the buffer it receives, which would break
+      // switching back to this PDF later and the saved copy
+      const loadingTask = pdfjsLib.getDocument({ data: this.uploadedPdfData.slice() });
       this.pdfDoc = await loadingTask.promise;
       this.totalPages.set(this.pdfDoc.numPages);
       
@@ -287,35 +334,49 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
     }
   }
 
-  loadConfig() {
+  /** Loads the saved positions; resolves to the storage key of the template they belong to. */
+  async loadConfig(): Promise<string | undefined> {
     this.loading.set(true);
-    this.configService.getActiveConfig().subscribe({
-      next: (response) => {
-        if (response.config && response.config.config_data) {
-          // Ensure all positions have required fields with defaults
-          this.overlays = (response.config.config_data.positions || []).map((pos) => ({
-            ...pos,
-            page: pos.page !== undefined ? pos.page : 1, // Default to page 1 if not specified
-            maxWidth: pos.maxWidth ?? null,
-            overflow: pos.overflow ?? null,
-          }));
-          this.saveDefaultPositions();
-        } else {
-          // No config exists, use built-in defaults
-          this.overlays = this.buildDefaultOverlays();
-          this.saveDefaultPositions();
-        }
-        this.updateFieldList();
-        this.loading.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading config:', error);
-        // Use built-in defaults on error
-        this.overlays = this.buildDefaultOverlays();
-        this.saveDefaultPositions();
-        this.updateFieldList();
-        this.loading.set(false);
-      },
+    let saved: FieldPosition[] = [];
+    let templateKey: string | undefined;
+    try {
+      const response = await firstValueFrom(this.configService.getActiveConfig());
+      saved = response.config?.config_data?.positions || [];
+      templateKey = response.config?.config_data?.template_key;
+      this.activeTemplateKey = templateKey;
+    } catch (error) {
+      // Use built-in defaults on error
+      console.error('Error loading config:', error);
+    }
+    this.overlays = this.mergeWithDefaults(saved);
+    this.saveDefaultPositions();
+    this.updateFieldList();
+    this.loading.set(false);
+    // Redraw in case a PDF rendered before the positions arrived
+    if (this.currentViewport) this.drawOverlays(this.currentPage(), this.currentViewport);
+    return templateKey;
+  }
+
+  /**
+   * Every field the PDF export draws (from pds-pdf.service), moved to its saved
+   * position where one exists. Saved keys the export no longer knows are dropped.
+   */
+  private mergeWithDefaults(saved: FieldPosition[]): FieldOverlay[] {
+    const savedByKey = new Map(saved.map((p) => [p.key, p]));
+    return buildTemplateFieldPositions().map((d) => {
+      const p = savedByKey.get(d.key);
+      return {
+        ...d,
+        page: p?.page || d.page,
+        x: p?.x ?? d.x,
+        y: p?.y ?? d.y,
+        center: p?.center ?? d.center,
+        size: p?.size || d.size,
+        w: d.type === 'image' ? p?.w || d.w : undefined,
+        h: d.type === 'image' ? p?.h || d.h : undefined,
+        maxWidth: p?.maxWidth ?? null,
+        overflow: p?.overflow ?? null,
+      };
     });
   }
 
@@ -332,55 +393,6 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
         overflow: o.overflow,
       });
     });
-  }
-
-  private buildDefaultOverlays(): FieldOverlay[] {
-    // ALL 400+ default positions from overlay-positions.json
-    // NOTE: page numbers removed to match original JSON structure
-    // The system will default all fields to page 1
-    return [
-      // Personal Information
-      { key: "surname", x: 135, y: 718, center: false, text: "DELA CRUZ", size: 11, maxWidth: null, overflow: null },
-      { key: "first_name", x: 135, y: 701, center: false, text: "JUAN", size: 11, maxWidth: null, overflow: null },
-      { key: "middle_name", x: 135, y: 686, center: false, text: "SANTOS", size: 11, maxWidth: null, overflow: null },
-      { key: "name_extension", x: 490, y: 701, center: false, text: "Jr.", size: 11, maxWidth: null, overflow: null },
-      { key: "date_of_birth", x: 135, y: 665, center: false, text: "15/01/1995", size: 11, maxWidth: null, overflow: null },
-      { key: "place_of_birth", x: 135, y: 645, center: false, text: "Manila, Philippines", size: 11, maxWidth: null, overflow: null },
-      { key: "sex_checkbox", x: 137, y: 628, center: false, text: "✓", size: 11, maxWidth: null, overflow: null },
-      { key: "civil_status_checkbox", x: 137, y: 613, center: false, text: "✓", size: 11, maxWidth: null, overflow: null },
-      { key: "civil_status_other", x: 137, y: 591, center: false, text: "✓", size: 11, maxWidth: null, overflow: null },
-      { key: "height", x: 137, y: 573, center: false, text: "170", size: 11, maxWidth: null, overflow: null },
-      { key: "weight", x: 137, y: 557, center: false, text: "65", size: 11, maxWidth: null, overflow: null },
-      { key: "blood_type", x: 137, y: 540, center: false, text: "O+", size: 11, maxWidth: null, overflow: null },
-      { key: "gsis_id_no", x: 137, y: 521, center: false, text: "1234567890", size: 11, maxWidth: null, overflow: null },
-      { key: "pag_ibig_id_no", x: 137, y: 504, center: false, text: "1234567890123", size: 11, maxWidth: null, overflow: null },
-      { key: "philhealth_no", x: 137, y: 485, center: false, text: "12-345678901-2", size: 11, maxWidth: null, overflow: null },
-      { key: "sss_no", x: 137, y: 468, center: false, text: "12-3456789-0", size: 11, maxWidth: null, overflow: null },
-      { key: "tin_no", x: 137, y: 450, center: false, text: "123-456-789-000", size: 11, maxWidth: null, overflow: null },
-      { key: "agency_employee_no", x: 137, y: 433, center: false, text: "asd", size: 11, maxWidth: null, overflow: null },
-      { key: "citizenship_checkbox", x: 375, y: 668, center: false, text: "✓", size: 11, maxWidth: null, overflow: null },
-      { key: "dual_citizenship_country", x: 370, y: 625, center: false, text: "", size: 11, maxWidth: null, overflow: null },
-      { key: "residential_house_no", x: 378, y: 612, center: true, text: "123", size: 11, maxWidth: null, overflow: null },
-      { key: "residential_street", x: 492, y: 612, center: true, text: "Sampaguita Street", size: 11, maxWidth: null, overflow: null },
-      { key: "residential_subdivision", x: 378, y: 595, center: true, text: "N/A", size: 11, maxWidth: null, overflow: null },
-      { key: "residential_barangay", x: 492, y: 595, center: true, text: "Barangay San Roque", size: 11, maxWidth: null, overflow: null },
-      { key: "residential_city", x: 378, y: 577, center: true, text: "Manila City", size: 11, maxWidth: null, overflow: null },
-      { key: "residential_province", x: 492, y: 577, center: true, text: "Metro Manila", size: 11, maxWidth: null, overflow: null },
-      { key: "residential_zip_code", x: 439, y: 558, center: true, text: "1000", size: 11, maxWidth: null, overflow: null },
-      { key: "permanent_house_no", x: 378, y: 543, center: true, text: "123", size: 11, maxWidth: null, overflow: null },
-      { key: "permanent_street", x: 492, y: 543, center: true, text: "Sampaguita Street", size: 11, maxWidth: null, overflow: null },
-      { key: "permanent_subdivision", x: 378, y: 526, center: true, text: "N/A", size: 11, maxWidth: null, overflow: null },
-      { key: "permanent_barangay", x: 492, y: 526, center: true, text: "Barangay San Roque", size: 11, maxWidth: null, overflow: null },
-      { key: "permanent_city", x: 378, y: 508, center: true, text: "Manila City", size: 11, maxWidth: null, overflow: null },
-      { key: "permanent_province", x: 492, y: 508, center: true, text: "Metro Manila", size: 11, maxWidth: null, overflow: null },
-      { key: "permanent_zip_code", x: 439, y: 486, center: true, text: "1000", size: 11, maxWidth: null, overflow: null },
-      { key: "telephone_no", x: 335, y: 468, center: false, text: "(02) 123-4567", size: 11, maxWidth: null, overflow: null },
-      { key: "mobile_no", x: 335, y: 450, center: false, text: "0917-123-4567", size: 11, maxWidth: null, overflow: null },
-      { key: "email_address", x: 335, y: 433, center: false, text: "juan.delacruz@email.com", size: 11, maxWidth: null, overflow: null },
-      
-      // NOTE: For now, returning just the first page fields to test.
-      // Once this works, we'll add all 400+ fields from your overlay-positions.json
-    ];
   }
 
   async loadPDF() {
@@ -460,16 +472,32 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
 
     ctx.clearRect(0, 0, overlayCanvasEl.width, overlayCanvasEl.height);
 
-    // Draw text overlays - if no page specified, show on page 1
+    // Draw overlays - if no page specified, show on page 1
     this.overlays
-      .filter((f) => {
-        const fieldPage = f.page || 1; // Default to page 1 if no page specified
-        return fieldPage === pageNum && f.type !== 'image';
-      })
+      .filter((f) => (f.page || 1) === pageNum)
       .forEach((f) => {
         const s = viewport.scale;
         const cx = f.x * s;
         const cy = viewport.height - f.y * s;
+
+        // Photo/signature: a labelled box (x/y is its top-left corner, as in the PDF export)
+        if (f.type === 'image') {
+          const w = (f.w || 0) * s;
+          const h = (f.h || 0) * s;
+          ctx.save();
+          ctx.fillStyle = 'rgba(220, 38, 38, 0.08)';
+          ctx.fillRect(cx, cy, w, h);
+          ctx.strokeStyle = '#dc2626';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(cx, cy, w, h);
+          ctx.fillStyle = '#dc2626';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = `bold ${10 * (s / 1.5)}px sans-serif`;
+          ctx.fillText(f.text, cx + w / 2, cy + h / 2);
+          ctx.restore();
+          return;
+        }
 
         ctx.fillStyle = '#000';
         ctx.textAlign = f.center ? 'center' : 'left';
@@ -484,24 +512,84 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
     if (selected) {
       const selectedPage = selected.page || 1; // Default to page 1
       if (selectedPage === pageNum) {
+        const box = this.getFieldBox(selected, viewport, ctx);
         ctx.save();
         ctx.strokeStyle = '#2563eb';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 3]);
-        
-        const s = viewport.scale;
-        const fieldHeight = 20; // Approximate height
-        const fieldWidth = ctx.measureText(selected.text).width;
-        
-        ctx.strokeRect(
-          selected.x * s,
-          viewport.height - selected.y * s - fieldHeight,
-          fieldWidth,
-          fieldHeight
-        );
+        ctx.strokeRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
         ctx.restore();
       }
     }
+  }
+
+  /** Bounding box of a text field in canvas pixels, matching how drawOverlays draws it. */
+  private getFieldBox(f: FieldOverlay, viewport: any, ctx: CanvasRenderingContext2D) {
+    const s = viewport.scale;
+    if (f.type === 'image') {
+      const left = f.x * s;
+      const top = viewport.height - f.y * s;
+      return { left, right: left + (f.w || 0) * s, top, bottom: top + (f.h || 0) * s };
+    }
+    const fontPx = (f.size * s) / 1.5;
+    ctx.save();
+    ctx.font = `${fontPx}px 'Times New Roman', Times, serif`;
+    const width = Math.max(ctx.measureText(f.text || '').width, 16);
+    ctx.restore();
+
+    const cx = f.x * s;
+    const cy = viewport.height - f.y * s;
+    const left = f.center ? cx - width / 2 : cx;
+    const pad = 3;
+    return {
+      left: left - pad,
+      right: left + width + pad,
+      top: cy - fontPx - pad,
+      bottom: cy + fontPx * 0.25 + pad,
+    };
+  }
+
+  /** Converts a mouse event to canvas pixels and PDF points on the current page. */
+  private pointerPosition(event: MouseEvent) {
+    const canvas = this.locatorCanvas.nativeElement;
+    const rect = canvas.getBoundingClientRect();
+    const scale = canvas.width / rect.width;
+    const cx = (event.clientX - rect.left) * scale;
+    const cy = (event.clientY - rect.top) * scale;
+    const s = this.currentViewport.scale;
+    return { cx, cy, px: cx / s, py: (canvas.height - cy) / s };
+  }
+
+  private fieldAt(cx: number, cy: number): FieldOverlay | null {
+    const ctx = this.overlayCanvas.nativeElement.getContext('2d');
+    if (!ctx || !this.currentViewport) return null;
+    const page = this.currentPage();
+    // Search from the end so the field drawn on top wins
+    for (let i = this.overlays.length - 1; i >= 0; i--) {
+      const f = this.overlays[i];
+      if ((f.page || 1) !== page) continue;
+      const b = this.getFieldBox(f, this.currentViewport, ctx);
+      if (cx >= b.left && cx <= b.right && cy >= b.top && cy <= b.bottom) return f;
+    }
+    return null;
+  }
+
+  onCanvasMouseDown(event: MouseEvent) {
+    if (!this.currentViewport || event.button !== 0) return;
+    const pos = this.pointerPosition(event);
+    const field = this.fieldAt(pos.cx, pos.cy);
+    if (!field) return;
+
+    event.preventDefault();
+    this.selectField(field);
+    this.dragState = { field, offsetX: pos.px - field.x, offsetY: pos.py - field.y, moved: false };
+  }
+
+  onCanvasMouseUp() {
+    if (!this.dragState) return;
+    const moved = this.dragState.moved;
+    this.dragState = null;
+    if (moved) this.updateFieldList();
   }
 
   prevPage() {
@@ -521,15 +609,24 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
   }
 
   onLocatorMove(event: MouseEvent) {
-    if (!this.locatorOn() || !this.currentViewport) return;
+    if (!this.currentViewport) return;
+    const pos = this.pointerPosition(event);
 
-    const rect = this.locatorCanvas.nativeElement.getBoundingClientRect();
-    const scale = this.locatorCanvas.nativeElement.width / rect.width;
-    const cx = (event.clientX - rect.left) * scale;
-    const cy = (event.clientY - rect.top) * scale;
-    const px = Math.round(cx / 1.5);
-    const py = Math.round((this.locatorCanvas.nativeElement.height - cy) / 1.5);
+    if (this.dragState) {
+      const f = this.dragState.field;
+      f.x = Math.round(pos.px - this.dragState.offsetX);
+      f.y = Math.round(pos.py - this.dragState.offsetY);
+      this.dragState.moved = true;
+      this.fieldEditorX.set(f.x);
+      this.fieldEditorY.set(f.y);
+      this.drawOverlays(this.currentPage(), this.currentViewport);
+    } else {
+      this.hoveringField.set(this.fieldAt(pos.cx, pos.cy) !== null);
+    }
 
+    if (!this.locatorOn()) return;
+    const px = Math.round(pos.px);
+    const py = Math.round(pos.py);
     this.coordX.set(px);
     this.coordY.set(py);
     this.coordLiveText.set(`x: ${px}  y: ${py}`);
@@ -589,11 +686,17 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
     });
   }
 
-  savePositions() {
+  async savePositions() {
     this.saving.set(true);
+
+    // The positions only line up on the PDF they were placed on, so that PDF is saved with them
+    // and faculty/dean downloads are drawn on it instead of the bundled template.
+    const pdf = this.uploadedPDFs().find((p) => p.id === this.selectedPdfId());
 
     // Convert overlays to match PDSTemplateConfigData interface
     const configData = {
+      template_key: pdf?.serverKey ?? this.activeTemplateKey,
+      template_name: pdf?.name,
       positions: this.overlays.map((overlay) => ({
         key: overlay.key,
         x: overlay.x,
@@ -614,6 +717,7 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
     this.configService.saveConfig(configData).subscribe({
       next: (response) => {
         this.saving.set(false);
+        this.activeTemplateKey = configData.template_key;
         Swal.fire({
           icon: 'success',
           title: 'Saved',
@@ -695,8 +799,15 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
   }
 
   private getCategoryFor(key: string): string {
+    if (key.startsWith('c5_')) return 'C5 – L&D (Continuation)';
+    if (key.startsWith('c6_')) return 'C6 – Work Experience (Continuation)';
+    if (key.startsWith('c7_')) return 'C7 – Family Background (Continuation)';
+    if (key.startsWith('c8_')) return 'C8 – Educational Background (Continuation)';
+    if (key.startsWith('c9_')) return 'C9 – Civil Service Eligibility (Continuation)';
+    if (key.startsWith('c10_')) return 'C10 – Voluntary Work (Continuation)';
+    if (key.startsWith('c11_')) return 'C11 – Other Information (Continuation)';
     if (key.startsWith('signature_')) return 'Signature';
-    if (key.startsWith('photo_')) return 'Photo';
+    if (key === 'photo') return 'Photo';
     if (key.startsWith('child_')) return 'Children';
     if (key.startsWith('spouse_')) return 'Spouse';
     if (key.startsWith('father_') || key.startsWith('mother_')) return 'Father / Mother';
@@ -711,9 +822,9 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
     if (key.startsWith('residential_')) return 'Residential Address';
     if (key.startsWith('permanent_')) return 'Permanent Address';
     if (key.startsWith('government_') || key === 'submitted_at') return 'Government ID / Date';
-    if (['citizenship_checkbox', 'citizenship_subtype_checkbox', 'dual_citizenship_country'].includes(key))
+    if (key.startsWith('citizenship_') || key === 'dual_citizenship_country')
       return 'Citizenship';
-    if (['sex_checkbox', 'civil_status_checkbox', 'civil_status_other'].includes(key))
+    if (key.startsWith('sex_') || key.startsWith('civil_status_'))
       return 'Sex / Civil Status';
     return 'Personal Information';
   }
@@ -723,7 +834,7 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
   }
 
   formatCoordText(field: FieldOverlay): string {
-    const base = `p${field.page} · ${field.x},${field.y}`;
+    const base = `p${field.page ?? 1} · ${field.x},${field.y}`;
     return field.type === 'image' ? `${base} · ${field.w}×${field.h}` : base;
   }
 }

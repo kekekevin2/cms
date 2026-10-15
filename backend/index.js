@@ -40,7 +40,9 @@ app.use((req, res, next) => {
 	next();
 });
 
-app.use(express.json());
+// Above the 100kb default: a PDS template config (POST /api/pds-template-config) carries ~850
+// field positions, which is larger than that.
+app.use(express.json({ limit: "2mb" }));
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -180,7 +182,7 @@ db.sequelize
 		// Sync models with database (creates tables if they don't exist)
 		// Using alter: false to prevent Sequelize from adding duplicate indexes
 		// on every restart. Run migrations manually when schema changes are needed.
-		return db.sequelize.sync({ alter: true });
+		return db.sequelize.sync({ alter: false });
 	})
 	.then(() => {
 		console.log("Database tables synced!");

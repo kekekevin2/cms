@@ -11,6 +11,16 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.JSON,
         allowNull: false,
         comment: "JSON configuration for PDS field positions and layout settings",
+        // MariaDB stores JSON as LONGTEXT, so reads come back as a string — parse it here
+        get() {
+          const raw = this.getDataValue("config_data");
+          if (typeof raw !== "string") return raw;
+          try {
+            return JSON.parse(raw);
+          } catch {
+            return raw;
+          }
+        },
       },
       version: {
         type: Sequelize.INTEGER,
