@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 @import 'primeicons/primeicons.css';
 @import 'tailwindcss';
+/* Make Tailwind's dark: utilities follow the app's theme toggle (ThemeService puts .dark on <html>)
+   instead of the OS/browser colour scheme, which is Tailwind v4's default. */
+@custom-variant dark (&:where(.dark, .dark *));
 @import './styles/dark-mode.css';
 @import './styles/responsive.css';
 
@@ -39,4 +42,32 @@ input:-ms-input-placeholder,
 textarea:-ms-input-placeholder {
   color: #9ca3af; /* gray-400 */
   opacity: 1;
+}
+
+/* Row/item action buttons (Edit, Delete, Download, Remove…): icon only, with the label sliding
+   out on hover or keyboard focus. The label stays in the DOM, so screen readers still announce
+   it. Mark a button with .action-btn and wrap its text in <span class="action-label">. */
+.action-btn {
+  gap: 0 !important;
+}
+
+.action-btn .action-label {
+  display: inline-block;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: bottom;
+  opacity: 0;
+  margin-left: 0;
+  transition:
+    max-width 0.2s ease,
+    opacity 0.15s ease,
+    margin-left 0.2s ease;
+}
+
+.action-btn:hover .action-label,
+.action-btn:focus-visible .action-label {
+  max-width: 12rem;
+  opacity: 1;
+  margin-left: 0.375rem;
 }

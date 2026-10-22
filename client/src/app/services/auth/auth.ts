@@ -75,11 +75,16 @@ export class Auth {
   }
 
   logout(): void {
+    this.clearSession();
+    this.router.navigate(['/login']);
+  }
+
+  /** Forgets the stored token and user without navigating (logout() also goes to /login). */
+  clearSession(): void {
     secureRemoveItem(this.TOKEN_KEY);
     secureRemoveItem(this.USER_KEY);
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
-    this.router.navigate(['/login']);
   }
 
   getProfile(): Observable<{ user: User }> {
@@ -129,8 +134,20 @@ export class Auth {
     }
   }
 
+  /**
+   * True when a token is stored and not expired. An expired token left in storage made the app
+   * treat the user as logged in (guards let them through, then every API call failed), so it is
+   * cleared here instead.
+   */
   private hasToken(): boolean {
-    return !!secureGetItem(this.TOKEN_KEY);
+    const token = secureGetItem(this.TOKEN_KEY);
+    if (!token) return false;
+    if (isJwtExpired(token)) {
+      secureRemoveItem(this.TOKEN_KEY);
+      secureRemoveItem(this.USER_KEY);
+      return false;
+    }
+    return true;
   }
 
   hasRole(role: string): boolean {
@@ -163,5 +180,15 @@ export class Auth {
       default:
         return '/login';
     }
+  }
+}
+
+/** Whether a JWT's "exp" claim is in the past. Tokens without a readable "exp" count as valid. */
+function isJwtExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.exp === 'number' && payload.exp * 1000 <= Date.now();
+  } catch {
+    return false;
   }
 }

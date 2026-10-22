@@ -370,15 +370,15 @@
             <div class="flex gap-2 pt-2 border-t border-gray-100">
               <button
                 (click)="openViewModal(submission)"
-                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+                class="action-btn inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
               >
-                <i class="pi pi-eye text-xs"></i> View
+                <i class="pi pi-eye text-xs"></i> <span class="action-label">View</span>
               </button>
               <button
                 (click)="downloadFile(submission.submission_id)"
-                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-sm hover:bg-blue-100 transition"
+                class="action-btn inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-sm hover:bg-blue-100 transition"
               >
-                <i class="pi pi-download text-xs"></i> Download
+                <i class="pi pi-download text-xs"></i> <span class="action-label">Download</span>
               </button>
             </div>
             @if (submission.status === 'pending') {
@@ -391,9 +391,9 @@
                 </button>
                 <button
                   (click)="openViewModal(submission)"
-                  class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-red-700 bg-red-50 rounded-sm hover:bg-red-100 transition"
+                  class="action-btn inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-red-700 bg-red-50 rounded-sm hover:bg-red-100 transition"
                 >
-                  <i class="pi pi-undo text-xs"></i> Return
+                  <i class="pi pi-undo text-xs"></i> <span class="action-label">Return</span>
                 </button>
               </div>
             }

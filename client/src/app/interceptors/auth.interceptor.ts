@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { Auth } from '../services/auth/auth';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { getDashboardPathByRole } from '../guards/dashboard-path';
 
 /**
  * Auth Interceptor - Adds authentication token to all HTTP requests
@@ -38,10 +39,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // Handle 403 Forbidden - user doesn't have permission
       if (error.status === 403) {
         console.warn('Auth Interceptor: 403 Forbidden - insufficient permissions');
-        const user = authService.currentUser();
-        if (user) {
+        const dashboardPath = getDashboardPathByRole(authService.currentUser()?.role);
+        if (dashboardPath) {
           // Redirect to user's own dashboard
-          const dashboardPath = getDashboardPathByRole(user.role);
           router.navigate([dashboardPath]);
         } else {
           authService.logout();
@@ -52,23 +52,3 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     }),
   );
 };
-
-/**
- * Get the appropriate dashboard path based on user role
- */
-function getDashboardPathByRole(role: string): string {
-  switch (role) {
-    case 'superadmin':
-      return '/superadmin/dashboard';
-    case 'admin':
-      return '/admin/dashboard';
-    case 'dean':
-      return '/dean/dashboard';
-    case 'faculty':
-      return '/faculty/dashboard';
-    case 'organization':
-      return '/organization/dashboard';
-    default:
-      return '/login';
-  }
-}

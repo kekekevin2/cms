@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { Auth } from '../services/auth/auth';
+import { getDashboardPathByRole } from './dashboard-path';
 
 /**
  * Role Guard - Ensures user has the required role to access a route
@@ -39,30 +40,12 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
       `Role Guard: User role '${user.role}' not in allowed roles [${allowedRoles.join(', ')}]`,
     );
     const dashboardPath = getDashboardPathByRole(user.role);
-    router.navigate([dashboardPath]);
+    if (dashboardPath) {
+      router.navigate([dashboardPath]);
+    } else {
+      console.error(`Role Guard: unknown role '${user.role}'`);
+      authService.logout();
+    }
     return false;
   };
 };
-
-/**
- * Get the appropriate dashboard path based on user role
- */
-function getDashboardPathByRole(role: string): string {
-  switch (role) {
-    case 'superadmin':
-      return '/superadmin/dashboard';
-    case 'admin':
-      return '/admin/dashboard';
-    case 'dean':
-      return '/department/dashboard';
-    case 'faculty':
-      return '/faculty/dashboard';
-    case 'organization':
-      return '/organization/dashboard';
-    case 'college_department':
-      return '/department/dashboard';
-    default:
-      console.error(`Unknown role: ${role}`);
-      return '/login';
-  }
-}
