@@ -35,7 +35,11 @@ export class DeanOrganizationDashboard implements OnInit, OnChanges {
     totalEvents: 0,
   });
   recentDocuments = signal<any[]>([]);
+  recentDocumentsLoading = signal(false);
+  recentOrganizationId = signal<number | null>(null);
+  organizationOptions = signal<any[]>([]);
   organizationStats = signal<any[]>([]);
+  private recentDocumentsRequestId = 0;
 
   /**
    * Aggregated member breakdown used by the Position and Year Level
@@ -59,11 +63,13 @@ export class DeanOrganizationDashboard implements OnInit, OnChanges {
 
   ngOnInit() {
     this.loadDashboard();
+    this.loadOrganizationOptions();
     this.loadSDGEventData();
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['organizationId'] && !changes['organizationId'].firstChange) {
+      this.recentOrganizationId.set(null);
       this.loadDashboard();
     }
   }
@@ -98,6 +104,38 @@ export class DeanOrganizationDashboard implements OnInit, OnChanges {
         this.loading.set(false);
       },
     });
+  }
+
+  filterRecentDocuments(event: Event) {
+    const value = Number((event.target as HTMLSelectElement).value);
+    this.recentOrganizationId.set(value || null);
+    this.loadRecentDocuments();
+  }
+
+  loadOrganizationOptions() {
+    this.deanService.getOrganizations(1, 1000).subscribe({
+      next: (response) => this.organizationOptions.set(response.organizations),
+      error: (error) => console.error('Error loading organization filter options:', error),
+    });
+  }
+
+  loadRecentDocuments() {
+    const requestId = ++this.recentDocumentsRequestId;
+    this.recentDocumentsLoading.set(true);
+    this.deanService
+      .getRecentOrganizationDocuments(this.recentOrganizationId() ?? undefined)
+      .subscribe({
+        next: (response) => {
+          if (requestId !== this.recentDocumentsRequestId) return;
+          this.recentDocuments.set(response.recentDocuments);
+          this.recentDocumentsLoading.set(false);
+        },
+        error: (error) => {
+          if (requestId !== this.recentDocumentsRequestId) return;
+          console.error('Error filtering recent report submissions:', error);
+          this.recentDocumentsLoading.set(false);
+        },
+      });
   }
 
   getApprovalRate(): number {
@@ -176,9 +214,10 @@ export class DeanOrganizationDashboard implements OnInit, OnChanges {
     return org.documents?.filter((doc: any) => doc.status === 'pending').length || 0;
   }
 
-  getFacultyName(org: any): string {
-    if (!org.faculty) return 'No Faculty';
-    const { first_name, middle_name, last_name } = org.faculty;
+  getAdviserName(org: any): string {
+    const adviser = org.organization_advisers?.find((assignment: any) => assignment.is_active)?.adviser;
+    if (!adviser) return 'No Adviser';
+    const { first_name, middle_name, last_name } = adviser;
     return middle_name ? `${first_name} ${middle_name} ${last_name}` : `${first_name} ${last_name}`;
   }
 }

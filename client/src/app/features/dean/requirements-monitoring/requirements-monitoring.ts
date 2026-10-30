@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -10,6 +10,10 @@ import { DeanFacultyService, Faculty } from '../../../services/dean/dean-faculty
 import { DropdownService, DropdownAcademicYear } from '../../../services/core/dropdown.service';
 import { RequirementSubmission } from '../../../services/faculty/faculty-requirement.service';
 import Swal from 'sweetalert2';
+import {
+  applyDocxPreviewZoom,
+  renderDocxPreview,
+} from '../../../shared/utils/docx-preview.util';
 
 @Component({
   selector: 'app-dean-requirements-monitoring',
@@ -18,6 +22,11 @@ import Swal from 'sweetalert2';
   styleUrl: './requirements-monitoring.css',
 })
 export class DeanRequirementsMonitoring implements OnInit {
+  @ViewChild('requirementPdfPreviewContainer')
+  private requirementPdfPreviewContainer?: ElementRef<HTMLElement>;
+  @ViewChild('requirementDocxPreviewContainer')
+  private requirementDocxPreviewContainer?: ElementRef<HTMLElement>;
+
   loading = signal(false);
 
   // Filters
@@ -27,6 +36,32 @@ export class DeanRequirementsMonitoring implements OnInit {
   selectedSemester: string = '';
   selectedFacultyId: number = 0;
   searchQuery = signal<string>('');
+  searchResultsOpen = signal(false);
+
+  selectSearchFaculty(faculty: Faculty) {
+    this.selectedFacultyId = faculty.faculty_id;
+    this.searchResultsOpen.set(false);
+    this.loadFacultyRequirements();
+  }
+
+  onSearchFocusOut(event: FocusEvent) {
+    if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) {
+      this.searchResultsOpen.set(false);
+    }
+  }
+  filteredFacultyList = computed(() => {
+    const terms = this.searchQuery().trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+    return this.facultyList().filter((faculty) => {
+      const text = this.getFacultyName(faculty).toLocaleLowerCase();
+      return terms.every((term) => text.includes(term));
+    });
+  });
+
+  selectedFacultyOutsideSearch() {
+    return this.facultyList().find((faculty) =>
+      Number(faculty.faculty_id) === Number(this.selectedFacultyId) &&
+      !this.filteredFacultyList().some((match) => match.faculty_id === faculty.faculty_id));
+  }
 
   // Pagination
   currentPage = signal(1);
@@ -40,6 +75,18 @@ export class DeanRequirementsMonitoring implements OnInit {
   // View modal
   showViewModal = signal(false);
   selectedSubmission = signal<any>(null);
+  previewLoading = signal(false);
+  previewError = signal('');
+  previewKind = signal<'pdf' | 'docx' | 'image' | 'text' | 'unsupported' | null>(null);
+  previewImageUrl = signal<string | null>(null);
+  previewText = signal('');
+  previewPageCount = signal(0);
+  previewZoom = signal(125);
+  readonly minPreviewZoom = 50;
+  readonly maxPreviewZoom = 250;
+  readonly previewZoomStep = 25;
+  private previewRequestId = 0;
+  private previewPdfDocument?: { destroy(): Promise<void> };
 
   Math = Math;
 
@@ -58,11 +105,10 @@ export class DeanRequirementsMonitoring implements OnInit {
     this.dropdownService.getAcademicYears().subscribe({
       next: (years) => {
         this.academicYearsList.set(years);
-        // Set latest (first) academic year and semester as default
+        // Set latest (first) academic year as default
         if (years.length > 0) {
           this.selectedAcademicYear = years[0].academic_year_id;
         }
-        this.selectedSemester = '1st Semester';
       },
       error: (error) => {
         console.error('Error loading academic years:', error);
@@ -155,13 +201,170 @@ export class DeanRequirementsMonitoring implements OnInit {
   }
 
   openViewModal(submission: any) {
+    const requestId = ++this.previewRequestId;
     this.selectedSubmission.set(submission);
     this.showViewModal.set(true);
+    this.previewLoading.set(true);
+    this.previewError.set('');
+    this.previewKind.set(null);
+    this.previewImageUrl.set(null);
+    this.previewText.set('');
+    this.previewPageCount.set(0);
+    this.previewZoom.set(125);
+
+    this.requirementService.previewRequirement(submission.submission_id).subscribe({
+      next: (preview) => {
+        if (requestId !== this.previewRequestId) return;
+        this.previewKind.set(preview.kind);
+        if (preview.kind === 'pdf' && preview.url) {
+          void this.renderRequirementPdf(preview.url, requestId);
+          return;
+        }
+        if (preview.kind === 'docx' && preview.url) {
+          this.previewZoom.set(100);
+          void this.renderRequirementDocx(preview.url, requestId);
+          return;
+        }
+        if (preview.kind === 'image' && preview.url) {
+          this.previewImageUrl.set(preview.url);
+        } else if (preview.kind === 'text') {
+          this.previewText.set(preview.text || 'This document has no readable text.');
+        }
+        this.previewLoading.set(false);
+      },
+      error: (error) => {
+        if (requestId !== this.previewRequestId) return;
+        this.previewError.set(error.error?.message || 'Unable to preview this requirement.');
+        this.previewLoading.set(false);
+      },
+    });
   }
 
   closeViewModal() {
+    this.previewRequestId++;
     this.showViewModal.set(false);
     this.selectedSubmission.set(null);
+    this.previewImageUrl.set(null);
+    this.previewText.set('');
+    this.previewPageCount.set(0);
+    this.previewZoom.set(125);
+    this.previewError.set('');
+    this.requirementPdfPreviewContainer?.nativeElement.replaceChildren();
+    this.requirementDocxPreviewContainer?.nativeElement.replaceChildren();
+    void this.previewPdfDocument?.destroy();
+    this.previewPdfDocument = undefined;
+  }
+
+  private async renderRequirementPdf(url: string, requestId: number): Promise<void> {
+    try {
+      const pdfjs = await import('pdfjs-dist');
+      if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
+      }
+      const pdf = await pdfjs.getDocument(url).promise;
+      if (requestId !== this.previewRequestId) {
+        await pdf.destroy();
+        return;
+      }
+
+      this.previewPdfDocument = pdf;
+      this.previewPageCount.set(pdf.numPages);
+      this.previewLoading.set(false);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const container = this.requirementPdfPreviewContainer?.nativeElement;
+      if (!container || requestId !== this.previewRequestId) return;
+      container.replaceChildren();
+
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        if (requestId !== this.previewRequestId) return;
+        const page = await pdf.getPage(pageNumber);
+        const baseViewport = page.getViewport({ scale: 1 });
+        // Leave room for the page gap so two pages fit side by side at 50%.
+        const availableWidth = Math.max(320, container.clientWidth - 64);
+        const scale = Math.min(1.6, availableWidth / baseViewport.width);
+        const viewport = page.getViewport({ scale });
+        const pixelRatio = window.devicePixelRatio || 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.floor(viewport.width * pixelRatio);
+        canvas.height = Math.floor(viewport.height * pixelRatio);
+        canvas.dataset['baseWidth'] = `${viewport.width}`;
+        canvas.dataset['baseHeight'] = `${viewport.height}`;
+        const zoomMultiplier = this.previewZoom() / 100;
+        canvas.style.width = `${viewport.width * zoomMultiplier}px`;
+        canvas.style.height = `${viewport.height * zoomMultiplier}px`;
+        canvas.style.maxWidth = 'none';
+        canvas.style.display = 'block';
+        canvas.style.margin = '0';
+        canvas.style.background = 'white';
+        canvas.style.borderRadius = '2px';
+        canvas.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.18)';
+        container.appendChild(canvas);
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Unable to create the PDF canvas.');
+        await page.render({
+          canvasContext: context,
+          viewport,
+          transform: pixelRatio === 1 ? undefined : [pixelRatio, 0, 0, pixelRatio, 0, 0],
+        }).promise;
+      }
+    } catch (error) {
+      if (requestId !== this.previewRequestId) return;
+      console.error('Requirement PDF preview rendering failed:', error);
+      this.previewError.set('Unable to render the PDF preview.');
+      this.previewLoading.set(false);
+    }
+  }
+
+  private async renderRequirementDocx(url: string, requestId: number): Promise<void> {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`DOCX request failed with status ${response.status}`);
+      const data = await response.arrayBuffer();
+      if (requestId !== this.previewRequestId) return;
+
+      this.previewLoading.set(false);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const container = this.requirementDocxPreviewContainer?.nativeElement;
+      if (!container || requestId !== this.previewRequestId) return;
+      const pageCount = await renderDocxPreview(data, container, this.previewZoom());
+      if (requestId !== this.previewRequestId) return;
+      this.previewPageCount.set(pageCount);
+    } catch (error) {
+      if (requestId !== this.previewRequestId) return;
+      console.error('Requirement DOCX preview rendering failed:', error);
+      this.previewError.set('Unable to render the Word document preview.');
+      this.previewLoading.set(false);
+    }
+  }
+
+  zoomPdfIn() {
+    this.setPdfZoom(this.previewZoom() + this.previewZoomStep);
+  }
+
+  zoomPdfOut() {
+    this.setPdfZoom(this.previewZoom() - this.previewZoomStep);
+  }
+
+  resetPdfZoom() {
+    this.setPdfZoom(100);
+  }
+
+  private setPdfZoom(zoom: number) {
+    const clampedZoom = Math.min(this.maxPreviewZoom, Math.max(this.minPreviewZoom, zoom));
+    this.previewZoom.set(clampedZoom);
+    const zoomMultiplier = clampedZoom / 100;
+
+    this.requirementPdfPreviewContainer?.nativeElement
+      .querySelectorAll<HTMLCanvasElement>('canvas[data-base-width][data-base-height]')
+      .forEach((canvas) => {
+        const baseWidth = Number(canvas.dataset['baseWidth']);
+        const baseHeight = Number(canvas.dataset['baseHeight']);
+        if (!Number.isFinite(baseWidth) || !Number.isFinite(baseHeight)) return;
+        canvas.style.width = `${baseWidth * zoomMultiplier}px`;
+        canvas.style.height = `${baseHeight * zoomMultiplier}px`;
+      });
+    const docxContainer = this.requirementDocxPreviewContainer?.nativeElement;
+    if (docxContainer) applyDocxPreviewZoom(docxContainer, clampedZoom);
   }
 
   validateRequirement() {

@@ -13,6 +13,8 @@ export interface Faculty {
   contact_number?: string;
   department: string;
   position_level?: string;
+  employment_status?: string | null;
+  designation?: string | null;
   user_id: number;
 }
 
@@ -24,6 +26,8 @@ export interface CreateFacultyData {
   email: string;
   contact_number?: string;
   position_level?: string;
+  employment_status?: string;
+  designation?: string;
 }
 
 export interface UpdateFacultyData {
@@ -34,6 +38,8 @@ export interface UpdateFacultyData {
   email: string;
   contact_number?: string;
   position_level?: string;
+  employment_status?: string | null;
+  designation?: string | null;
 }
 
 export interface FacultyResponse {

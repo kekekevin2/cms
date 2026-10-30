@@ -537,6 +537,88 @@ exports.downloadRequirement = async (req, res) => {
   }
 };
 
+// Preview a requirement file after verifying it belongs to the dean's department.
+// PDFs, DOCX files, and images use an inline storage URL; plain text is returned as text.
+exports.previewRequirement = async (req, res) => {
+  try {
+    const deanInfo = await getDepartmentForUser(req.user.user_id);
+    if (!deanInfo) {
+      return res.status(404).json({ message: "Department profile not found" });
+    }
+
+    const submission = await db.RequirementSubmission.findOne({
+      where: { submission_id: req.params.submission_id },
+      include: [
+        {
+          model: db.Faculty,
+          where: { department: deanInfo.department },
+        },
+      ],
+    });
+
+    if (!submission) {
+      return res.status(404).json({
+        message: "Submission not found or not in your department",
+      });
+    }
+
+    const filename = submission.file_name;
+    const extension = path.extname(filename || "").toLowerCase();
+    const imageMimeTypes = {
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+      ".bmp": "image/bmp",
+    };
+
+    if (extension === ".docx") {
+      return res.json({
+        kind: "docx",
+        url: await storage.getUrl(submission.file_path),
+        filename,
+        mimeType:
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+    }
+
+    if ([".txt", ".csv", ".json", ".xml"].includes(extension)) {
+      const text = (await storage.getBuffer(submission.file_path))
+        .toString("utf8")
+        .slice(0, 1_000_000);
+      return res.json({ kind: "text", text, filename, mimeType: "text/plain" });
+    }
+
+    if (extension === ".pdf") {
+      return res.json({
+        kind: "pdf",
+        url: await storage.getUrl(submission.file_path),
+        filename,
+        mimeType: "application/pdf",
+      });
+    }
+
+    if (imageMimeTypes[extension]) {
+      return res.json({
+        kind: "image",
+        url: await storage.getUrl(submission.file_path),
+        filename,
+        mimeType: imageMimeTypes[extension],
+      });
+    }
+
+    return res.json({
+      kind: "unsupported",
+      filename,
+      mimeType: "application/octet-stream",
+    });
+  } catch (error) {
+    console.error("Preview requirement error:", error);
+    res.status(500).json({ message: "Error previewing requirement" });
+  }
+};
+
 // Manually set faculty clearance status (dean override)
 exports.setFacultyClearanceStatus = async (req, res) => {
   try {

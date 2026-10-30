@@ -32,6 +32,13 @@ async function main() {
 	if (!Buffer.isBuffer(readBack) || readBack.toString("utf8") !== "hello storage") {
 		throw new Error(`BAD getBuffer ROUND-TRIP: got ${JSON.stringify(readBack && readBack.toString())}`);
 	}
+
+	const legacyUrl = await storage.getUrl(
+		"C:\\old-workspace\\backend\\uploads\\requirements\\legacy.pdf",
+	);
+	if (!legacyUrl.endsWith("/uploads/requirements/legacy.pdf")) {
+		throw new Error(`legacy absolute upload path was not normalized: ${legacyUrl}`);
+	}
 	console.log("getBuffer round-trip → ok");
 
 	await storage.remove(key);

@@ -34,6 +34,12 @@ router.get(
   requirementController.downloadRequirement,
 );
 
+// Preview a requirement file inline
+router.get(
+  "/:submission_id/preview",
+  requirementController.previewRequirement,
+);
+
 // Set faculty clearance status (manual override)
 router.put(
   "/faculty/:faculty_id/clearance-status",

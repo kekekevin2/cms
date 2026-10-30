@@ -115,13 +115,6 @@ export interface EducationAnalytics {
   completed_degrees: CompletedDegrees;
 }
 
-export interface ResearchAnalytics {
-  total_faculty: number;
-  faculty_with_publications: number;
-  total_publications: number;
-  percentage_with_publications: string;
-}
-
 export interface FacultyData {
   faculty_id: number;
   faculty_name: string;
@@ -135,6 +128,8 @@ export interface FacultyInvolvementResponse {
   data: FacultyData[];
   total: number;
 }
+
+export type FacultyEmploymentType = 'permanent' | 'temporary' | 'guest_lecturer';
 
 @Injectable({
   providedIn: 'root',
@@ -153,38 +148,43 @@ export class DeanAnalyticsService {
     return this.http.get<EducationAnalytics>(`${this.apiUrl}/education`);
   }
 
-  getResearchAnalytics(): Observable<ResearchAnalytics> {
-    return this.http.get<ResearchAnalytics>(`${this.apiUrl}/research`);
-  }
-
   // Faculty Profile Analytics - Pie Charts
-  getResearchInvolvement(academicYearId?: number): Observable<FacultyInvolvementResponse> {
-    const options = academicYearId
-      ? { params: { academic_year_id: academicYearId.toString() } }
-      : {};
+  getResearchInvolvement(
+    academicYearId?: number,
+    employmentType?: FacultyEmploymentType,
+  ): Observable<FacultyInvolvementResponse> {
+    const params: Record<string, string> = {};
+    if (academicYearId) params['academic_year_id'] = academicYearId.toString();
+    if (employmentType) params['employment_type'] = employmentType;
     return this.http.get<FacultyInvolvementResponse>(
       `${this.facultyAnalyticsUrl}/research-involvement`,
-      options,
+      { params },
     );
   }
 
-  getExtensionInvolvement(academicYearId?: number): Observable<FacultyInvolvementResponse> {
-    const options = academicYearId
-      ? { params: { academic_year_id: academicYearId.toString() } }
-      : {};
+  getExtensionInvolvement(
+    academicYearId?: number,
+    employmentType?: FacultyEmploymentType,
+  ): Observable<FacultyInvolvementResponse> {
+    const params: Record<string, string> = {};
+    if (academicYearId) params['academic_year_id'] = academicYearId.toString();
+    if (employmentType) params['employment_type'] = employmentType;
     return this.http.get<FacultyInvolvementResponse>(
       `${this.facultyAnalyticsUrl}/extension-involvement`,
-      options,
+      { params },
     );
   }
 
-  getSeminarsInvolvement(academicYearId?: number): Observable<FacultyInvolvementResponse> {
-    const options = academicYearId
-      ? { params: { academic_year_id: academicYearId.toString() } }
-      : {};
+  getSeminarsInvolvement(
+    academicYearId?: number,
+    employmentType?: FacultyEmploymentType,
+  ): Observable<FacultyInvolvementResponse> {
+    const params: Record<string, string> = {};
+    if (academicYearId) params['academic_year_id'] = academicYearId.toString();
+    if (employmentType) params['employment_type'] = employmentType;
     return this.http.get<FacultyInvolvementResponse>(
       `${this.facultyAnalyticsUrl}/seminars-involvement`,
-      options,
+      { params },
     );
   }
 

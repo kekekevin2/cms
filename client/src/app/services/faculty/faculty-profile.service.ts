@@ -62,6 +62,13 @@ export interface EmploymentProfile {
   is_government_service?: boolean;
 }
 
+// Course Handled Interface
+export interface CourseHandled {
+  id: number;
+  faculty_id?: number;
+  course_name: string;
+}
+
 // Professional Membership Interface
 export interface ProfessionalMembership {
   id?: number;
@@ -193,6 +200,32 @@ export class FacultyProfileService {
 
   deleteEmploymentProfile(id: number): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.apiUrl}/employment/${id}`);
+  }
+
+  // ==================== COURSES HANDLED ====================
+  // Printed in the "COURSES HANDLED" section of the Faculty Profile PDF
+  getCoursesHandled(): Observable<{ courses: CourseHandled[] }> {
+    return this.http.get<{ courses: CourseHandled[] }>(`${this.apiUrl}/courses`);
+  }
+
+  createCourseHandled(courseName: string): Observable<{ message: string; course: CourseHandled }> {
+    return this.http.post<{ message: string; course: CourseHandled }>(`${this.apiUrl}/courses`, {
+      course_name: courseName,
+    });
+  }
+
+  updateCourseHandled(
+    id: number,
+    courseName: string,
+  ): Observable<{ message: string; course: CourseHandled }> {
+    return this.http.put<{ message: string; course: CourseHandled }>(
+      `${this.apiUrl}/courses/${id}`,
+      { course_name: courseName },
+    );
+  }
+
+  deleteCourseHandled(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/courses/${id}`);
   }
 
   // ==================== PROFESSIONAL MEMBERSHIP ====================

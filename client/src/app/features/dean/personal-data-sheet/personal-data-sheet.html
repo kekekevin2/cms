@@ -1067,7 +1067,7 @@
                 <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                   <div class="flex-1">
                     <p class="font-medium">{{ child.child_name }}</p>
-                    <p class="text-sm text-gray-600">Born: {{ child.date_of_birth }}</p>
+                    <p class="text-sm text-gray-600">Born: {{ child.date_of_birth | date: 'MM/dd/yyyy' : 'UTC' }}</p>
                   </div>
                   @if (!isFormReadonly()) {
                     <button
@@ -1341,7 +1341,7 @@
                     <p><strong>Rating:</strong> {{ elig.rating }}</p>
                   }
                   @if (elig.date_of_examination) {
-                    <p><strong>Exam Date:</strong> {{ elig.date_of_examination }}</p>
+                    <p><strong>Exam Date:</strong> {{ elig.date_of_examination | date: 'MM/dd/yyyy' : 'UTC' }}</p>
                   }
                   @if (elig.place_of_examination) {
                     <p><strong>Place:</strong> {{ elig.place_of_examination }}</p>
@@ -1350,7 +1350,7 @@
                     <p><strong>License No.:</strong> {{ elig.license_number }}</p>
                   }
                   @if (elig.license_validity) {
-                    <p><strong>Valid Until:</strong> {{ elig.license_validity }}</p>
+                    <p><strong>Valid Until:</strong> {{ elig.license_validity | date: 'MM/dd/yyyy' : 'UTC' }}</p>
                   }
                 </div>
               </div>
@@ -1524,7 +1524,7 @@
                   }
                 </div>
                 <div class="text-sm text-gray-600">
-                  <p><strong>Period:</strong> {{ train.date_from }} to {{ train.date_to }}</p>
+                  <p><strong>Period:</strong> {{ train.date_from | date: 'MM/dd/yyyy' : 'UTC' }} to {{ train.date_to | date: 'MM/dd/yyyy' : 'UTC' }}</p>
                   @if (train.number_of_hours) {
                     <p><strong>Hours:</strong> {{ train.number_of_hours }}</p>
                   }
@@ -1634,7 +1634,7 @@
                   }
                 </div>
                 <div class="text-sm text-gray-600">
-                  <p><strong>Period:</strong> {{ vol.date_from }} to {{ vol.date_to }}</p>
+                  <p><strong>Period:</strong> {{ vol.date_from | date: 'MM/dd/yyyy' : 'UTC' }} to {{ vol.date_to | date: 'MM/dd/yyyy' : 'UTC' }}</p>
                   @if (vol.number_of_hours) {
                     <p><strong>Hours:</strong> {{ vol.number_of_hours }}</p>
                   }
@@ -1891,448 +1891,91 @@
         </p>
 
         <div class="space-y-4">
-          <!-- Question 34 -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-800 mb-2">
-              34. Are you related by consanguinity or affinity to the appointing or recommending
-              authority?
-            </label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q34_a_answer"
-                  [value]="true"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>Yes</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q34_a_answer"
-                  [value]="false"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>No</span>
-              </label>
-            </div>
-            @if (pds.q34_a_answer) {
-              <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >If yes, give details:</label
-                >
-                <textarea
-                  [(ngModel)]="pds.q34_a_details"
-                  [disabled]="isFormReadonly()"
-                  rows="2"
-                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                ></textarea>
+          <!-- Questions 34–40, worded as on page 4 of CS Form 212 (services/core/pds-questionnaire.ts) -->
+          @for (group of questionnaire; track group.no) {
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <div class="flex gap-2">
+                <span class="text-sm text-gray-800 font-medium shrink-0 w-6">{{ group.no }}.</span>
+                <div class="flex-1 min-w-0 space-y-4">
+                  @if (group.intro) {
+                    <p class="text-sm text-gray-800 font-medium">{{ group.intro }}</p>
+                  }
+                  @for (item of group.items; track item.answer) {
+                    <div>
+                      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-6">
+                        <p class="text-sm text-gray-800 flex gap-1.5">
+                          @if (item.letter) {
+                            <span class="shrink-0">{{ item.letter }}.</span>
+                          }
+                          <span>{{ item.text }}</span>
+                        </p>
+                        <div class="flex gap-4 shrink-0">
+                          <label class="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              [name]="item.answer"
+                              [ngModel]="pds[item.answer]"
+                              (ngModelChange)="setPdsField(item.answer, $event)"
+                              [value]="true"
+                              [disabled]="isFormReadonly()"
+                              class="w-4 h-4"
+                            />
+                            <span class="text-sm text-gray-800">Yes</span>
+                          </label>
+                          <label class="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              [name]="item.answer"
+                              [ngModel]="pds[item.answer]"
+                              (ngModelChange)="setPdsField(item.answer, $event)"
+                              [value]="false"
+                              [disabled]="isFormReadonly()"
+                              class="w-4 h-4"
+                            />
+                            <span class="text-sm text-gray-800">No</span>
+                          </label>
+                        </div>
+                      </div>
+                      @if (pds[item.answer]) {
+                        <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          @for (detail of item.details; track detail.field) {
+                            <div [class.sm:col-span-2]="detail.type === 'textarea'">
+                              <label class="block text-sm font-medium text-gray-700 mb-1">{{ detail.label }}</label>
+                              @if (detail.type === 'textarea') {
+                                <textarea
+                                  [ngModel]="pds[detail.field]"
+                                  (ngModelChange)="setPdsField(detail.field, $event)"
+                                  [disabled]="isFormReadonly()"
+                                  rows="2"
+                                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 resize-none"
+                                ></textarea>
+                              } @else if (detail.type === 'date') {
+                                <input
+                                  type="date"
+                                  [ngModel]="$any(pds[detail.field])?.slice(0, 10)"
+                                  (ngModelChange)="setPdsField(detail.field, $event)"
+                                  [disabled]="isFormReadonly()"
+                                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                                />
+                              } @else {
+                                <input
+                                  type="text"
+                                  [ngModel]="pds[detail.field]"
+                                  (ngModelChange)="setPdsField(detail.field, $event)"
+                                  [disabled]="isFormReadonly()"
+                                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                                />
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
               </div>
-            }
-          </div>
-
-          <!-- Question 35 a -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-800 mb-2">
-              35. a) Have you ever been found guilty of any administrative offense?
-            </label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q35_a_answer"
-                  [value]="true"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>Yes</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q35_a_answer"
-                  [value]="false"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>No</span>
-              </label>
             </div>
-            @if (pds.q35_a_answer) {
-              <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >If yes, give details:</label
-                >
-                <textarea
-                  [(ngModel)]="pds.q35_a_details"
-                  [disabled]="isFormReadonly()"
-                  rows="2"
-                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                ></textarea>
-              </div>
-            }
-          </div>
-
-          <!-- Question 35 b -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-800 mb-2">
-              35. b) Have you been criminally charged before any court?
-            </label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q35_b_answer"
-                  [value]="true"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>Yes</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q35_b_answer"
-                  [value]="false"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>No</span>
-              </label>
-            </div>
-            @if (pds.q35_b_answer) {
-              <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >If yes, give details:</label
-                >
-                <textarea
-                  [(ngModel)]="pds.q35_b_details"
-                  [disabled]="isFormReadonly()"
-                  rows="2"
-                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                ></textarea>
-              </div>
-            }
-          </div>
-
-          <!-- Question 36 -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-800 mb-2">
-              36. Have you ever been convicted of any crime or violation of any law?
-            </label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q36_answer"
-                  [value]="true"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>Yes</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q36_answer"
-                  [value]="false"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>No</span>
-              </label>
-            </div>
-            @if (pds.q36_answer) {
-              <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >If yes, give details:</label
-                >
-                <textarea
-                  [(ngModel)]="pds.q36_details"
-                  [disabled]="isFormReadonly()"
-                  rows="2"
-                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                ></textarea>
-              </div>
-            }
-          </div>
-
-          <!-- Question 37 -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-800 mb-2">
-              37. Have you ever been separated from the service in any of the following modes?
-            </label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q37_answer"
-                  [value]="true"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>Yes</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q37_answer"
-                  [value]="false"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>No</span>
-              </label>
-            </div>
-            @if (pds.q37_answer) {
-              <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >If yes, give details:</label
-                >
-                <textarea
-                  [(ngModel)]="pds.q37_details"
-                  [disabled]="isFormReadonly()"
-                  rows="2"
-                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                ></textarea>
-              </div>
-            }
-          </div>
-
-          <!-- Question 38 -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-800 mb-2">
-              38. a) Have you ever been a candidate in a national or local election?
-            </label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q38_answer"
-                  [value]="true"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>Yes</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q38_answer"
-                  [value]="false"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>No</span>
-              </label>
-            </div>
-            @if (pds.q38_answer) {
-              <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >If yes, give details:</label
-                >
-                <textarea
-                  [(ngModel)]="pds.q38_details"
-                  [disabled]="isFormReadonly()"
-                  rows="2"
-                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                ></textarea>
-              </div>
-            }
-          </div>
-
-          <!-- Question 38 b -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-800 mb-2">
-              38. b) Have you resigned from the government service during the three-month period
-              before the last election?
-            </label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q39_answer"
-                  [value]="true"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>Yes</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q39_answer"
-                  [value]="false"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>No</span>
-              </label>
-            </div>
-            @if (pds.q39_answer) {
-              <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >If yes, give details:</label
-                >
-                <textarea
-                  [(ngModel)]="pds.q39_details"
-                  [disabled]="isFormReadonly()"
-                  rows="2"
-                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                ></textarea>
-              </div>
-            }
-          </div>
-
-          <!-- Question 39 -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-800 mb-2">
-              39. Have you acquired the status of an immigrant or permanent resident of another
-              country?
-            </label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q40_answer"
-                  [value]="true"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>Yes</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q40_answer"
-                  [value]="false"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>No</span>
-              </label>
-            </div>
-            @if (pds.q40_answer) {
-              <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >If yes, give details:</label
-                >
-                <textarea
-                  [(ngModel)]="pds.q40_details"
-                  [disabled]="isFormReadonly()"
-                  rows="2"
-                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                ></textarea>
-              </div>
-            }
-          </div>
-
-          <!-- Question 40 -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-800 mb-2">
-              40. a) Are you a member of any indigenous group?
-            </label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q41_answer"
-                  [value]="true"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>Yes</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q41_answer"
-                  [value]="false"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>No</span>
-              </label>
-            </div>
-            @if (pds.q41_answer) {
-              <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >If yes, please specify:</label
-                >
-                <input
-                  type="text"
-                  [(ngModel)]="pds.q41_country"
-                  [disabled]="isFormReadonly()"
-                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-            }
-          </div>
-
-          <!-- Question 40 b -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-800 mb-2">
-              40. b) Are you a person with disability?
-            </label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q43_answer"
-                  [value]="true"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>Yes</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q43_answer"
-                  [value]="false"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>No</span>
-              </label>
-            </div>
-            @if (pds.q43_answer) {
-              <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >If yes, please specify ID No.:</label
-                >
-                <input
-                  type="text"
-                  [(ngModel)]="pds.q43_id_no"
-                  [disabled]="isFormReadonly()"
-                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-            }
-          </div>
-
-          <!-- Question 40 c -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <label class="block text-sm font-medium text-gray-800 mb-2">
-              40. c) Are you a solo parent?
-            </label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q44_answer"
-                  [value]="true"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>Yes</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  [(ngModel)]="pds.q44_answer"
-                  [value]="false"
-                  [disabled]="isFormReadonly()"
-                />
-                <span>No</span>
-              </label>
-            </div>
-            @if (pds.q44_answer) {
-              <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >If yes, please specify ID No.:</label
-                >
-                <input
-                  type="text"
-                  [(ngModel)]="pds.q44_id_no"
-                  [disabled]="isFormReadonly()"
-                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-            }
-          </div>
+          }
         </div>
       </div>
     }
@@ -2454,17 +2097,74 @@
           </div>
         </div>
 
+        <!-- Government Issued ID (page 4 of CS Form 212) -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-1">Government Issued ID</h3>
+          <p class="text-sm text-gray-500 mb-3">i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Government Issued ID</label>
+              <input
+                type="text"
+                [(ngModel)]="pds.government_issued_id"
+                placeholder="e.g., Passport"
+                [disabled]="isFormReadonly()"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">ID/License/Passport No.</label>
+              <input
+                type="text"
+                [(ngModel)]="pds.government_id_number"
+                [disabled]="isFormReadonly()"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Date of Issuance</label>
+              <input
+                type="date"
+                [ngModel]="pds.government_id_date_issued?.slice(0, 10)"
+                (ngModelChange)="pds.government_id_date_issued = $event"
+                [disabled]="isFormReadonly()"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Place of Issuance</label>
+              <input
+                type="text"
+                [(ngModel)]="pds.government_id_place_issued"
+                placeholder="e.g., Manila"
+                [disabled]="isFormReadonly()"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
+        </div>
+
         <!-- Declaration -->
-        <div class="bg-blue-50 p-6 rounded-lg border border-blue-200 mt-6">
+        <div id="pds-declaration" class="bg-blue-50 p-6 rounded-lg border border-blue-200 mt-6">
           <h3 class="font-semibold text-gray-800 mb-2">DECLARATION</h3>
-          <p class="text-sm text-gray-700 leading-relaxed">
-            I declare under oath that I have personally accomplished this Personal Data Sheet which
-            is a true, correct and complete statement pursuant to the provisions of pertinent laws,
-            rules and regulations of the Republic of the Philippines. I authorize the agency
-            head/authorized representative to verify/validate the contents stated herein. I agree
-            that any misrepresentation made in this document and its attachments shall cause the
-            filing of administrative/criminal case/s against me.
-          </p>
+          <!-- Ticking it is required before Update / Submit; shown ticked once submitted -->
+          <label class="flex items-start gap-3" [class.cursor-pointer]="!isFormReadonly()">
+            <input
+              type="checkbox"
+              class="mt-1 w-4 h-4 shrink-0 accent-blue-600"
+              [checked]="declarationAgreed() || isFormReadonly()"
+              [disabled]="isFormReadonly()"
+              (change)="declarationAgreed.set($any($event.target).checked)"
+            />
+            <span class="text-sm text-gray-700 leading-relaxed">
+              I declare under oath that I have personally accomplished this Personal Data Sheet
+              which is a true, correct and complete statement pursuant to the provisions of
+              pertinent laws, rules and regulations of the Republic of the Philippines. I authorize
+              the agency head/authorized representative to verify/validate the contents stated
+              herein. I agree that any misrepresentation made in this document and its attachments
+              shall cause the filing of administrative/criminal case/s against me.
+            </span>
+          </label>
         </div>
       </div>
     }

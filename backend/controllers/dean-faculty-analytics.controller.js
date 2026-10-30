@@ -14,6 +14,38 @@ async function getDepartmentForUser(userId) {
 
 const { Op } = require("sequelize");
 
+// Only accept positive numeric IDs before using them in query filters.
+const optionalPositiveInteger = (value) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+const employmentStatusFilter = (value) => {
+  const filters = {
+    permanent: ["permanent", "permanent faculty"],
+    temporary: ["temporary", "temporary faculty"],
+    guest_lecturer: ["guest lecturer", "guest lecturer faculty"],
+  };
+  const statuses = Object.hasOwn(filters, value) ? filters[value] : null;
+  if (!statuses) return null;
+
+  // Match the College Department's saved status regardless of case/outer whitespace.
+  // Exact values also avoid treating "Non-Permanent" as "Permanent".
+  return db.sequelize.where(
+    db.sequelize.fn("LOWER", db.sequelize.fn("TRIM", db.sequelize.col(`${db.Faculty.name}.employment_status`))),
+    { [Op.in]: statuses },
+  );
+};
+
+const employmentSubtitle = (value) => {
+  const labels = {
+    permanent: "Permanent Faculty",
+    temporary: "Temporary Faculty",
+    guest_lecturer: "Guest Lecturer",
+  };
+  return `(${Object.hasOwn(labels, value) ? labels[value] : "All Faculty Types"})`;
+};
+
 // Get faculty involvement in research-related activities
 exports.getResearchInvolvement = async (req, res) => {
   try {
@@ -26,11 +58,16 @@ exports.getResearchInvolvement = async (req, res) => {
     }
     const dean = { department: deanInfo.department };
 
-    const academicYearId = req.query.academic_year_id;
+    const academicYearId = optionalPositiveInteger(req.query.academic_year_id);
+    const employmentStatus = employmentStatusFilter(req.query.employment_type);
 
     // Get all active (non-archived) faculty in dean's department
     const faculty = await db.Faculty.findAll({
-      where: { department: dean.department, is_active: true },
+      where: {
+        department: dean.department,
+        is_active: true,
+        ...(employmentStatus ? { [Op.and]: employmentStatus } : {}),
+      },
       include: [
         {
           model: db.FacultyResearchActivities,
@@ -74,7 +111,7 @@ exports.getResearchInvolvement = async (req, res) => {
     res.json({
       title:
         "Faculty Involvement in Research-related Seminars/Workshops/Trainings/Conferences",
-      subtitle: "(Permanent and Temporary)",
+      subtitle: employmentSubtitle(req.query.employment_type),
       data,
       total,
     });
@@ -96,11 +133,16 @@ exports.getExtensionInvolvement = async (req, res) => {
     }
     const dean = { department: deanInfo.department };
 
-    const academicYearId = req.query.academic_year_id;
+    const academicYearId = optionalPositiveInteger(req.query.academic_year_id);
+    const employmentStatus = employmentStatusFilter(req.query.employment_type);
 
     // Get all active (non-archived) faculty in dean's department
     const faculty = await db.Faculty.findAll({
-      where: { department: dean.department, is_active: true },
+      where: {
+        department: dean.department,
+        is_active: true,
+        ...(employmentStatus ? { [Op.and]: employmentStatus } : {}),
+      },
       include: [
         {
           model: db.FacultyExtensionActivities,
@@ -143,7 +185,7 @@ exports.getExtensionInvolvement = async (req, res) => {
 
     res.json({
       title: "Faculty Involvement in Extension Services",
-      subtitle: "(Permanent and Temporary)",
+      subtitle: employmentSubtitle(req.query.employment_type),
       data,
       total,
     });
@@ -165,11 +207,16 @@ exports.getSeminarsInvolvement = async (req, res) => {
     }
     const dean = { department: deanInfo.department };
 
-    const academicYearId = req.query.academic_year_id;
+    const academicYearId = optionalPositiveInteger(req.query.academic_year_id);
+    const employmentStatus = employmentStatusFilter(req.query.employment_type);
 
     // Get all active (non-archived) faculty in dean's department
     const faculty = await db.Faculty.findAll({
-      where: { department: dean.department, is_active: true },
+      where: {
+        department: dean.department,
+        is_active: true,
+        ...(employmentStatus ? { [Op.and]: employmentStatus } : {}),
+      },
       include: [
         {
           model: db.FacultySeminarsTrainings,
@@ -212,7 +259,7 @@ exports.getSeminarsInvolvement = async (req, res) => {
 
     res.json({
       title: "Faculty Involvement in Seminars/Workshops/Trainings/Conferences",
-      subtitle: "(Permanent and Temporary)",
+      subtitle: employmentSubtitle(req.query.employment_type),
       data,
       total,
     });

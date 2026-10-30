@@ -11,6 +11,11 @@ import {
 } from '../../../services/core/pds-pdf.service';
 import Swal from 'sweetalert2';
 import { firstValueFrom } from 'rxjs';
+import {
+  drawFittedText,
+  getPageRules,
+  PageRules,
+} from '../../../services/core/pds-text-layout';
 
 import * as pdfjsLib from 'pdfjs-dist';
 declare const jsPDF: any;
@@ -111,6 +116,8 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
   private pdfDoc: any = null;
   private uploadedPdfData: Uint8Array | null = null;
   private currentViewport: any = null;
+  /** Table rules of the rendered page, used to fit long values into their boxes. */
+  private currentRules: PageRules | null = null;
   private overlays: FieldOverlay[] = [];
   private defaultPositions: Map<string, any> = new Map();
 
@@ -430,6 +437,7 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
       const page = await this.pdfDoc.getPage(pageNum);
       const viewport = page.getViewport({ scale: 1.5 });
       this.currentViewport = viewport;
+      this.currentRules = await getPageRules(this.pdfDoc, pageNum).catch(() => null);
 
       console.log('Viewport size:', viewport.width, 'x', viewport.height);
 
@@ -499,10 +507,8 @@ export class PDSTemplateEditor implements OnInit, AfterViewInit {
           return;
         }
 
-        ctx.fillStyle = '#000';
-        ctx.textAlign = f.center ? 'center' : 'left';
-        ctx.font = `${(f.size * s) / 1.5}px 'Times New Roman', Times, serif`;
-        ctx.fillText(f.text, cx, cy);
+        // Same fitting as the PDF export: long values wrap and shrink inside their box
+        drawFittedText(ctx, f.text, f, this.currentRules, { width: viewport.width / s, height: viewport.height / s }, s);
       });
 
     ctx.textAlign = 'left';

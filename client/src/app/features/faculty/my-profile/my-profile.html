@@ -7,22 +7,42 @@
     <!-- Top Header Bar -->
     <div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-gray-100">
       <div class="flex items-center gap-3">
-        <!-- Passport Photo -->
-        <div class="shrink-0">
-          @if (personalProfile().passport_photo) {
+        <!-- Profile picture: click to upload/change (also used on the Faculty Profile PDF) -->
+        <label
+          class="relative shrink-0 w-14 h-14 rounded-sm overflow-hidden border-2 border-gray-100 cursor-pointer group"
+          [class.pointer-events-none]="uploadingAvatar()"
+          title="Change profile picture"
+        >
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            class="sr-only"
+            (change)="onAvatarSelected($event)"
+          />
+          @if (personalProfile().profile_picture || personalProfile().passport_photo) {
             <img
-              [src]="personalProfile().passport_photo"
-              alt="Passport Photo"
-              class="w-14 h-14 rounded-sm object-cover border-2 border-gray-100"
+              [src]="personalProfile().profile_picture || personalProfile().passport_photo"
+              alt="Profile picture"
+              class="w-full h-full object-cover"
             />
           } @else {
-            <div
-              class="w-14 h-14 rounded-sm bg-green-600 flex items-center justify-center border-2 border-gray-100"
-            >
+            <div class="w-full h-full bg-green-600 flex items-center justify-center">
               <i class="pi pi-user text-white text-lg"></i>
             </div>
           }
-        </div>
+          <div
+            class="absolute inset-0 flex flex-col items-center justify-center gap-0.5 bg-black/50 text-white transition-opacity"
+            [class.opacity-0]="!uploadingAvatar()"
+            [class.group-hover:opacity-100]="!uploadingAvatar()"
+          >
+            @if (uploadingAvatar()) {
+              <i class="pi pi-spin pi-spinner text-sm"></i>
+            } @else {
+              <i class="pi pi-camera text-sm"></i>
+              <span class="text-[9px] font-medium leading-none">Change</span>
+            }
+          </div>
+        </label>
         <div>
           <h2 class="text-sm font-semibold text-gray-900">
             {{ personalProfile().title ? personalProfile().title + ' ' : ''
@@ -82,6 +102,12 @@
           class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
         >
           <i class="pi pi-briefcase text-xs text-gray-400 w-4 text-center"></i> Employment
+        </button>
+        <button
+          (click)="scrollTo('section-courses')"
+          class="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-sm transition shrink-0 sm:shrink sm:w-full text-left whitespace-nowrap sm:whitespace-normal"
+        >
+          <i class="pi pi-book text-xs text-gray-400 w-4 text-center"></i> Courses Handled
         </button>
         <button
           (click)="scrollTo('section-membership')"
@@ -347,13 +373,16 @@
                   </div>
                   <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">Extension</label>
-                    <input
-                      type="text"
+                    <select
                       [(ngModel)]="personalForm().extension_name"
                       name="extension_name"
-                      placeholder="Jr., Sr., III"
                       class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
-                    />
+                    >
+                      <option value="">None</option>
+                      @for (extension of nameExtensionOptions; track extension) {
+                        <option [value]="extension">{{ extension }}</option>
+                      }
+                    </select>
                   </div>
                   <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1"
@@ -653,6 +682,56 @@
                         </button>
                         <button
                           (click)="deleteEmploymentProfile(profile.id!)"
+                          class="px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded-sm transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- ==================== COURSES HANDLED ==================== -->
+        <!-- Printed in the "COURSES HANDLED" section of the Faculty Profile PDF -->
+        <div id="section-courses" class="bg-white rounded-sm border border-gray-100 overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-book text-xs text-gray-400"></i>
+              <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Courses Handled</p>
+            </div>
+            <button
+              (click)="openCourseModal()"
+              class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+            >
+              <i class="pi pi-plus text-xs"></i> Add
+            </button>
+          </div>
+          <div class="p-4">
+            @if (courses().length === 0) {
+              <p class="text-xs text-gray-400">No courses handled added yet.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (course of courses(); track course.id) {
+                  <div class="border border-gray-100 rounded-sm p-3 hover:bg-gray-50 transition">
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-gray-800 break-words">
+                          {{ course.course_name }}
+                        </p>
+                      </div>
+                      <div class="flex gap-1 shrink-0">
+                        <button
+                          (click)="openCourseModal(course)"
+                          class="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-sm transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          (click)="deleteCourse(course)"
                           class="px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded-sm transition"
                         >
                           Delete
@@ -1182,6 +1261,51 @@
             class="w-full sm:w-auto px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition"
           >
             {{ isEditingEmployment() ? 'Save Changes' : 'Add Employment' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Course Handled Modal -->
+@if (showCourseModal()) {
+  <div class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-sm shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-xs font-semibold text-gray-800">
+          {{ editingCourse() ? 'Edit Course Handled' : 'Add Course Handled' }}
+        </h3>
+        <button (click)="showCourseModal.set(false)" class="text-gray-400 hover:text-gray-600">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+      <form (ngSubmit)="saveCourse()" class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Course Name</label>
+          <input
+            type="text"
+            [(ngModel)]="courseName"
+            name="course_name"
+            maxlength="255"
+            placeholder="e.g., Production and Operations Management"
+            class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+          />
+        </div>
+        <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+          <button
+            type="button"
+            (click)="showCourseModal.set(false)"
+            class="w-full sm:w-auto px-4 py-2 text-xs text-gray-600 bg-gray-100 rounded-sm hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            [disabled]="!courseName.trim() || savingCourse()"
+            class="w-full sm:w-auto px-4 py-2 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ editingCourse() ? 'Save Changes' : 'Add Course' }}
           </button>
         </div>
       </form>

@@ -366,38 +366,12 @@
               <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Requirements Status Distribution</h3>
               <div class="flex items-center justify-center mb-4">
                 <div class="relative w-64 h-64">
-                  <!-- Donut Chart using conic-gradient -->
+                  <!-- Donut Chart using conic-gradient (colours: --chart-* tokens in styles.css) -->
+                  <div class="absolute inset-0 rounded-full" [style.background]="requirementsDonut()"></div>
+                  <!-- Centre hole, same colour as the card -->
                   <div
-                    class="absolute inset-0 rounded-full"
-                    [style.background]="
-                      'conic-gradient(' +
-                      'from 0deg, ' +
-                      'rgb(34, 197, 94) 0deg ' +
-                      (departmentStats()!.validated / departmentStats()!.total_requirements) * 360 +
-                      'deg, ' +
-                      'rgb(234, 179, 8) ' +
-                      (departmentStats()!.validated / departmentStats()!.total_requirements) * 360 +
-                      'deg ' +
-                      ((departmentStats()!.validated + departmentStats()!.pending) /
-                        departmentStats()!.total_requirements) *
-                        360 +
-                      'deg, ' +
-                      'rgb(239, 68, 68) ' +
-                      ((departmentStats()!.validated + departmentStats()!.pending) /
-                        departmentStats()!.total_requirements) *
-                        360 +
-                      'deg ' +
-                      ((departmentStats()!.validated +
-                        departmentStats()!.pending +
-                        departmentStats()!.returned) /
-                        departmentStats()!.total_requirements) *
-                        360 +
-                      'deg)'
-                    "
-                  ></div>
-                  <!-- Center white circle for donut effect -->
-                  <div
-                    class="absolute inset-8 bg-white rounded-full flex items-center justify-center flex-col"
+                    class="absolute inset-8 rounded-full flex items-center justify-center flex-col"
+                    style="background: var(--chart-hole)"
                   >
                     <div class="text-sm font-bold text-gray-800">
                       {{ departmentStats()!.total_requirements }}
@@ -407,26 +381,33 @@
                 </div>
               </div>
               <!-- Legend -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="flex items-center space-x-2">
-                  <div class="w-4 h-4 bg-green-500 rounded"></div>
+                  <div class="w-4 h-4 rounded" style="background: var(--chart-validated)"></div>
                   <div class="text-sm">
                     <span class="font-semibold">{{ departmentStats()!.validated }}</span>
                     <span class="text-gray-600"> Validated</span>
                   </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <div class="w-4 h-4 bg-yellow-500 rounded"></div>
+                  <div class="w-4 h-4 rounded" style="background: var(--chart-pending)"></div>
                   <div class="text-sm">
                     <span class="font-semibold">{{ departmentStats()!.pending }}</span>
                     <span class="text-gray-600"> Pending</span>
                   </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <div class="w-4 h-4 bg-red-500 rounded"></div>
+                  <div class="w-4 h-4 rounded" style="background: var(--chart-returned)"></div>
                   <div class="text-sm">
                     <span class="font-semibold">{{ departmentStats()!.returned }}</span>
                     <span class="text-gray-600"> Returned</span>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <div class="w-4 h-4 rounded" style="background: var(--chart-empty)"></div>
+                  <div class="text-sm">
+                    <span class="font-semibold">{{ notSubmittedRequirements() }}</span>
+                    <span class="text-gray-600"> Not Submitted</span>
                   </div>
                 </div>
               </div>
@@ -442,7 +423,7 @@
                       cx="128"
                       cy="128"
                       r="100"
-                      stroke="#e5e7eb"
+                      style="stroke: var(--chart-empty)"
                       stroke-width="20"
                       fill="none"
                     />
@@ -450,7 +431,7 @@
                       cx="128"
                       cy="128"
                       r="100"
-                      stroke="#3b82f6"
+                      style="stroke: var(--chart-progress)"
                       stroke-width="20"
                       fill="none"
                       [attr.stroke-dasharray]="628"
@@ -461,7 +442,7 @@
                     />
                   </svg>
                   <div class="absolute inset-0 flex items-center justify-center flex-col">
-                    <div class="text-5xl font-bold text-blue-600">
+                    <div class="text-5xl font-bold text-gray-800">
                       {{ departmentStats()!.completion_rate }}%
                     </div>
                     <div class="text-xs text-gray-500 mt-2">Complete</div>
@@ -498,13 +479,13 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <!-- Cleared Faculties -->
               <div
-                class="flex items-center space-x-4 p-4 bg-green-50 rounded-sm border-2 border-green-200"
+                class="flex items-center space-x-4 p-4 bg-white rounded-sm border border-gray-200"
               >
                 <div class="shrink-0">
                   <div
-                    class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white"
+                    class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center text-green-600"
                   >
-                    <i class="fas fa-user-check text-2xl"></i>
+                    <i class="fas fa-user-check text-xl"></i>
                   </div>
                 </div>
                 <div class="flex-1">
@@ -518,13 +499,13 @@
 
               <!-- Pending Faculties -->
               <div
-                class="flex items-center space-x-4 p-4 bg-yellow-50 rounded-sm border-2 border-yellow-200"
+                class="flex items-center space-x-4 p-4 bg-white rounded-sm border border-gray-200"
               >
                 <div class="shrink-0">
                   <div
-                    class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center text-white"
+                    class="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600"
                   >
-                    <i class="fas fa-clock text-2xl"></i>
+                    <i class="fas fa-clock text-xl"></i>
                   </div>
                 </div>
                 <div class="flex-1">
@@ -538,13 +519,13 @@
 
               <!-- For Review Faculties -->
               <div
-                class="flex items-center space-x-4 p-4 bg-red-50 rounded-sm border-2 border-red-200"
+                class="flex items-center space-x-4 p-4 bg-white rounded-sm border border-gray-200"
               >
                 <div class="shrink-0">
                   <div
-                    class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white"
+                    class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center text-red-600"
                   >
-                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                    <i class="fas fa-exclamation-triangle text-xl"></i>
                   </div>
                 </div>
                 <div class="flex-1">
@@ -1284,116 +1265,130 @@
             </div>
           </div>
 
-          <!-- Research & Publications Section -->
-          <div class="mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Research & Publications</h2>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <!-- Research & Publications -->
-              <div class="p-6 border border-gray-200 rounded-sm bg-white shadow-sm">
-                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-4">Research & Publications</h3>
-                @if (researchAnalytics()) {
-                  <div class="space-y-4">
-                    <div class="flex items-center justify-between p-4 bg-blue-50 rounded-sm">
-                      <div>
-                        <p class="text-xs text-gray-500">Total Publications</p>
-                        <p class="text-sm font-bold text-blue-600">
-                          {{ researchAnalytics()!.total_publications }}
-                        </p>
-                      </div>
-                      <div class="text-4xl text-blue-300">
-                        <i class="fas fa-book"></i>
-                      </div>
-                    </div>
-                    <div class="flex items-center justify-between p-4 bg-green-50 rounded-sm">
-                      <div>
-                        <p class="text-xs text-gray-500">Faculty with Publications</p>
-                        <p class="text-sm font-bold text-green-600">
-                          {{ researchAnalytics()!.faculty_with_publications }}
-                        </p>
-                      </div>
-                      <div class="text-4xl text-green-300">
-                        <i class="fas fa-user-graduate"></i>
-                      </div>
-                    </div>
-                    <div class="p-4 bg-purple-50 rounded-sm">
-                      <p class="text-xs text-gray-500 mb-2">Percentage with Publications</p>
-                      <div class="flex items-center gap-4">
-                        <div class="flex-1">
-                          <div class="w-full bg-gray-200 rounded-full h-4">
-                            <div
-                              class="bg-purple-600 h-full rounded-full transition-all"
-                              [style.width.%]="researchAnalytics()!.percentage_with_publications"
-                            ></div>
-                          </div>
-                        </div>
-                        <span class="text-sm font-bold text-purple-600">
-                          {{ researchAnalytics()!.percentage_with_publications }}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-
           <!-- Faculty Involvement Section -->
           <div class="mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Faculty Involvement Analytics</h2>
+            <div class="flex flex-col gap-3 mb-4 sm:flex-row sm:items-end sm:justify-between">
+              <h2 class="text-2xl font-bold text-gray-800">Faculty Involvement Analytics</h2>
+              <div class="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2">
+                <div class="sm:w-56">
+                  <label for="involvement-academic-year" class="block text-xs font-medium text-gray-600 mb-1">
+                    Filter by Academic Year
+                  </label>
+                  <select
+                    id="involvement-academic-year"
+                    [(ngModel)]="involvementAcademicYear"
+                    (ngModelChange)="onInvolvementAcademicYearChange()"
+                    class="w-full px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 bg-white"
+                  >
+                    <option [ngValue]="null">All Academic Years</option>
+                    @for (year of academicYearsList(); track year.academic_year_id) {
+                      <option [ngValue]="year.academic_year_id">
+                        {{ year.year_start }}-{{ year.year_end }}
+                      </option>
+                    }
+                  </select>
+                </div>
+                <div class="sm:w-56">
+                  <label for="involvement-employment-type" class="block text-xs font-medium text-gray-600 mb-1">
+                    Filter by Employment Type
+                  </label>
+                  <select
+                    id="involvement-employment-type"
+                    [(ngModel)]="involvementEmploymentType"
+                    (ngModelChange)="onInvolvementEmploymentTypeChange()"
+                    class="w-full px-3 py-2 text-xs border border-gray-200 rounded-sm outline-none focus:outline-none focus:ring-0 focus:border-gray-300 bg-white"
+                  >
+                    <option [ngValue]="null">All Faculty Types</option>
+                    <option value="permanent">Permanent Faculty</option>
+                    <option value="temporary">Temporary Faculty</option>
+                    <option value="guest_lecturer">Guest Lecturer</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            @if (involvementExportError()) {
+              <p role="alert" class="text-sm text-red-600 mb-3">{{ involvementExportError() }}</p>
+            }
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <!-- Research Involvement Chart -->
-              <div class="p-6 border border-gray-200 rounded-sm bg-purple-50 shadow-sm">
-                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-2 text-center">
+              <div class="relative p-6 border border-gray-200 border-t-4 border-t-purple-500 rounded-sm bg-white shadow-sm">
+                <button type="button"
+                  class="absolute right-2 top-2 p-2 text-gray-500 hover:text-blue-600 rounded-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                  (click)="downloadInvolvementChart('research')"
+                  [disabled]="chartLoading.research || !involvementItems.research.length || involvementExport() !== null"
+                  aria-label="Download research involvement chart as PDF" title="Download chart as PDF"
+                  [attr.aria-busy]="involvementExport() === 'research'">
+                  <i [class]="involvementExport() === 'research' ? 'pi pi-spinner pi-spin' : 'pi pi-download'" aria-hidden="true"></i>
+                </button>
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-1 text-center">
                   Research-related Activities
                 </h3>
-                <p class="text-xs text-gray-600 text-center mb-4">(Permanent and Temporary)</p>
+                <p class="text-xs text-gray-500 text-center mb-2">({{ involvementEmploymentTypeLabel() }})</p>
                 @if (chartLoading.research) {
-                  <div class="flex items-center justify-center h-64">
+                  <div class="flex items-center justify-center h-72">
                     <div
-                      class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"
+                      class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-400 border-r-transparent"
                     ></div>
                   </div>
                 } @else {
-                  <div class="relative h-64">
-                    <canvas #researchChart></canvas>
+                  <div class="h-72">
+                    <app-pie-3d-chart [items]="involvementItems.research" />
                   </div>
                 }
               </div>
 
               <!-- Extension Involvement Chart -->
-              <div class="p-6 border border-gray-200 rounded-sm bg-green-50 shadow-sm">
-                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-2 text-center">Extension Services</h3>
-                <p class="text-xs text-gray-600 text-center mb-4">(Permanent and Temporary)</p>
+              <div class="relative p-6 border border-gray-200 border-t-4 border-t-green-500 rounded-sm bg-white shadow-sm">
+                <button type="button"
+                  class="absolute right-2 top-2 p-2 text-gray-500 hover:text-blue-600 rounded-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                  (click)="downloadInvolvementChart('extension')"
+                  [disabled]="chartLoading.extension || !involvementItems.extension.length || involvementExport() !== null"
+                  aria-label="Download extension involvement chart as PDF" title="Download chart as PDF"
+                  [attr.aria-busy]="involvementExport() === 'extension'">
+                  <i [class]="involvementExport() === 'extension' ? 'pi pi-spinner pi-spin' : 'pi pi-download'" aria-hidden="true"></i>
+                </button>
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-1 text-center">
+                  Extension Services
+                </h3>
+                <p class="text-xs text-gray-500 text-center mb-2">({{ involvementEmploymentTypeLabel() }})</p>
                 @if (chartLoading.extension) {
-                  <div class="flex items-center justify-center h-64">
+                  <div class="flex items-center justify-center h-72">
                     <div
-                      class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent"
+                      class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-400 border-r-transparent"
                     ></div>
                   </div>
                 } @else {
-                  <div class="relative h-64">
-                    <canvas #extensionChart></canvas>
+                  <div class="h-72">
+                    <app-pie-3d-chart [items]="involvementItems.extension" />
                   </div>
                 }
               </div>
 
               <!-- Seminars Involvement Chart -->
-              <div class="p-6 border border-gray-200 rounded-sm bg-amber-50 shadow-sm">
-                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-2 text-center">
+              <div class="relative p-6 border border-gray-200 border-t-4 border-t-amber-500 rounded-sm bg-white shadow-sm">
+                <button type="button"
+                  class="absolute right-2 top-2 p-2 text-gray-500 hover:text-blue-600 rounded-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                  (click)="downloadInvolvementChart('seminars')"
+                  [disabled]="chartLoading.seminars || !involvementItems.seminars.length || involvementExport() !== null"
+                  aria-label="Download seminars involvement chart as PDF" title="Download chart as PDF"
+                  [attr.aria-busy]="involvementExport() === 'seminars'">
+                  <i [class]="involvementExport() === 'seminars' ? 'pi pi-spinner pi-spin' : 'pi pi-download'" aria-hidden="true"></i>
+                </button>
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-800 mb-1 text-center">
                   Seminars/Trainings/Conferences
                 </h3>
-                <p class="text-xs text-gray-600 text-center mb-4">(Permanent and Temporary)</p>
+                <p class="text-xs text-gray-500 text-center mb-2">({{ involvementEmploymentTypeLabel() }})</p>
                 @if (chartLoading.seminars) {
-                  <div class="flex items-center justify-center h-64">
+                  <div class="flex items-center justify-center h-72">
                     <div
-                      class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-purple-600 border-r-transparent"
+                      class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-400 border-r-transparent"
                     ></div>
                   </div>
                 } @else {
-                  <div class="relative h-64">
-                    <canvas #seminarsChart></canvas>
+                  <div class="h-72">
+                    <app-pie-3d-chart [items]="involvementItems.seminars" />
                   </div>
                 }
               </div>

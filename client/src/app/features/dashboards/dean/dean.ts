@@ -1,4 +1,6 @@
-import { Component, signal, OnInit, ViewChild, ElementRef, AfterViewInit, inject } from '@angular/core';
+import { Component, signal, OnInit, OnDestroy, inject } from '@angular/core';
+import type { Subscription } from 'rxjs';
+import { finalize } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../../../services/auth/auth';
@@ -20,16 +22,16 @@ import {
   DeanAnalyticsService,
   FacultyDemographics,
   EducationAnalytics,
-  ResearchAnalytics,
   FacultyInvolvementResponse,
+  FacultyEmploymentType,
 } from '../../../services/dean/dean-analytics.service';
 import { ChangePasswordModal } from '../../../shared/components/change-password-modal/change-password-modal';
 import { DeanService, Dean } from '../../../services/dean/dean.service';
 import { DeanMemberDemographicsComponent } from '../../dean/member-demographics/dean-member-demographics';
 import { FacultyNotificationsComponent } from '../../dean/faculty-notifications/faculty-notifications';
-import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import { Pie3dChartComponent, Pie3dItem } from '../../../shared/components/pie-3d-chart/pie-3d-chart';
 
-Chart.register(...registerables);
+import type { InvolvementChartType } from '../../../services/core/involvement-chart-pdf.service';
 
 @Component({
   selector: 'app-dean-dashboard',
@@ -46,14 +48,12 @@ Chart.register(...registerables);
     ChangePasswordModal,
     DeanMemberDemographicsComponent,
     FacultyNotificationsComponent,
+    Pie3dChartComponent,
   ],
   templateUrl: './dean.html',
   styles: [],
 })
-export class DeanDashboard implements OnInit, AfterViewInit {
-  @ViewChild('researchChart') researchChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('extensionChart') extensionChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('seminarsChart') seminarsChartRef!: ElementRef<HTMLCanvasElement>;
+export class DeanDashboard implements OnInit, OnDestroy {
 
   private route = inject(ActivatedRoute);
 
@@ -81,34 +81,25 @@ export class DeanDashboard implements OnInit, AfterViewInit {
   academicYearsList = signal<DropdownAcademicYear[]>([]);
   selectedAcademicYear: number = 0;
   selectedSemester: string = '';
+  involvementAcademicYear: number | null = null;
+  involvementEmploymentType: FacultyEmploymentType | null = null;
 
   // Analytics data
   facultyDemographics = signal<FacultyDemographics | null>(null);
   educationAnalytics = signal<EducationAnalytics | null>(null);
-  researchAnalytics = signal<ResearchAnalytics | null>(null);
 
-  // Chart data
-  private charts: { [key: string]: Chart } = {};
+  // Faculty involvement pies (isometric, see shared/components/pie-3d-chart)
+  involvementItems: Record<'research' | 'extension' | 'seminars', Pie3dItem[]> = {
+    research: [],
+    extension: [],
+    seminars: [],
+  };
   chartLoading = {
     research: false,
     extension: false,
     seminars: false,
   };
-
-  private readonly COLORS: string[] = [
-    '#FF6384',
-    '#36A2EB',
-    '#FFCE56',
-    '#4BC0C0',
-    '#9966FF',
-    '#FF9F40',
-    '#FF6384',
-    '#C9CBCF',
-    '#4BC0C0',
-    '#FF6384',
-    '#36A2EB',
-    '#FFCE56',
-  ];
+  private involvementSubscriptions: Partial<Record<'research' | 'extension' | 'seminars', Subscription>> = {};
 
   constructor(
     public authService: Auth,
@@ -147,13 +138,8 @@ export class DeanDashboard implements OnInit, AfterViewInit {
     });
   }
 
-  ngAfterViewInit() {
-    // Charts will be created when Faculty Analytics tab is selected
-  }
-
-  ngOnDestroy() {
-    // Clean up charts
-    Object.values(this.charts).forEach((chart) => chart.destroy());
+  ngOnDestroy(): void {
+    Object.values(this.involvementSubscriptions).forEach((subscription) => subscription?.unsubscribe());
   }
 
   loadDeanProfile() {
@@ -253,10 +239,7 @@ export class DeanDashboard implements OnInit, AfterViewInit {
     this.dashboardSubTab.set(subTab);
     if (subTab === 'analytics') {
       this.loadAnalytics();
-      // Load pie charts after a short delay to ensure DOM is ready
-      setTimeout(() => {
-        this.loadFacultyInvolvementCharts();
-      }, 100);
+      this.loadFacultyInvolvementCharts();
     } else if (subTab === 'organization-analytics') {
       // Organization dashboard loads its own data via ngOnInit
     }
@@ -265,8 +248,12 @@ export class DeanDashboard implements OnInit, AfterViewInit {
   loadAnalytics() {
     this.loading.set(true);
 
-    // Load all analytics data
-    this.analyticsService.getFacultyDemographics().subscribe({
+    let remaining = 2;
+    const settled = () => {
+      if (--remaining === 0) this.loading.set(false);
+    };
+    // Wait for both remaining analytics requests, including errors.
+    this.analyticsService.getFacultyDemographics().pipe(finalize(settled)).subscribe({
       next: (data) => {
         this.facultyDemographics.set(data);
       },
@@ -275,7 +262,7 @@ export class DeanDashboard implements OnInit, AfterViewInit {
       },
     });
 
-    this.analyticsService.getEducationAnalytics().subscribe({
+    this.analyticsService.getEducationAnalytics().pipe(finalize(settled)).subscribe({
       next: (data) => {
         this.educationAnalytics.set(data);
       },
@@ -284,16 +271,7 @@ export class DeanDashboard implements OnInit, AfterViewInit {
       },
     });
 
-    this.analyticsService.getResearchAnalytics().subscribe({
-      next: (data) => {
-        this.researchAnalytics.set(data);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading research analytics:', error);
-        this.loading.set(false);
-      },
-    });
+
   }
 
   logout() {
@@ -315,117 +293,111 @@ export class DeanDashboard implements OnInit, AfterViewInit {
     return titles[this.activeTab()] || 'Dashboard';
   }
 
-  // Faculty Involvement Charts
-  loadFacultyInvolvementCharts() {
-    this.loadChart('research', 'researchChart');
-    this.loadChart('extension', 'extensionChart');
-    this.loadChart('seminars', 'seminarsChart');
+  /** Requirements donut: validated / pending / returned, then the not-yet-submitted rest in grey */
+  requirementsDonut(): string {
+    const s = this.departmentStats();
+    const total = s?.total_requirements || 0;
+    if (!s || total <= 0) return 'var(--chart-empty)';
+    const deg = (n: number) => (n / total) * 360;
+    const a = deg(s.validated);
+    const b = a + deg(s.pending);
+    const c = b + deg(s.returned);
+    return (
+      `conic-gradient(var(--chart-validated) 0deg ${a}deg, var(--chart-pending) ${a}deg ${b}deg, ` +
+      `var(--chart-returned) ${b}deg ${c}deg, var(--chart-empty) ${c}deg 360deg)`
+    );
   }
 
-  private loadChart(chartType: 'research' | 'extension' | 'seminars', chartRefName: string) {
-    this.chartLoading[chartType] = true;
+  notSubmittedRequirements(): number {
+    const s = this.departmentStats();
+    if (!s) return 0;
+    return Math.max(0, s.total_requirements - s.validated - s.pending - s.returned);
+  }
 
-    let observable;
-    switch (chartType) {
-      case 'research':
-        observable = this.analyticsService.getResearchInvolvement();
-        break;
-      case 'extension':
-        observable = this.analyticsService.getExtensionInvolvement();
-        break;
-      case 'seminars':
-        observable = this.analyticsService.getSeminarsInvolvement();
-        break;
+  involvementExport = signal<InvolvementChartType | null>(null);
+  involvementExportError = signal('');
+
+  async downloadInvolvementChart(type: InvolvementChartType): Promise<void> {
+    if (this.chartLoading[type] || this.involvementExport() || !this.involvementItems[type].some(item => item.value > 0)) return;
+    const items = this.involvementItems[type].map(item => ({ ...item }));
+    const employment = this.involvementEmploymentType
+      ? { permanent: 'Permanent', temporary: 'Temporary', guest_lecturer: 'Guest Lecturer' }[this.involvementEmploymentType]
+      : 'All Faculty Types';
+    const years = this.academicYearsList().filter(year => !this.involvementAcademicYear || year.academic_year_id === this.involvementAcademicYear);
+    const period = years.length
+      ? `FY ${Math.min(...years.map(year => year.year_start))}-${Math.max(...years.map(year => year.year_end))}`
+      : 'All Academic Years';
+    this.involvementExport.set(type);
+    this.involvementExportError.set('');
+    try {
+      const { InvolvementChartPdfService } = await import('../../../services/core/involvement-chart-pdf.service');
+      await new InvolvementChartPdfService().download(type, items, employment, period);
+    } catch (error) {
+      console.error('Chart PDF download failed:', error);
+      this.involvementExportError.set('Unable to download the chart. Please try again.');
+    } finally {
+      this.involvementExport.set(null);
     }
+  }
 
-    observable.subscribe({
+  // Faculty Involvement Charts
+  onInvolvementAcademicYearChange() {
+    this.loadFacultyInvolvementCharts();
+  }
+
+  onInvolvementEmploymentTypeChange() {
+    this.loadFacultyInvolvementCharts();
+  }
+
+  involvementEmploymentTypeLabel(): string {
+    const labels: Record<FacultyEmploymentType, string> = {
+      permanent: 'Permanent Faculty',
+      temporary: 'Temporary Faculty',
+      guest_lecturer: 'Guest Lecturer',
+    };
+    return this.involvementEmploymentType ? labels[this.involvementEmploymentType] : 'All Faculty Types';
+  }
+
+  loadFacultyInvolvementCharts() {
+    this.loadChart('research');
+    this.loadChart('extension');
+    this.loadChart('seminars');
+  }
+
+  private loadChart(chartType: 'research' | 'extension' | 'seminars') {
+    this.involvementSubscriptions[chartType]?.unsubscribe();
+    this.chartLoading[chartType] = true;
+    this.involvementItems[chartType] = [];
+
+    const observable =
+      chartType === 'research'
+        ? this.analyticsService.getResearchInvolvement(
+            this.involvementAcademicYear || undefined,
+            this.involvementEmploymentType || undefined,
+          )
+        : chartType === 'extension'
+          ? this.analyticsService.getExtensionInvolvement(
+              this.involvementAcademicYear || undefined,
+              this.involvementEmploymentType || undefined,
+            )
+          : this.analyticsService.getSeminarsInvolvement(
+              this.involvementAcademicYear || undefined,
+              this.involvementEmploymentType || undefined,
+            );
+
+    this.involvementSubscriptions[chartType] = observable.subscribe({
       next: (response: FacultyInvolvementResponse) => {
+        this.involvementItems[chartType] = response.data.map((item) => ({
+          name: item.faculty_name,
+          value: item.count,
+          percentage: item.percentage,
+        }));
         this.chartLoading[chartType] = false;
-        setTimeout(() => {
-          this.createPieChart(chartType, chartRefName, response);
-        }, 50);
       },
       error: (error: any) => {
         this.chartLoading[chartType] = false;
         console.error(`Error loading ${chartType} chart:`, error);
       },
     });
-  }
-
-  private createPieChart(chartKey: string, chartRefName: string, data: FacultyInvolvementResponse) {
-    const chartRef = (this as any)[chartRefName + 'Ref'];
-    if (!chartRef?.nativeElement) {
-      console.error(`Chart canvas ${chartRefName} not found`);
-      return;
-    }
-
-    const ctx = chartRef.nativeElement.getContext('2d');
-    if (!ctx) return;
-
-    // Destroy existing chart if it exists
-    if (this.charts[chartKey]) {
-      this.charts[chartKey].destroy();
-    }
-
-    const labels = data.data.map((item) => item.faculty_name);
-    const percentages = data.data.map((item) => parseInt(item.percentage));
-    const colors = labels.map((_, index) => this.COLORS[index % this.COLORS.length]);
-
-    const config: ChartConfiguration = {
-      type: 'pie',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            data: percentages,
-            backgroundColor: colors,
-            borderColor: '#ffffff',
-            borderWidth: 3,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'right',
-            labels: {
-              font: {
-                size: 14,
-                family: "'Georgia', 'Times New Roman', serif",
-              },
-              padding: 15,
-              generateLabels: (chart) => {
-                const data = chart.data;
-                if (data.labels && data.labels.length && data.datasets.length) {
-                  return data.labels.map((label, i) => {
-                    const value = data.datasets[0].data[i];
-                    return {
-                      text: `${label} ${value}%`,
-                      fillStyle: (data.datasets[0].backgroundColor as string[])[i],
-                      hidden: false,
-                      index: i,
-                    };
-                  });
-                }
-                return [];
-              },
-            },
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                const label = context.label || '';
-                const value = context.parsed || 0;
-                return `${label}: ${value}%`;
-              },
-            },
-          },
-        },
-      },
-    };
-
-    this.charts[chartKey] = new Chart(ctx, config);
   }
 }

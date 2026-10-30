@@ -125,6 +125,7 @@ const FacultyEmploymentProfile = require("./faculty-employment-profile.model")(
 );
 const FacultyProfessionalMembership =
   require("./faculty-professional-membership.model")(sequelize, Sequelize);
+const FacultyCourseHandled = require("./faculty-course-handled.model")(sequelize, Sequelize);
 const FacultyAwards = require("./faculty-awards.model")(sequelize, Sequelize);
 const FacultySeminarsTrainings = require("./faculty-seminars-trainings.model")(
   sequelize,
@@ -516,6 +517,14 @@ FacultyProfessionalMembership.belongsTo(Faculty, {
   foreignKey: "faculty_id",
 });
 
+Faculty.hasMany(FacultyCourseHandled, {
+  foreignKey: "faculty_id",
+  as: "courses_handled",
+});
+FacultyCourseHandled.belongsTo(Faculty, {
+  foreignKey: "faculty_id",
+});
+
 Faculty.hasMany(FacultyAwards, {
   foreignKey: "faculty_id",
   as: "awards",
@@ -679,6 +688,7 @@ db.FacultyPersonalProfile = FacultyPersonalProfile;
 db.FacultyAcademicProfile = FacultyAcademicProfile;
 db.FacultyEmploymentProfile = FacultyEmploymentProfile;
 db.FacultyProfessionalMembership = FacultyProfessionalMembership;
+db.FacultyCourseHandled = FacultyCourseHandled;
 db.FacultyAwards = FacultyAwards;
 db.FacultySeminarsTrainings = FacultySeminarsTrainings;
 db.FacultyResearchActivities = FacultyResearchActivities;

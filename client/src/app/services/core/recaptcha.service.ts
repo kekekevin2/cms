@@ -1,70 +1,93 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-// Declare grecaptcha from Google reCAPTCHA script
+// Declared by the Google reCAPTCHA v2 script after it is loaded.
 declare const grecaptcha: any;
+
+export interface RecaptchaCheckboxCallbacks {
+  onVerify: (token: string) => void;
+  onExpire: () => void;
+  onError: () => void;
+}
 
 /**
  * Service to handle Google reCAPTCHA operations
- * Provides methods to execute and reset reCAPTCHA challenges
+ * Provides the reCAPTCHA v2 checkbox token used by the login request.
  */
 @Injectable({
   providedIn: 'root',
 })
 export class RecaptchaService {
-  private siteKey = environment.recaptchaSiteKey;
+  private apiLoadPromise: Promise<void> | null = null;
 
-  /**
-   * Execute reCAPTCHA and get token
-   * For reCAPTCHA v2, this gets the response from the checkbox widget
-   * 
-   * @param action Optional action name (used for reCAPTCHA v3, not v2)
-   * @returns Promise with reCAPTCHA token
-   */
-  async executeRecaptcha(action: string = 'submit'): Promise<string> {
-    return new Promise((resolve, reject) => {
-      // Check if reCAPTCHA script is loaded
-      if (typeof grecaptcha === 'undefined') {
-        reject('reCAPTCHA not loaded. Please refresh the page.');
-        return;
-      }
+  constructor(private http: HttpClient) {}
 
-      try {
-        // For reCAPTCHA v2, get the response from the widget
-        const response = grecaptcha.getResponse();
-        
-        if (response && response.length > 0) {
-          resolve(response);
-        } else {
-          reject('Please complete the reCAPTCHA challenge');
-        }
-      } catch (error) {
-        console.error('reCAPTCHA error:', error);
-        reject('reCAPTCHA error: ' + error);
-      }
+  /** Gets the public site key from the API, which reads it from the server environment. */
+  loadSiteKey(): Observable<string> {
+    return this.http
+      .get<{ siteKey: string }>(`${environment.apiUrl}/auth/recaptcha-config`)
+      .pipe(map((config) => config.siteKey));
+  }
+
+  /** Loads the reCAPTCHA v2 API with explicit widget rendering. */
+  loadApi(): Promise<void> {
+    if (typeof grecaptcha !== 'undefined' && grecaptcha.render) {
+      return Promise.resolve();
+    }
+
+    if (this.apiLoadPromise) return this.apiLoadPromise;
+
+    this.apiLoadPromise = new Promise<void>((resolve, reject) => {
+      const callbackName = '__recaptchaV2Ready';
+      (window as any)[callbackName] = () => {
+        delete (window as any)[callbackName];
+        resolve();
+      };
+
+      const script = document.createElement('script');
+      script.src = `https://www.google.com/recaptcha/api.js?onload=${callbackName}&render=explicit`;
+      script.async = true;
+      script.defer = true;
+      script.onerror = () => {
+        delete (window as any)[callbackName];
+        this.apiLoadPromise = null;
+        reject('Unable to load reCAPTCHA. Please refresh the page.');
+      };
+      document.head.appendChild(script);
+    });
+
+    return this.apiLoadPromise;
+  }
+
+  renderCheckbox(
+    containerId: string,
+    siteKey: string,
+    theme: 'light' | 'dark',
+    callbacks: RecaptchaCheckboxCallbacks,
+  ): number {
+    if (typeof grecaptcha === 'undefined' || !grecaptcha.render) {
+      throw new Error('reCAPTCHA not loaded. Please refresh the page.');
+    }
+    return grecaptcha.render(containerId, {
+      sitekey: siteKey,
+      theme,
+      size: 'normal',
+      callback: callbacks.onVerify,
+      'expired-callback': callbacks.onExpire,
+      'error-callback': callbacks.onError,
     });
   }
 
-  /**
-   * Reset reCAPTCHA widget
-   * Call this after form submission (success or error) to allow retry
-   */
-  resetRecaptcha(): void {
-    if (typeof grecaptcha !== 'undefined') {
-      try {
-        grecaptcha.reset();
-      } catch (error) {
-        console.error('Error resetting reCAPTCHA:', error);
-      }
-    }
+  getToken(widgetId: number): string {
+    return typeof grecaptcha === 'undefined' ? '' : grecaptcha.getResponse(widgetId);
   }
 
-  /**
-   * Get site key for rendering reCAPTCHA widget
-   * @returns reCAPTCHA site key from environment
-   */
-  getSiteKey(): string {
-    return this.siteKey;
+  reset(widgetId: number): void {
+    if (typeof grecaptcha !== 'undefined') {
+      grecaptcha.reset(widgetId);
+    }
   }
 
   /**

@@ -13,6 +13,7 @@ import {
 } from './pds.service';
 import { PDSTemplateConfigService, PDSTemplateConfigData } from './pds-template-config.service';
 import { firstValueFrom } from 'rxjs';
+import { drawFittedText, getPageRules } from './pds-text-layout';
 
 // Use CDN for worker to avoid Vite dynamic import warning
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
@@ -183,20 +184,19 @@ export class PdsPdfService {
       await page.render({ canvasContext: ctx, viewport }).promise;
 
       const scale = viewport.scale;
+      // Long values wrap and shrink to fit their box, found from the template's table rules
+      const rules = await getPageRules(doc, pageNum).catch(() => null);
+      const pageSize = { width: viewport.width / scale, height: viewport.height / scale };
       pageOverlays.forEach((o) => {
-        const cx = o.x * scale;
-        const cy = viewport.height - o.y * scale;
         if (o.image) {
           const img = o.image === 'photo' ? photoImage : signatureImage;
+          const cx = o.x * scale;
+          const cy = viewport.height - o.y * scale;
           if (img) ctx.drawImage(img, cx, cy, (o.w ?? 0) * scale, (o.h ?? 0) * scale);
           return;
         }
-        ctx.font = `${((o.size || 11) * scale) / 1.5}px 'Times New Roman', Times, serif`;
-        ctx.fillStyle = '#000';
-        ctx.textAlign = o.center ? 'center' : 'left';
-        ctx.fillText(o.text, cx, cy);
+        drawFittedText(ctx, o.text, o, rules, pageSize, scale);
       });
-      ctx.textAlign = 'left';
 
       const rawViewport = page.getViewport({ scale: 1 });
       const wPt = rawViewport.width * 0.75;
@@ -673,7 +673,7 @@ function buildOverlays(pds: PersonalDataSheet, showAllChecks = false): Overlay[]
   // Government Issued ID — values in the right-hand column of the ID box
   push({ key: 'government_issued_id', page: 4, x: 131, y: 148, text: pds.government_issued_id || '', size: 9 });
   push({ key: 'government_id_number', page: 4, x: 131, y: 131.5, text: pds.government_id_number || '', size: 9 });
-  push({ key: 'government_id_date_issued', page: 4, x: 131, y: 113.5, text: formatDMY(pds.government_id_date_issued), size: 9 });
+  push({ key: 'government_id_date_issued', page: 4, x: 131, y: 113.5, text: [formatDMY(pds.government_id_date_issued), pds.government_id_place_issued].filter(Boolean).join(' / '), size: 9 });
 
   // Date Accomplished (the row above its label)
   push({ key: 'submitted_at', page: 4, x: 332.6, y: 119.5, text: formatDMY(pds.submitted_at), size: 9, center: true });
@@ -866,6 +866,7 @@ function samplePds(): PersonalDataSheet {
     government_issued_id: 'Passport',
     government_id_number: 'P1234567',
     government_id_date_issued: '2020-01-01',
+    government_id_place_issued: 'Manila',
     submitted_at: '2026-01-01',
   };
   return sample as unknown as PersonalDataSheet;

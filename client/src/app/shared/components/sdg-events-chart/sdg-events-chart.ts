@@ -80,7 +80,18 @@ export class SDGEventsChartComponent implements AfterViewInit, OnDestroy {
     const dataset = this.chart.data.datasets?.[0] as any;
     if (dataset) {
       dataset.borderColor = sliceBorder;
+      dataset.borderWidth = isDark ? 1.5 : 2;
+      dataset.backgroundColor = this.legendItems().map((item) => this.displayColor(item.color));
     }
+  }
+
+  /** Official SDG colour, softened towards the dark card colour in dark mode so it doesn't glare */
+  displayColor(hex: string): string {
+    if (!this.themeService.isDarkMode()) return hex;
+    const n = parseInt(hex.replace('#', ''), 16);
+    const card = [31, 41, 55]; // gray-800
+    const mix = (c: number, i: number) => Math.round(c * 0.75 + card[i] * 0.25);
+    return `rgb(${mix((n >> 16) & 255, 0)}, ${mix((n >> 8) & 255, 1)}, ${mix(n & 255, 2)})`;
   }
 
   ngAfterViewInit() {
@@ -157,9 +168,13 @@ export class SDGEventsChartComponent implements AfterViewInit, OnDestroy {
     const isDark = this.themeService.isDarkMode();
     const sliceBorder = isDark ? '#1f2937' : '#ffffff';
 
-    // ensure fresh dataset border matches current theme
+    // ensure fresh dataset border/colours match current theme
     if (chartData.datasets && chartData.datasets[0]) {
       (chartData.datasets[0] as any).borderColor = sliceBorder;
+      (chartData.datasets[0] as any).borderWidth = isDark ? 1.5 : 2;
+      (chartData.datasets[0] as any).backgroundColor = this.legendItems().map((item) =>
+        this.displayColor(item.color),
+      );
     }
 
     const config: ChartConfiguration = {

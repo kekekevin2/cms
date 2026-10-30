@@ -92,4 +92,15 @@ export class DeanService {
       params,
     });
   }
+
+  getRecentOrganizationDocuments(organizationId?: number): Observable<{ recentDocuments: any[] }> {
+    let params = new HttpParams();
+    if (organizationId != null) {
+      params = params.set('organizationId', organizationId.toString());
+    }
+    return this.http.get<{ recentDocuments: any[] }>(
+      `${this.deanApiUrl}/dashboard/organizations/recent-documents`,
+      { params },
+    );
+  }
 }

@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
+import type { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -25,7 +26,7 @@ import Swal from 'sweetalert2';
   templateUrl: './faculty-management.html',
   styleUrl: './faculty-management.css',
 })
-export class DeanFacultyManagement implements OnInit {
+export class DeanFacultyManagement implements OnInit, OnDestroy {
   // Active faculty state
   facultyList = signal<Faculty[]>([]);
   loading = signal(false);
@@ -49,9 +50,56 @@ export class DeanFacultyManagement implements OnInit {
   disabledSearchQuery = signal('');
 
   positionLevels = signal<DropdownPositionLevel[]>([]);
+  readonly employmentStatuses = ['Permanent', 'Temporary', 'Guest Lecturer'];
+  private readonly academicRankPattern = /^(?:Instructor (?:I|II|III)|Assistant Professor (?:I|II|III|IV)|Associate Professor (?:I|II|III|IV|V)|Professor (?:I|II|III|IV|V|VI))$/;
+  private readonly guestLecturerRanks: DropdownPositionLevel[] = [
+    'Lecturer I', 'Lecturer II', 'Lecturer III', 'Lecturer IV', 'Lecturer V', 'Lecturer VI', 'Lecturer VII',
+    'Senior Lecturer I', 'Senior Lecturer II', 'Senior Lecturer III', 'Senior Lecturer IV', 'Senior Lecturer V',
+    'Professorial Lecturer I', 'Professorial Lecturer II', 'Professorial Lecturer III',
+    'Professorial Lecturer IV', 'Professorial Lecturer V', 'Professorial Lecturer VI',
+  ].map((value) => ({ value, label: value }));
+
+  private isPermanentOrTemporary(status: string | null | undefined): boolean {
+    return ['Permanent', 'Temporary'].includes(this.normalizeEmploymentStatus(status));
+  }
+
+  academicRanksFor(status: string | null | undefined): DropdownPositionLevel[] {
+    if (this.normalizeEmploymentStatus(status) === 'Guest Lecturer') return this.guestLecturerRanks;
+    if (this.isPermanentOrTemporary(status)) {
+      return this.positionLevels().filter((level) => this.academicRankPattern.test(level.value));
+    }
+    return [
+      ...this.positionLevels().filter((level) => this.academicRankPattern.test(level.value)),
+      ...this.guestLecturerRanks,
+    ];
+  }
+
+  onEmploymentStatusChange(mode: 'create' | 'edit', status: string): void {
+    const form = mode === 'create' ? this.createForm : this.editForm;
+    form.employment_status = this.normalizeEmploymentStatus(status);
+    if (!form.employment_status ||
+        (this.isPermanentOrTemporary(form.employment_status) && form.position_level &&
+          !this.academicRankPattern.test(form.position_level)) ||
+        (form.employment_status === 'Guest Lecturer' && form.position_level &&
+          !this.guestLecturerRanks.some((rank) => rank.value === form.position_level))) {
+      form.position_level = '';
+    }
+  }
 
   showCreateModal = signal(false);
   showEditModal = signal(false);
+  viewedFaculty = signal<Faculty | null>(null);
+  viewLoading = signal(false);
+  viewError = signal('');
+  private viewRequest?: Subscription;
+  private viewTrigger?: HTMLElement;
+  private viewDialogElement?: HTMLElement;
+
+  @ViewChild('facultyViewDialog')
+  set facultyViewDialog(ref: ElementRef<HTMLElement> | undefined) {
+    this.viewDialogElement = ref?.nativeElement;
+    this.viewDialogElement?.focus();
+  }
 
   createForm: CreateFacultyData = {
     employee_id: '',
@@ -61,6 +109,8 @@ export class DeanFacultyManagement implements OnInit {
     email: '',
     contact_number: '',
     position_level: '',
+    employment_status: '',
+    designation: '',
   };
   editForm = {
     faculty_id: 0,
@@ -71,6 +121,8 @@ export class DeanFacultyManagement implements OnInit {
     email: '',
     contact_number: '',
     position_level: '',
+    employment_status: '',
+    designation: '',
   };
 
   constructor(
@@ -82,6 +134,71 @@ export class DeanFacultyManagement implements OnInit {
     private pdfService: PdsPdfService,
     private facultyProfilePdfService: FacultyProfilePdfService,
   ) {}
+
+  openViewModal(faculty: Faculty, rememberTrigger = true): void {
+    if (rememberTrigger && document.activeElement instanceof HTMLElement) {
+      this.viewTrigger = document.activeElement;
+    }
+    this.viewRequest?.unsubscribe();
+    this.viewedFaculty.set({ ...faculty });
+    this.viewError.set('');
+    this.viewLoading.set(true);
+    this.viewDialogElement?.focus();
+    this.viewRequest = this.facultyProfileService.getFacultyFullProfile(faculty.faculty_id).subscribe({
+      next: (profile) => {
+        this.viewedFaculty.set({
+          ...faculty,
+          ...(profile.faculty || {}),
+          employment_status: this.normalizeEmploymentStatus(profile.faculty?.employment_status),
+        });
+        this.viewLoading.set(false);
+      },
+      error: (error) => {
+        this.viewError.set(error.error?.message || 'Unable to load faculty details. Please try again.');
+        this.viewLoading.set(false);
+      },
+    });
+  }
+
+  closeViewModal(): void {
+    this.viewRequest?.unsubscribe();
+    this.viewedFaculty.set(null);
+    this.viewLoading.set(false);
+    this.viewError.set('');
+    if (this.viewTrigger?.isConnected) this.viewTrigger.focus();
+    this.viewTrigger = undefined;
+  }
+
+  retryViewFaculty(): void {
+    const faculty = this.viewedFaculty();
+    if (faculty) this.openViewModal(faculty, false);
+  }
+
+  onViewKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.closeViewModal();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const dialog = event.currentTarget as HTMLElement;
+    const buttons = dialog.querySelectorAll<HTMLButtonElement>('button:not([disabled])');
+    const first = buttons[0];
+    const last = buttons[buttons.length - 1];
+    if (!first) return;
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialog)) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.viewRequest?.unsubscribe();
+  }
 
   generateAllActivitiesPDF(faculty: Faculty) {
     Promise.all([
@@ -110,57 +227,63 @@ export class DeanFacultyManagement implements OnInit {
           if (isNaN(d.getTime())) return '';
           return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         };
+        // "FY 2022-2025": the span of years the listed activities fall in
+        const period = (rows: any[]) => {
+          const years = rows
+            .map((r) => new Date(r.date).getFullYear())
+            .filter((y) => !isNaN(y));
+          if (years.length === 0) return `FY ${new Date().getFullYear()}`;
+          const [from, to] = [Math.min(...years), Math.max(...years)];
+          return from === to ? `FY ${from}` : `FY ${from}-${to}`;
+        };
+        // No. / Title / Category / Date / Sponsoring Agency, sized like the accreditation tables
+        const involvementColumns = (titleHeader: string) => [
+          { key: 'no', header: 'No.', widthFraction: 0.07, align: 'center' as const },
+          { key: 'title', header: titleHeader, widthFraction: 0.38 },
+          { key: 'category', header: 'Category (Local, National, International)', widthFraction: 0.15 },
+          { key: 'date', header: 'Date', widthFraction: 0.18 },
+          { key: 'sponsoring_agency', header: 'Sponsoring Agency', widthFraction: 0.22 },
+        ];
+        const involvementRows = (rows: any[]) =>
+          rows.map((r: any, i: number) => ({
+            no: `${i + 1}.`,
+            title: r.title || '',
+            category: r.category || '',
+            date: formatDate(r.date),
+            sponsoring_agency: r.sponsoring_agency || '',
+          }));
 
         await this.facultyProfilePdfService.generateActivitiesReport(faculty, [
           {
-            title: 'Seminars/Trainings/Conferences Attended',
-            columns: [
-              { key: 'no', header: 'No.', widthFraction: 0.05 },
-              {
-                key: 'title',
-                header: 'Title of Seminar/Workshop/Training/Conference Attended',
-                widthFraction: 0.4,
-              },
-              { key: 'category', header: 'Category (Local, National, International)', widthFraction: 0.15 },
-              { key: 'date', header: 'Date', widthFraction: 0.15 },
-              { key: 'sponsoring_agency', header: 'Sponsoring Agency', widthFraction: 0.25 },
+            titleLines: [
+              'List of Faculty Involvement in',
+              'Seminars/Workshops/Trainings/Conferences (Permanent and Temporary)',
             ],
-            rows: seminars.map((s: any, i: number) => ({
-              no: String(i + 1),
-              title: s.title || '',
-              category: s.category || '',
-              date: formatDate(s.date),
-              sponsoring_agency: s.sponsoring_agency || '',
-            })),
+            period: period(seminars),
+            columns: involvementColumns('Title of Seminar/Workshop/Training/ Conference Attended'),
+            rows: involvementRows(seminars),
           },
           {
-            title: 'Research Activities',
-            columns: [
-              { key: 'no', header: 'No.', widthFraction: 0.05 },
-              { key: 'title', header: 'Title of Research', widthFraction: 0.4 },
-              { key: 'category', header: 'Category', widthFraction: 0.15 },
-              { key: 'date', header: 'Date', widthFraction: 0.15 },
-              { key: 'sponsoring_agency', header: 'Sponsoring Agency', widthFraction: 0.25 },
+            titleLines: [
+              'List of Faculty Involvement in Research-related',
+              'Seminars/Workshops/Trainings/Conferences (Permanent and Temporary)',
             ],
-            rows: research.map((r: any, i: number) => ({
-              no: String(i + 1),
-              title: r.title || '',
-              category: r.category || '',
-              date: formatDate(r.date),
-              sponsoring_agency: r.sponsoring_agency || '',
-            })),
+            period: period(research),
+            columns: involvementColumns('Title of Research Seminar/Workshop/Training/ Conference Attended'),
+            rows: involvementRows(research),
           },
           {
-            title: 'Extension Activities',
+            titleLines: ['List of Faculty Involvement in', 'Extension Activities (Permanent and Temporary)'],
+            period: period(extensions),
             columns: [
-              { key: 'no', header: 'No.', widthFraction: 0.05 },
-              { key: 'title', header: 'Title of Extension PPAs', widthFraction: 0.4 },
-              { key: 'date', header: 'Date of Implementation', widthFraction: 0.15 },
-              { key: 'beneficiary', header: 'Beneficiary', widthFraction: 0.22 },
+              { key: 'no', header: 'No.', widthFraction: 0.07, align: 'center' as const },
+              { key: 'title', header: 'Title of Extension PPAs', widthFraction: 0.38 },
+              { key: 'date', header: 'Date of Implementation', widthFraction: 0.18 },
+              { key: 'beneficiary', header: 'Beneficiary', widthFraction: 0.19 },
               { key: 'location', header: 'Location', widthFraction: 0.18 },
             ],
             rows: extensions.map((e: any, i: number) => ({
-              no: String(i + 1),
+              no: `${i + 1}.`,
               title: e.title || '',
               date: formatDate(e.date),
               beneficiary: e.beneficiary || '',
@@ -268,12 +391,45 @@ export class DeanFacultyManagement implements OnInit {
       email: '',
       contact_number: '',
       position_level: '',
+      employment_status: '',
+      designation: '',
     };
     this.showCreateModal.set(true);
   }
 
   closeCreateModal() {
     this.showCreateModal.set(false);
+  }
+
+  designationEntries(mode: 'create' | 'edit'): string[] {
+    const form = mode === 'create' ? this.createForm : this.editForm;
+    return (form.designation || '').split('\n');
+  }
+
+  updateDesignationEntry(mode: 'create' | 'edit', index: number, value: string): void {
+    const form = mode === 'create' ? this.createForm : this.editForm;
+    const entries = this.designationEntries(mode);
+    entries[index] = value;
+    form.designation = entries.join('\n');
+  }
+
+  addDesignationEntry(mode: 'create' | 'edit', index: number, event: Event): void {
+    if (event instanceof KeyboardEvent && event.isComposing) return;
+    event.preventDefault();
+    const form = mode === 'create' ? this.createForm : this.editForm;
+    const entries = this.designationEntries(mode);
+    if (!entries[index].trim() || (form.designation || '').length >= 255) return;
+    entries.splice(index + 1, 0, '');
+    form.designation = entries.join('\n');
+    const container = (event.target as HTMLElement).closest('.designation-inputs');
+    setTimeout(() => container?.querySelectorAll<HTMLInputElement>('input')[index + 1]?.focus());
+  }
+
+  removeDesignationEntry(mode: 'create' | 'edit', index: number): void {
+    const form = mode === 'create' ? this.createForm : this.editForm;
+    const entries = this.designationEntries(mode);
+    entries.splice(index, 1);
+    form.designation = entries.join('\n');
   }
 
   submitCreateForm() {
@@ -304,6 +460,8 @@ export class DeanFacultyManagement implements OnInit {
       });
       return;
     }
+
+    if (!this.validateEmploymentFields(this.createForm)) return;
 
     this.createLoading.set(true);
     this.facultyService.createFaculty(this.createForm).subscribe({
@@ -360,8 +518,29 @@ export class DeanFacultyManagement implements OnInit {
       email: faculty.email,
       contact_number: faculty.contact_number || '',
       position_level: faculty.position_level || '',
+      employment_status: this.normalizeEmploymentStatus(faculty.employment_status),
+      designation: faculty.designation || '',
     };
+    this.onEmploymentStatusChange('edit', this.editForm.employment_status);
     this.showEditModal.set(true);
+  }
+
+  private normalizeEmploymentStatus(value: string | null | undefined): string {
+    const normalized = (value || '').trim().replace(/\s+faculty$/i, '').toLowerCase();
+    return this.employmentStatuses.find((status) => status.toLowerCase() === normalized) || value || '';
+  }
+
+  private validateEmploymentFields(form: Pick<Faculty, 'employment_status' | 'position_level'>): boolean {
+    if (!form.employment_status?.trim() || !form.position_level?.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Validation Error',
+        text: !form.employment_status?.trim() ? 'Please select employment status' : 'Please select academic rank',
+        confirmButtonColor: '#2563eb',
+      });
+      return false;
+    }
+    return true;
   }
 
   closeEditModal() {
@@ -397,6 +576,8 @@ export class DeanFacultyManagement implements OnInit {
       return;
     }
 
+    if (!this.validateEmploymentFields(this.editForm)) return;
+
     this.updateLoading.set(true);
     this.facultyService
       .updateFaculty(this.editForm.faculty_id, {
@@ -407,6 +588,8 @@ export class DeanFacultyManagement implements OnInit {
         email: this.editForm.email,
         contact_number: this.editForm.contact_number,
         position_level: this.editForm.position_level,
+        employment_status: this.editForm.employment_status,
+        designation: this.editForm.designation,
       })
       .subscribe({
         next: () => {
@@ -561,11 +744,20 @@ export class DeanFacultyManagement implements OnInit {
           next: async (profileData) => {
             try {
               await this.facultyProfilePdfService.generateAndDownload({
-                faculty,
+                faculty: {
+                  ...faculty,
+                  ...(profileData.faculty || {}),
+                  employment_status: profileData.faculty?.employment_status ?? null,
+                },
                 personal: profileData.personal,
                 academic: profileData.academic,
                 employment: profileData.employment,
                 coursesHandled: profileData.coursesHandled,
+                eligibilities: (profileData.eligibilities || [])
+                  .map((e: any) => e.career_service)
+                  .filter(Boolean),
+                pdsEducation: profileData.pdsEducation || [],
+                photoUrl: profileData.photoUrl || null,
               });
               Swal.close();
             } catch (error) {

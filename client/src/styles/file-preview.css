@@ -1,0 +1,114 @@
+.pdf-preview-modal,
+.pdf-preview-header,
+.pdf-preview-footer {
+  background-color: #ffffff;
+}
+
+.pdf-preview-body {
+  background-color: #f9fafb;
+}
+
+.pdf-preview-stage {
+  background-color: #e5e7eb;
+}
+
+.pdf-preview-toolbar {
+  background-color: #f8fafc;
+  border-color: #d1d5db;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+}
+
+.pdf-preview-pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: safe center;
+  gap: 1rem;
+}
+
+.docx-preview-container {
+  height: calc(92vh - 10.5rem);
+  min-height: 28rem;
+}
+
+.pdf-page-count {
+  color: #64748b;
+}
+
+.pdf-page-count i {
+  color: #3b82f6;
+}
+
+.pdf-zoom-group {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
+}
+
+.pdf-zoom-button,
+.pdf-zoom-value {
+  color: #475569;
+  background-color: transparent;
+}
+
+.pdf-zoom-button:hover:not(:disabled),
+.pdf-zoom-value:hover {
+  background-color: #f1f5f9;
+}
+
+.pdf-zoom-button:disabled {
+  color: #cbd5e1;
+}
+
+.pdf-zoom-value {
+  border-color: #cbd5e1;
+}
+
+:host-context(.dark) .pdf-preview-modal,
+:host-context(.dark) .pdf-preview-header,
+:host-context(.dark) .pdf-preview-footer {
+  background-color: #1f2937;
+}
+
+:host-context(.dark) .pdf-preview-body,
+:host-context(.dark) .pdf-preview-stage {
+  background-color: #111827;
+}
+
+:host-context(.dark) .pdf-preview-toolbar {
+  background-color: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+:host-context(.dark) .pdf-page-count {
+  color: #9ca3af;
+}
+
+:host-context(.dark) .pdf-page-count i {
+  color: #60a5fa;
+}
+
+:host-context(.dark) .pdf-zoom-group {
+  background-color: #374151;
+  border-color: #4b5563;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+:host-context(.dark) .pdf-zoom-button,
+:host-context(.dark) .pdf-zoom-value {
+  color: #d1d5db;
+}
+
+:host-context(.dark) .pdf-zoom-button:hover:not(:disabled),
+:host-context(.dark) .pdf-zoom-value:hover {
+  background-color: #4b5563;
+}
+
+:host-context(.dark) .pdf-zoom-button:disabled {
+  color: #6b7280;
+}
+
+:host-context(.dark) .pdf-zoom-value {
+  border-color: #4b5563;
+}

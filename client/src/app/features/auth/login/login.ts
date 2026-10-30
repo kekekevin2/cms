@@ -6,16 +6,14 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Component, OnInit, signal, AfterViewInit } from '@angular/core';
+import {
+  Component, OnInit, OnDestroy, signal, effect, AfterViewInit, ElementRef, ViewChild,
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { Auth } from '../../../services/auth/auth';
 import { ThemeService } from '../../../services/theme/theme.service';
 import { RecaptchaService } from '../../../services/core/recaptcha.service';
-import { environment } from '../../../environments/environment';
 import Swal from 'sweetalert2';
-
-// Declare grecaptcha for TypeScript
-declare const grecaptcha: any;
 
 @Component({
   selector: 'app-login',
@@ -23,11 +21,17 @@ declare const grecaptcha: any;
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login implements OnInit, AfterViewInit {
+export class Login implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('recaptchaFrame') private recaptchaFrame!: ElementRef<HTMLDivElement>;
+  recaptchaScale = 1;
+  private recaptchaResizeObserver?: ResizeObserver;
+  private destroyed = false;
   loginForm!: FormGroup;
   isPasswordVisible: boolean = false;
   isLoading = signal<boolean>(false);
-  recaptchaSiteKey = environment.recaptchaSiteKey;
+  isRecaptchaVerified = signal(false);
+  recaptchaSiteKey = '';
+  recaptchaConfigError = false;
   private recaptchaWidgetId: number | null = null;
 
   constructor(
@@ -35,7 +39,16 @@ export class Login implements OnInit, AfterViewInit {
     private authService: Auth,
     public themeService: ThemeService,
     private recaptchaService: RecaptchaService,
-  ) {}
+  ) {
+    effect(() => {
+      const theme = this.themeService.isDarkMode() ? 'dark' : 'light';
+      if (this.recaptchaWidgetId !== null) {
+        this.resetRecaptcha();
+        this.recaptchaWidgetId = null;
+        this.renderRecaptcha(theme);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
@@ -45,27 +58,54 @@ export class Login implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Wait for grecaptcha to be ready and render the widget
-    this.renderRecaptcha();
+    const frame = this.recaptchaFrame.nativeElement;
+    const resizeRecaptcha = () => {
+      // Google renders the normal checkbox at a fixed 304 × 78 pixels.
+      this.recaptchaScale = Math.min(1, frame.clientWidth / 304);
+      frame.style.height = `${78 * this.recaptchaScale}px`;
+    };
+    this.recaptchaResizeObserver = new ResizeObserver(resizeRecaptcha);
+    this.recaptchaResizeObserver.observe(frame);
+    this.recaptchaService.loadSiteKey().subscribe({
+      next: async (siteKey) => {
+        try {
+          await this.recaptchaService.loadApi();
+          if (this.destroyed) return;
+          this.recaptchaSiteKey = siteKey;
+          this.renderRecaptcha();
+        } catch (error) {
+          this.recaptchaConfigError = true;
+          console.error('Unable to load reCAPTCHA:', error);
+        }
+      },
+      error: (error) => {
+        this.recaptchaConfigError = true;
+        console.error('Unable to load reCAPTCHA configuration:', error);
+      },
+    });
   }
 
-  private renderRecaptcha(): void {
-    if (typeof grecaptcha !== 'undefined' && grecaptcha.render) {
-      try {
-        const container = document.getElementById('recaptcha-container');
-        if (!container) return;
-        // Only render if container is empty
-        if (container.childElementCount > 0) return;
-        this.recaptchaWidgetId = grecaptcha.render('recaptcha-container', {
-          sitekey: this.recaptchaSiteKey,
-          theme: this.themeService.isDarkMode() ? 'dark' : 'light',
-          size: 'normal',
-        });
-      } catch (error) {
-        console.error('Error rendering reCAPTCHA:', error);
-      }
-    } else {
-      setTimeout(() => this.renderRecaptcha(), 100);
+  private renderRecaptcha(theme: 'light' | 'dark' = this.themeService.isDarkMode() ? 'dark' : 'light'): void {
+    if (!this.recaptchaSiteKey || this.recaptchaWidgetId !== null) return;
+    this.isRecaptchaVerified.set(false);
+    try {
+      // Use a fresh element because Google does not allow rendering twice on one host.
+      const host = document.createElement('div');
+      host.id = 'login-recaptcha-widget';
+      this.recaptchaFrame.nativeElement.querySelector('#recaptcha-container')!.replaceChildren(host);
+      this.recaptchaWidgetId = this.recaptchaService.renderCheckbox(
+        host.id,
+        this.recaptchaSiteKey,
+        theme,
+        {
+          onVerify: (token) => this.isRecaptchaVerified.set(!!token),
+          onExpire: () => this.isRecaptchaVerified.set(false),
+          onError: () => this.isRecaptchaVerified.set(false),
+        },
+      );
+    } catch (error) {
+      this.recaptchaConfigError = true;
+      console.error('Unable to render reCAPTCHA:', error);
     }
   }
 
@@ -73,24 +113,33 @@ export class Login implements OnInit, AfterViewInit {
     this.isPasswordVisible = !this.isPasswordVisible;
   }
 
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    this.recaptchaResizeObserver?.disconnect();
+  }
+
   async onSubmit(): Promise<void> {
+    if (this.isLoading()) return;
     if (this.loginForm.valid) {
+      if (this.recaptchaConfigError || this.recaptchaWidgetId === null) {
+        Swal.fire({
+          icon: 'error',
+          title: 'reCAPTCHA Unavailable',
+          text: 'reCAPTCHA is not ready. Please refresh the page or contact the administrator.',
+          confirmButtonColor: '#16a34a',
+        });
+        return;
+      }
+
       this.isLoading.set(true);
 
       const { email, password } = this.loginForm.value;
 
       try {
-        // Get reCAPTCHA token
-        let recaptchaToken: string;
-
-        if (typeof grecaptcha !== 'undefined') {
-          recaptchaToken = grecaptcha.getResponse(this.recaptchaWidgetId);
-
-          if (!recaptchaToken || recaptchaToken.length === 0) {
-            throw 'Please complete the reCAPTCHA challenge';
-          }
-        } else {
-          throw 'reCAPTCHA not loaded. Please refresh the page.';
+        const recaptchaToken = this.recaptchaService.getToken(this.recaptchaWidgetId);
+        if (!recaptchaToken) {
+          this.isRecaptchaVerified.set(false);
+          throw 'Please complete the reCAPTCHA challenge';
         }
 
         console.log('📤 Login component: Calling auth service...');
@@ -127,7 +176,6 @@ export class Login implements OnInit, AfterViewInit {
             console.error('❌ Login component: Login failed', error);
             this.isLoading.set(false);
             this.resetRecaptcha();
-
             const message = error.error?.message || 'Login failed. Please check your credentials.';
             Swal.fire({
               icon: 'error',
@@ -151,16 +199,22 @@ export class Login implements OnInit, AfterViewInit {
   }
 
   private resetRecaptcha(): void {
-    if (typeof grecaptcha !== 'undefined' && this.recaptchaWidgetId !== null) {
-      try {
-        grecaptcha.reset(this.recaptchaWidgetId);
-      } catch (error) {
-        console.error('Error resetting reCAPTCHA:', error);
-      }
+    this.isRecaptchaVerified.set(false);
+    if (this.recaptchaWidgetId !== null) {
+      this.recaptchaService.reset(this.recaptchaWidgetId);
     }
   }
 
   get loginData() {
     return this.loginForm.controls;
+  }
+
+  get canSignIn(): boolean {
+    return (
+      this.loginForm.valid &&
+      this.isRecaptchaVerified() &&
+      !this.recaptchaConfigError &&
+      !this.isLoading()
+    );
   }
 }

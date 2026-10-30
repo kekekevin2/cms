@@ -35,14 +35,34 @@ function buildKey(folder, originalname) {
 	return `${folder}/${base}-${unique}${ext}`;
 }
 
-/** Rejects keys that would escape the storage root. */
+/**
+ * Normalizes historical disk paths such as
+ * "uploads\\organization-documents\\file.pdf" into the driver-neutral key
+ * "organization-documents/file.pdf", then rejects anything that could escape
+ * the storage root.
+ */
 function assertSafeKey(key) {
 	if (typeof key !== "string" || key.length === 0) {
 		throw new Error("Storage key must be a non-empty string");
 	}
-	if (key.startsWith("/") || key.includes("..") || key.includes("\\") || /^[a-zA-Z]:/.test(key)) {
+	let normalized = key.replace(/\\/g, "/");
+	const legacyUploadsMarker = normalized.toLowerCase().lastIndexOf("/uploads/");
+	if (legacyUploadsMarker >= 0) {
+		// Historical database rows may contain an absolute path from an older
+		// workspace. Keep only the driver-neutral key after the uploads folder.
+		normalized = normalized.slice(legacyUploadsMarker + "/uploads/".length);
+	} else if (/^\/?uploads\//i.test(normalized)) {
+		normalized = normalized.replace(/^\/?uploads\//i, "");
+	}
+	if (
+		normalized.startsWith("/") ||
+		normalized.includes("..") ||
+		normalized.includes("\\") ||
+		/^[a-zA-Z]:/.test(normalized)
+	) {
 		throw new Error(`Unsafe storage key: ${key}`);
 	}
+	return normalized;
 }
 
 // ---------------------------------------------------------------- disk driver
@@ -58,20 +78,20 @@ const diskDriver = {
 	},
 
 	async getUrl(key) {
-		assertSafeKey(key);
-		return `${PUBLIC_BASE_URL}/uploads/${key}`;
+		const safeKey = assertSafeKey(key);
+		return `${PUBLIC_BASE_URL}/uploads/${safeKey}`;
 	},
 
 	async remove(key) {
-		assertSafeKey(key);
-		await fs.unlink(path.join(DISK_ROOT, key)).catch(err => {
+		const safeKey = assertSafeKey(key);
+		await fs.unlink(path.join(DISK_ROOT, safeKey)).catch(err => {
 			if (err.code !== 'ENOENT') throw err;
 		});
 	},
 
 	async getBuffer(key) {
-		assertSafeKey(key);
-		return fs.readFile(path.join(DISK_ROOT, key));
+		const safeKey = assertSafeKey(key);
+		return fs.readFile(path.join(DISK_ROOT, safeKey));
 	},
 };
 
@@ -108,25 +128,25 @@ function makeS3Driver() {
 		},
 
 		async getUrl(key, { download = false, filename } = {}) {
-			assertSafeKey(key);
+			const safeKey = assertSafeKey(key);
 			const command = new GetObjectCommand({
 				Bucket,
-				Key: key,
+				Key: safeKey,
 				...(download && {
-					ResponseContentDisposition: `attachment; filename="${(filename || path.basename(key)).replace(/"/g, "")}"`,
+					ResponseContentDisposition: `attachment; filename="${(filename || path.basename(safeKey)).replace(/"/g, "")}"`,
 				}),
 			});
 			return getSignedUrl(client, command, { expiresIn: PRESIGN_TTL });
 		},
 
 		async remove(key) {
-			assertSafeKey(key);
-			await client.send(new DeleteObjectCommand({ Bucket, Key: key }));
+			const safeKey = assertSafeKey(key);
+			await client.send(new DeleteObjectCommand({ Bucket, Key: safeKey }));
 		},
 
 		async getBuffer(key) {
-			assertSafeKey(key);
-			const response = await client.send(new GetObjectCommand({ Bucket, Key: key }));
+			const safeKey = assertSafeKey(key);
+			const response = await client.send(new GetObjectCommand({ Bucket, Key: safeKey }));
 			const bytes = await response.Body.transformToByteArray();
 			return Buffer.from(bytes);
 		},

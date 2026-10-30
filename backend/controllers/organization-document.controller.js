@@ -13,6 +13,7 @@ async function getDepartmentForUser(userId) {
 }
 
 const { Op } = require("sequelize");
+const path = require("node:path");
 const storage = require("../utils/storage");
 
 // Get all documents for organization
@@ -611,6 +612,79 @@ exports.deanDownloadDocument = async (req, res) => {
 	} catch (error) {
 		console.error("Dean download document error:", error);
 		res.status(500).json({ message: "Error downloading document" });
+	}
+};
+
+// Dean inline preview. PDFs and images use an inline storage URL, while DOCX
+// and text files are returned as extracted text so preview works in local and
+// hosted environments without sending private files to a third-party viewer.
+exports.deanPreviewDocument = async (req, res) => {
+	try {
+		const deanInfo = await getDepartmentForUser(req.user.user_id);
+		if (!deanInfo) {
+			return res.status(404).json({ message: "Department profile not found" });
+		}
+
+		const document = await db.OrganizationDocument.findOne({
+			where: { document_id: req.params.id },
+			include: [
+				{
+					model: db.Organization,
+					where: { department: deanInfo.department },
+				},
+			],
+		});
+		if (!document) {
+			return res.status(404).json({
+				message: "Document not found or not in your department",
+			});
+		}
+
+		const filename = document.original_filename;
+		const mimeType = document.mime_type || "application/octet-stream";
+		const extension = path.extname(filename || "").toLowerCase();
+
+		if (
+			extension === ".docx" ||
+			mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+		) {
+			return res.json({
+				kind: "docx",
+				url: await storage.getUrl(document.document_path),
+				filename,
+				mimeType,
+			});
+		}
+		if (
+			mimeType.startsWith("text/") ||
+			[".txt", ".csv", ".json", ".xml"].includes(extension)
+		) {
+			const text = (await storage.getBuffer(document.document_path))
+				.toString("utf8")
+				.slice(0, 1_000_000);
+			return res.json({ kind: "text", text, filename, mimeType });
+		}
+		if (mimeType === "application/pdf" || extension === ".pdf") {
+			return res.json({
+				kind: "pdf",
+				url: await storage.getUrl(document.document_path),
+				filename,
+				mimeType,
+			});
+		}
+		if (mimeType.startsWith("image/")) {
+			return res.json({
+				kind: "image",
+				url: await storage.getUrl(document.document_path),
+				filename,
+				mimeType,
+			});
+		}
+
+		res.json({ kind: "unsupported", filename, mimeType });
+	} catch (error) {
+		console.error("Dean preview document error:", error);
+		res.status(500).json({ message: "Error previewing document" });
 	}
 };
 

@@ -15,6 +15,7 @@ import {
   PDSReference,
 } from '../../../services/core/pds.service';
 import { PdsPdfService } from '../../../services/core/pds-pdf.service';
+import { PDS_QUESTIONNAIRE } from '../../../services/core/pds-questionnaire';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -51,6 +52,8 @@ export class PersonalDataSheetComponent implements OnInit {
 
   currentTab = signal<number>(1);
   loading = signal(false);
+  readonly questionnaire = PDS_QUESTIONNAIRE;
+  declarationAgreed = signal(false);
   isEditMode = signal(false); // Track edit mode for submitted/approved PDS
   photoFile: File | null = null;
   signatureFile: File | null = null;
@@ -239,7 +242,22 @@ export class PersonalDataSheetComponent implements OnInit {
     });
   }
 
+  /** The declaration must be ticked before the PDS can be saved or submitted */
+  private requireDeclaration(): boolean {
+    if (this.declarationAgreed()) return true;
+    Swal.fire({
+      icon: 'warning',
+      title: 'Declaration Required',
+      text: 'Please read and check the declaration before saving or submitting your Personal Data Sheet.',
+      confirmButtonColor: '#2563eb',
+    }).then(() =>
+      document.getElementById('pds-declaration')?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+    );
+    return false;
+  }
+
   savePDS() {
+    if (!this.requireDeclaration()) return;
     this.loading.set(true);
     this.pdsService.savePDS(this.pds).subscribe({
       next: () => {
@@ -365,6 +383,7 @@ export class PersonalDataSheetComponent implements OnInit {
   }
 
   submitPDS() {
+    if (!this.requireDeclaration()) return;
     Swal.fire({
       title: 'Submit Personal Data Sheet?',
       text: 'Your current data will be saved and submitted for approval.',
@@ -382,6 +401,7 @@ export class PersonalDataSheetComponent implements OnInit {
             this.pdsService.submitPDS().subscribe({
               next: () => {
                 this.isEditMode.set(false);
+                this.declarationAgreed.set(false);
                 Swal.fire({
                   icon: 'success',
                   title: 'Submitted!',
@@ -694,6 +714,7 @@ export class PersonalDataSheetComponent implements OnInit {
 
   cancelEditMode() {
     this.isEditMode.set(false);
+    this.declarationAgreed.set(false);
     // Reload PDS to discard changes
     this.loadPDS();
   }

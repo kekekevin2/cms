@@ -138,6 +138,14 @@ export interface DocumentsResponse {
   totalItems: number;
 }
 
+export interface DocumentPreviewResponse {
+  kind: 'pdf' | 'docx' | 'image' | 'text' | 'unsupported';
+  filename: string;
+  mimeType: string;
+  url?: string;
+  text?: string;
+}
+
 export interface ChecklistItem {
   document_type_id: number;
   type_name: string;
@@ -452,5 +460,11 @@ export class DeanOrganizationManagementService {
 
   downloadDocument(documentId: number): Observable<{ url: string }> {
     return this.http.get<{ url: string }>(`${this.apiUrl}/documents/${documentId}/download`);
+  }
+
+  previewDocument(documentId: number): Observable<DocumentPreviewResponse> {
+    return this.http.get<DocumentPreviewResponse>(
+      `${this.apiUrl}/documents/${documentId}/preview`,
+    );
   }
 }

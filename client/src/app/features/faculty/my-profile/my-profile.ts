@@ -7,6 +7,7 @@ import {
   PersonalProfile,
   AcademicProfile,
   EmploymentProfile,
+  CourseHandled,
   ProfessionalMembership,
   Award,
   SeminarTraining,
@@ -57,6 +58,8 @@ export class FacultyMyProfile implements OnInit {
   personalProfile = signal<PersonalProfile>({});
   personalForm = signal<PersonalProfile>({});
   isEditingPersonal = signal(false);
+  readonly nameExtensionOptions = ['Jr.', 'Sr.', 'II', 'III', 'IV', 'V'];
+  uploadingAvatar = signal(false);
   selectedProfilePhoto: File | null = null;
   selectedPassportPhoto: File | null = null;
 
@@ -71,6 +74,14 @@ export class FacultyMyProfile implements OnInit {
   employmentForm = signal<EmploymentProfile>({});
   showEmploymentModal = signal(false);
   isEditingEmployment = signal(false);
+
+  // Courses Handled (printed on the Faculty Profile PDF)
+  courses = signal<CourseHandled[]>([]);
+  courseName = '';
+  showCourseModal = signal(false);
+  /** Course being edited in the modal, or null when adding a new one */
+  editingCourse = signal<CourseHandled | null>(null);
+  savingCourse = signal(false);
 
   // Professional Memberships
   memberships = signal<ProfessionalMembership[]>([]);
@@ -114,6 +125,7 @@ export class FacultyMyProfile implements OnInit {
     this.loadPersonalProfile();
     this.loadAcademicProfiles();
     this.loadEmploymentProfiles();
+    this.loadCourses();
     this.loadMemberships();
     this.loadAwards();
     this.loadSeminars();
@@ -147,8 +159,18 @@ export class FacultyMyProfile implements OnInit {
   }
 
   startEditingPersonal() {
-    this.personalForm.set({ ...this.personalProfile() });
+    this.personalForm.set({
+      ...this.personalProfile(),
+      extension_name: this.normalizeNameExtension(this.personalProfile().extension_name),
+    });
     this.isEditingPersonal.set(true);
+  }
+
+  private normalizeNameExtension(value: string | undefined): string {
+    const normalized = (value || '').trim().replace(/\./g, '').toUpperCase();
+    return this.nameExtensionOptions.find((option) =>
+      option.replace(/\./g, '').toUpperCase() === normalized,
+    ) || '';
   }
 
   onProfilePhotoSelected(event: Event) {
@@ -165,17 +187,63 @@ export class FacultyMyProfile implements OnInit {
     }
   }
 
+  /** Uploads a new profile picture straight from the header avatar (no other fields change). */
+  onAvatarSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ''; // allow picking the same file again
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      this.sweetAlert.error('Please choose a JPG, PNG or WebP image');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.sweetAlert.error('The image must be 5 MB or smaller');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+    this.uploadingAvatar.set(true);
+    this.profileService.upsertPersonalProfile(formData).subscribe({
+      next: () => {
+        // The save response holds the storage key; re-read for the viewable URL, and update only
+        // the picture so any personal-profile edit in progress is kept
+        this.profileService.getPersonalProfile().subscribe({
+          next: (response) => {
+            const url = response.profile?.profile_picture;
+            this.personalProfile.update((p) => ({ ...p, profile_picture: url }));
+            this.personalForm.update((p) => ({ ...p, profile_picture: url }));
+            this.uploadingAvatar.set(false);
+            this.sweetAlert.success('Profile picture updated');
+          },
+          error: () => this.uploadingAvatar.set(false),
+        });
+      },
+      error: (error) => {
+        console.error('Error uploading profile picture:', error);
+        this.uploadingAvatar.set(false);
+        this.sweetAlert.error(error?.error?.message || 'Failed to upload profile picture');
+      },
+    });
+  }
+
   savePersonalProfile() {
     const formData = new FormData();
     const form = this.personalForm();
 
     // Append all form fields
+    // (photo fields hold viewable URLs here; new photos are sent as files below)
     Object.keys(form).forEach((key) => {
+      if (key === 'profile_picture' || key === 'passport_photo') return;
       const value = form[key as keyof PersonalProfile];
       if (value !== undefined && value !== null && value !== '') {
         formData.append(key, value.toString());
       }
     });
+
+    // Send the empty choice too, so selecting None clears a previously saved suffix.
+    formData.set('extension_name', this.normalizeNameExtension(form.extension_name));
 
     // Append profile photo if selected
     if (this.selectedProfilePhoto) {
@@ -190,8 +258,9 @@ export class FacultyMyProfile implements OnInit {
     this.profileService.upsertPersonalProfile(formData).subscribe({
       next: (response) => {
         this.sweetAlert.success('Personal profile saved successfully');
-        this.personalProfile.set(response.profile);
         this.isEditingPersonal.set(false);
+        // The save response holds storage keys; reload for viewable photo URLs
+        this.loadPersonalProfile();
         this.selectedProfilePhoto = null;
         this.selectedPassportPhoto = null;
       },
@@ -352,6 +421,64 @@ export class FacultyMyProfile implements OnInit {
             },
           });
         }
+      });
+  }
+
+  // ==================== COURSES HANDLED ====================
+
+  loadCourses() {
+    this.profileService.getCoursesHandled().subscribe({
+      next: (response) => this.courses.set(response.courses || []),
+      error: (error) => console.error('Error loading courses handled:', error),
+    });
+  }
+
+  openCourseModal(course?: CourseHandled) {
+    this.editingCourse.set(course ?? null);
+    this.courseName = course?.course_name ?? '';
+    this.showCourseModal.set(true);
+  }
+
+  saveCourse() {
+    const name = this.courseName.trim();
+    if (!name || this.savingCourse()) return;
+    const editing = this.editingCourse();
+    this.savingCourse.set(true);
+    const request = editing
+      ? this.profileService.updateCourseHandled(editing.id, name)
+      : this.profileService.createCourseHandled(name);
+    request.subscribe({
+      next: (response) => {
+        this.courses.update((list) =>
+          editing ? list.map((c) => (c.id === editing.id ? response.course : c)) : [...list, response.course],
+        );
+        this.sweetAlert.success(editing ? 'Course updated successfully' : 'Course added successfully');
+        this.savingCourse.set(false);
+        this.showCourseModal.set(false);
+      },
+      error: (error) => {
+        console.error('Error saving course:', error);
+        this.savingCourse.set(false);
+        this.sweetAlert.error(editing ? 'Failed to update course' : 'Failed to add course');
+      },
+    });
+  }
+
+  deleteCourse(course: CourseHandled) {
+    this.sweetAlert
+      .confirm(`Remove "${course.course_name}" from your courses handled?`)
+      .then((result: any) => {
+        if (!result.isConfirmed) return;
+        this.profileService.deleteCourseHandled(course.id).subscribe({
+          next: () => {
+            this.courses.update((list) => list.filter((c) => c.id !== course.id));
+            this.sweetAlert.success('Course deleted successfully');
+          },
+          error: (error) => {
+            console.error('Error deleting course:', error);
+            this.sweetAlert.error('Failed to delete course');
+          },
+        });
       });
   }
 

@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;800;900&display=swap'); /* Faculty Profile PDF cover */
 @import 'primeicons/primeicons.css';
 @import 'tailwindcss';
 /* Make Tailwind's dark: utilities follow the app's theme toggle (ThemeService puts .dark on <html>)
@@ -17,6 +18,12 @@
 
 button {
   cursor: pointer;
+}
+
+/* Google adds this iframe dynamically, outside Angular's scoped component styles. */
+app-login .recaptcha-frame iframe {
+  display: block;
+  border: 0;
 }
 
 /* Placeholder text color - gray for better visibility */
@@ -70,4 +77,70 @@ textarea:-ms-input-placeholder {
   max-width: 12rem;
   opacity: 1;
   margin-left: 0.375rem;
+}
+
+/* Styled tooltip bubble (shared/utils/tooltip.util.ts): every `title` attribute app-wide, plus the appTooltip directive */
+.app-tooltip {
+  position: fixed;
+  z-index: 9999;
+  max-width: 20rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+  background: var(--color-gray-800);
+  color: var(--color-white);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.18);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+.app-tooltip--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Arrow pointing at the hovered element */
+.app-tooltip::after {
+  content: '';
+  position: absolute;
+  left: var(--arrow-x, 50%);
+  width: 8px;
+  height: 8px;
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.app-tooltip--above::after {
+  bottom: -4px;
+}
+
+.app-tooltip--below::after {
+  top: -4px;
+}
+
+html.dark .app-tooltip {
+  background: var(--color-gray-100);
+  color: var(--color-gray-900);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.45);
+}
+
+/* Side-nav jump targets (PDS, My Profile): land below the fixed 64px portal top bar instead of under it */
+[id^='section-'] {
+  scroll-margin-top: 5rem;
+}
+
+/* Chart colour tokens (dean dashboard donut / completion ring); dark values in styles/dark-mode.css */
+:root {
+  --chart-validated: var(--color-green-500);
+  --chart-pending: var(--color-yellow-500);
+  --chart-returned: var(--color-red-500);
+  --chart-empty: var(--color-gray-200);
+  --chart-progress: var(--color-blue-500);
+  --chart-hole: var(--color-white);
 }

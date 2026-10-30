@@ -21,6 +21,13 @@ router.get(
   deanOrgDashboardController.getOrganizationDashboard,
 );
 
+router.get(
+  "/organizations/recent-documents",
+  verifyToken,
+  checkRole("dean", "college_department"),
+  deanOrgDashboardController.getRecentOrganizationDocuments,
+);
+
 // Get member demographics for an organization
 router.get(
   "/organizations/member-demographics",

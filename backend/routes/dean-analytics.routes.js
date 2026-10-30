@@ -14,7 +14,4 @@ router.get("/demographics", deanAnalyticsController.getFacultyDemographics);
 // Get education analytics
 router.get("/education", deanAnalyticsController.getEducationAnalytics);
 
-// Get research analytics
-router.get("/research", deanAnalyticsController.getResearchAnalytics);
-
 module.exports = router;

@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
 import {
   SuperadminCollegeDepartmentService,
   CollegeDepartment,
@@ -19,7 +20,7 @@ import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-superadmin-college-department-management',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TooltipDirective],
   templateUrl: './college-department-management.html',
   styleUrl: './college-department-management.css',
 })
@@ -39,6 +40,8 @@ export class SuperadminCollegeDepartmentManagement implements OnInit {
 
   showCreateModal = signal(false);
   showEditModal = signal(false);
+  /** College department shown in the read-only View modal, or null when it is closed. */
+  viewItem = signal<CollegeDepartment | null>(null);
   showDeleteModal = signal(false);
   deleteConfirmText = signal('');
   itemToDelete: CollegeDepartment | null = null;
@@ -297,6 +300,14 @@ export class SuperadminCollegeDepartmentManagement implements OnInit {
   }
 
   // ── Edit ───────────────────────────────────────────────────────────────────
+
+  openViewModal(item: CollegeDepartment) {
+    this.viewItem.set(item);
+  }
+
+  closeViewModal() {
+    this.viewItem.set(null);
+  }
 
   openEditModal(item: CollegeDepartment) {
     const campusId = item.campus_id ?? 0;

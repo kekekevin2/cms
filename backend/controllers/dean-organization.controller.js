@@ -102,6 +102,15 @@ exports.getOrganizations = async (req, res) => {
       return {
         ...orgData,
         email: orgData.user?.email || null,
+        // Sequelize exposes this nested association as `Faculty` because that is
+        // the model alias. Normalize it to the API's `adviser` field so the
+        // organization View and Edit screens receive a stable response shape.
+        organization_advisers: (orgData.organization_advisers || []).map(
+          ({ Faculty, ...assignment }) => ({
+            ...assignment,
+            adviser: Faculty || null,
+          }),
+        ),
       };
     });
 
@@ -262,7 +271,7 @@ exports.updateOrganization = async (req, res) => {
     }
     const dean = { department: deanInfo.department };
 
-    const { organization_name, description } = req.body;
+    const { organization_name, description, email, adviser_id_1 } = req.body;
 
     const organization = await db.Organization.findOne({
       where: {
@@ -275,10 +284,33 @@ exports.updateOrganization = async (req, res) => {
       return res.status(404).json({ message: "Organization not found" });
     }
 
-    // Update organization
-    await organization.update({
-      organization_name,
-      description,
+    if (typeof organization_name !== 'string' || !organization_name.trim()) {
+      return res.status(400).json({ message: 'Organization name is required' });
+    }
+    const normalizedEmail = typeof email === 'string' ? email.trim() : '';
+    if (email !== undefined && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ message: 'A valid email is required' });
+    }
+    if (email !== undefined) {
+      const existing = await db.User.findOne({ where: { email: normalizedEmail, user_id: { [Op.ne]: organization.user_id } } });
+      if (existing) return res.status(409).json({ message: 'Email is already in use' });
+    }
+    if (adviser_id_1 !== undefined) {
+      const adviser = await db.Faculty.findOne({ where: { faculty_id: Number(adviser_id_1), department: dean.department } });
+      if (!adviser) return res.status(400).json({ message: 'Select an adviser from your department' });
+    }
+    await db.sequelize.transaction(async (transaction) => {
+      await organization.update({ organization_name: organization_name.trim(), description }, { transaction });
+      if (email !== undefined) {
+        await db.User.update({ email: normalizedEmail }, { where: { user_id: organization.user_id }, transaction });
+      }
+      if (adviser_id_1 !== undefined) {
+        const current = await db.OrganizationAdviser.findOne({ where: { organization_id: id, is_active: true }, transaction });
+        if (!current || Number(current.faculty_id) !== Number(adviser_id_1)) {
+          await db.OrganizationAdviser.update({ is_active: false }, { where: { organization_id: id, is_active: true }, transaction });
+          await db.OrganizationAdviser.create({ organization_id: id, faculty_id: Number(adviser_id_1), assigned_date: new Date(), is_active: true }, { transaction });
+        }
+      }
     });
 
     res.json({

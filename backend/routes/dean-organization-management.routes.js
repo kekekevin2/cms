@@ -44,5 +44,11 @@ router.get(
 	checkRole("dean", "college_department"),
 	documentController.deanDownloadDocument,
 );
+router.get(
+	"/documents/:id/preview",
+	verifyToken,
+	checkRole("dean", "college_department"),
+	documentController.deanPreviewDocument,
+);
 
 module.exports = router;

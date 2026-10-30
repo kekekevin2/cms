@@ -21,6 +21,31 @@ async function getDepartmentForUser(userId) {
 
 const { Op } = require("sequelize");
 
+function findRecentDocuments(department, organizationId) {
+  const organizationWhere = { department };
+  if (organizationId) organizationWhere.organization_id = organizationId;
+
+  return db.OrganizationDocument.findAll({
+    // Keep enough recent items for review; the dashboard list scrolls after
+    // its fixed maximum height instead of growing the whole page.
+    limit: 20,
+    order: [["submitted_date", "DESC"]],
+    include: [
+      {
+        model: db.Organization,
+        as: "organization",
+        where: organizationWhere,
+        attributes: ["organization_id", "organization_name"],
+      },
+      {
+        model: db.DocumentType,
+        as: "document_type",
+        attributes: ["document_type_id", "type_name"],
+      },
+    ],
+  });
+}
+
 // Get organization dashboard statistics
 exports.getOrganizationDashboard = async (req, res) => {
   try {
@@ -137,24 +162,9 @@ exports.getOrganizationDashboard = async (req, res) => {
     // Get event statistics - temporarily disabled due to missing association
     const totalEvents = 0; // TODO: Add OrganizationEvent -> Organization association in models/index.js
 
-    // Get recent documents
-    const recentDocuments = await db.OrganizationDocument.findAll({
-      limit: 5,
-      order: [["submitted_date", "DESC"]],
-      include: [
-        {
-          model: db.Organization,
-          as: "organization",
-          where: orgWhere,
-          attributes: ["organization_id", "organization_name"],
-        },
-        {
-          model: db.DocumentType,
-          as: "document_type",
-          attributes: ["document_type_id", "type_name"],
-        },
-      ],
-    });
+    // The submissions panel has its own organization filter and always starts
+    // with the department-wide recent list.
+    const recentDocuments = await findRecentDocuments(dean.department);
 
     // Get organizations with their stats
     const organizationStats = await db.Organization.findAll({
@@ -162,10 +172,16 @@ exports.getOrganizationDashboard = async (req, res) => {
       attributes: ["organization_id", "organization_name"],
       include: [
         {
-          model: db.Faculty,
-          as: "faculty",
-          attributes: ["first_name", "middle_name", "last_name"],
-          required: false, // Make optional - don't fail if no faculty
+          model: db.OrganizationAdviser,
+          where: { is_active: true },
+          required: false,
+          include: [
+            {
+              model: db.Faculty,
+              as: "Faculty",
+              attributes: ["faculty_id", "first_name", "middle_name", "last_name"],
+            },
+          ],
         },
         {
           model: db.OrganizationMember,
@@ -300,6 +316,19 @@ exports.getOrganizationDashboard = async (req, res) => {
       membersByYearLevel,
     };
 
+    const organizationStatsWithAdvisers = organizationStats.map((organization) => {
+      const data = organization.toJSON();
+      return {
+        ...data,
+        organization_advisers: (data.organization_advisers || []).map(
+          ({ Faculty, ...assignment }) => ({
+            ...assignment,
+            adviser: Faculty || null,
+          }),
+        ),
+      };
+    });
+
     res.json({
       statistics: {
         totalOrganizations,
@@ -315,7 +344,7 @@ exports.getOrganizationDashboard = async (req, res) => {
       },
       memberStats,
       recentDocuments,
-      organizationStats,
+      organizationStats: organizationStatsWithAdvisers,
     });
   } catch (error) {
     console.error("Get organization dashboard error:", error);
@@ -326,6 +355,27 @@ exports.getOrganizationDashboard = async (req, res) => {
       error: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
+  }
+};
+
+// Refresh only the Recent Report Submissions panel without recalculating the
+// rest of the organization dashboard.
+exports.getRecentOrganizationDocuments = async (req, res) => {
+  try {
+    const deanInfo = await getDepartmentForUser(req.user.user_id);
+    if (!deanInfo) {
+      return res.status(404).json({ message: "Department profile not found" });
+    }
+
+    const organizationId = Number(req.query.organizationId);
+    const recentDocuments = await findRecentDocuments(
+      deanInfo.department,
+      Number.isInteger(organizationId) && organizationId > 0 ? organizationId : undefined,
+    );
+    res.json({ recentDocuments });
+  } catch (error) {
+    console.error("Get recent organization documents error:", error);
+    res.status(500).json({ message: "Error fetching recent organization documents" });
   }
 };
 

@@ -52,6 +52,14 @@ export interface DepartmentStatistics {
   faculty_clearance_rate: string;
 }
 
+export interface RequirementPreviewResponse {
+  kind: 'pdf' | 'docx' | 'image' | 'text' | 'unsupported';
+  filename: string;
+  mimeType: string;
+  url?: string;
+  text?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -150,6 +158,12 @@ export class DeanRequirementService {
       next: ({ url }) => downloadFromUrl(url, fileName),
       error: (err) => console.error('Download failed', err),
     });
+  }
+
+  previewRequirement(submission_id: number): Observable<RequirementPreviewResponse> {
+    return this.http.get<RequirementPreviewResponse>(
+      `${this.apiUrl}/${submission_id}/preview`,
+    );
   }
 
   // Set faculty clearance status (manual override)

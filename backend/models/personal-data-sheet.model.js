@@ -406,6 +406,11 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.DATE,
       allowNull: true,
     },
+    // Added by migrations/add-government-id-place-issued-to-pds.js
+    government_id_place_issued: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    },
 
     // Status
     status: {

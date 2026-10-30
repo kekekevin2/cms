@@ -141,17 +141,34 @@ html.dark {
   @apply bg-gray-800;
 }
 
-.dark tbody tr:hover {
-  @apply bg-gray-700;
-}
-
 .dark tbody tr:nth-child(even) {
   @apply bg-gray-800/50;
 }
 
-/* Buttons - preserve colored buttons */
-.dark button:not([class*="bg-green"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-yellow"]):not([class*="bg-purple"]):not([class*="bg-indigo"]) {
-  @apply hover:bg-gray-700;
+/* Row hover: only a faint lift, so gray buttons in the row (gray-600, below) keep their outline.
+   Declared after the even-row rule so it also applies to even rows. */
+.dark tbody tr:hover,
+.dark tr.hover\:bg-gray-50:hover,
+.dark tr.hover\:bg-gray-50\/60:hover {
+  background-color: color-mix(in oklab, var(--color-gray-800) 92%, white);
+}
+
+/* Gray buttons (row actions like Edit, quick-nav, secondary buttons) sit one step above rows
+   and cards, and lighten on hover */
+.dark button.bg-gray-50,
+.dark button.bg-gray-100 {
+  @apply bg-gray-600;
+}
+
+.dark button.bg-gray-50:hover,
+.dark button.bg-gray-100:hover,
+.dark button.hover\:bg-gray-200:hover {
+  @apply bg-gray-500;
+}
+
+/* Other uncoloured buttons (no bg-* of their own) get a hover background */
+.dark button:not([class*="bg-"]):hover {
+  @apply bg-gray-700;
 }
 
 /* Dropdowns and Modals */
@@ -909,7 +926,259 @@ html.dark .to-yellow-100 {
   --tw-gradient-to: color-mix(in oklab, var(--color-yellow-500) 10%, transparent);
 }
 
-/* Saturated gradient cards (dashboard stat tiles): keep the colour, lose the glare */
-html.dark [class*="bg-gradient-to-"]:not([class*="-50"]):not([class*="-100"]) {
-  filter: saturate(0.8) brightness(0.85);
+/* Saturated gradient cards (dashboard stat tiles, bg-linear-to-* / bg-gradient-to-*): swap the
+   bright stops for deep shades of the same colour, so tiles stay recognisable without glaring and
+   their white text keeps its contrast. */
+html.dark .from-red-400,
+html.dark .from-red-500,
+html.dark .from-red-600 {
+  --tw-gradient-from: var(--color-red-800);
+}
+html.dark .via-red-500,
+html.dark .via-red-600 {
+  --tw-gradient-via: var(--color-red-800);
+}
+html.dark .to-red-500,
+html.dark .to-red-600,
+html.dark .to-red-700 {
+  --tw-gradient-to: var(--color-red-900);
+}
+html.dark .from-green-400,
+html.dark .from-green-500,
+html.dark .from-green-600 {
+  --tw-gradient-from: var(--color-green-800);
+}
+html.dark .via-green-500,
+html.dark .via-green-600 {
+  --tw-gradient-via: var(--color-green-800);
+}
+html.dark .to-green-500,
+html.dark .to-green-600,
+html.dark .to-green-700 {
+  --tw-gradient-to: var(--color-green-900);
+}
+html.dark .from-emerald-400,
+html.dark .from-emerald-500,
+html.dark .from-emerald-600 {
+  --tw-gradient-from: var(--color-emerald-800);
+}
+html.dark .via-emerald-500,
+html.dark .via-emerald-600 {
+  --tw-gradient-via: var(--color-emerald-800);
+}
+html.dark .to-emerald-500,
+html.dark .to-emerald-600,
+html.dark .to-emerald-700 {
+  --tw-gradient-to: var(--color-emerald-900);
+}
+html.dark .from-lime-400,
+html.dark .from-lime-500,
+html.dark .from-lime-600 {
+  --tw-gradient-from: var(--color-lime-800);
+}
+html.dark .via-lime-500,
+html.dark .via-lime-600 {
+  --tw-gradient-via: var(--color-lime-800);
+}
+html.dark .to-lime-500,
+html.dark .to-lime-600,
+html.dark .to-lime-700 {
+  --tw-gradient-to: var(--color-lime-900);
+}
+html.dark .from-teal-400,
+html.dark .from-teal-500,
+html.dark .from-teal-600 {
+  --tw-gradient-from: var(--color-teal-800);
+}
+html.dark .via-teal-500,
+html.dark .via-teal-600 {
+  --tw-gradient-via: var(--color-teal-800);
+}
+html.dark .to-teal-500,
+html.dark .to-teal-600,
+html.dark .to-teal-700 {
+  --tw-gradient-to: var(--color-teal-900);
+}
+html.dark .from-cyan-400,
+html.dark .from-cyan-500,
+html.dark .from-cyan-600 {
+  --tw-gradient-from: var(--color-cyan-800);
+}
+html.dark .via-cyan-500,
+html.dark .via-cyan-600 {
+  --tw-gradient-via: var(--color-cyan-800);
+}
+html.dark .to-cyan-500,
+html.dark .to-cyan-600,
+html.dark .to-cyan-700 {
+  --tw-gradient-to: var(--color-cyan-900);
+}
+html.dark .from-sky-400,
+html.dark .from-sky-500,
+html.dark .from-sky-600 {
+  --tw-gradient-from: var(--color-sky-800);
+}
+html.dark .via-sky-500,
+html.dark .via-sky-600 {
+  --tw-gradient-via: var(--color-sky-800);
+}
+html.dark .to-sky-500,
+html.dark .to-sky-600,
+html.dark .to-sky-700 {
+  --tw-gradient-to: var(--color-sky-900);
+}
+html.dark .from-blue-400,
+html.dark .from-blue-500,
+html.dark .from-blue-600 {
+  --tw-gradient-from: var(--color-blue-800);
+}
+html.dark .via-blue-500,
+html.dark .via-blue-600 {
+  --tw-gradient-via: var(--color-blue-800);
+}
+html.dark .to-blue-500,
+html.dark .to-blue-600,
+html.dark .to-blue-700 {
+  --tw-gradient-to: var(--color-blue-900);
+}
+html.dark .from-indigo-400,
+html.dark .from-indigo-500,
+html.dark .from-indigo-600 {
+  --tw-gradient-from: var(--color-indigo-800);
+}
+html.dark .via-indigo-500,
+html.dark .via-indigo-600 {
+  --tw-gradient-via: var(--color-indigo-800);
+}
+html.dark .to-indigo-500,
+html.dark .to-indigo-600,
+html.dark .to-indigo-700 {
+  --tw-gradient-to: var(--color-indigo-900);
+}
+html.dark .from-violet-400,
+html.dark .from-violet-500,
+html.dark .from-violet-600 {
+  --tw-gradient-from: var(--color-violet-800);
+}
+html.dark .via-violet-500,
+html.dark .via-violet-600 {
+  --tw-gradient-via: var(--color-violet-800);
+}
+html.dark .to-violet-500,
+html.dark .to-violet-600,
+html.dark .to-violet-700 {
+  --tw-gradient-to: var(--color-violet-900);
+}
+html.dark .from-purple-400,
+html.dark .from-purple-500,
+html.dark .from-purple-600 {
+  --tw-gradient-from: var(--color-purple-800);
+}
+html.dark .via-purple-500,
+html.dark .via-purple-600 {
+  --tw-gradient-via: var(--color-purple-800);
+}
+html.dark .to-purple-500,
+html.dark .to-purple-600,
+html.dark .to-purple-700 {
+  --tw-gradient-to: var(--color-purple-900);
+}
+html.dark .from-pink-400,
+html.dark .from-pink-500,
+html.dark .from-pink-600 {
+  --tw-gradient-from: var(--color-pink-800);
+}
+html.dark .via-pink-500,
+html.dark .via-pink-600 {
+  --tw-gradient-via: var(--color-pink-800);
+}
+html.dark .to-pink-500,
+html.dark .to-pink-600,
+html.dark .to-pink-700 {
+  --tw-gradient-to: var(--color-pink-900);
+}
+html.dark .from-rose-400,
+html.dark .from-rose-500,
+html.dark .from-rose-600 {
+  --tw-gradient-from: var(--color-rose-800);
+}
+html.dark .via-rose-500,
+html.dark .via-rose-600 {
+  --tw-gradient-via: var(--color-rose-800);
+}
+html.dark .to-rose-500,
+html.dark .to-rose-600,
+html.dark .to-rose-700 {
+  --tw-gradient-to: var(--color-rose-900);
+}
+html.dark .from-orange-400,
+html.dark .from-orange-500,
+html.dark .from-orange-600 {
+  --tw-gradient-from: var(--color-orange-800);
+}
+html.dark .via-orange-500,
+html.dark .via-orange-600 {
+  --tw-gradient-via: var(--color-orange-800);
+}
+html.dark .to-orange-500,
+html.dark .to-orange-600,
+html.dark .to-orange-700 {
+  --tw-gradient-to: var(--color-orange-900);
+}
+html.dark .from-amber-400,
+html.dark .from-amber-500,
+html.dark .from-amber-600 {
+  --tw-gradient-from: var(--color-amber-800);
+}
+html.dark .via-amber-500,
+html.dark .via-amber-600 {
+  --tw-gradient-via: var(--color-amber-800);
+}
+html.dark .to-amber-500,
+html.dark .to-amber-600,
+html.dark .to-amber-700 {
+  --tw-gradient-to: var(--color-amber-900);
+}
+html.dark .from-yellow-400,
+html.dark .from-yellow-500,
+html.dark .from-yellow-600 {
+  --tw-gradient-from: var(--color-yellow-800);
+}
+html.dark .via-yellow-500,
+html.dark .via-yellow-600 {
+  --tw-gradient-via: var(--color-yellow-800);
+}
+html.dark .to-yellow-500,
+html.dark .to-yellow-600,
+html.dark .to-yellow-700 {
+  --tw-gradient-to: var(--color-yellow-900);
+}
+
+/* Tooltip bubble: light on the dark UI so it still stands out from the page */
+html.dark .app-tooltip {
+  background: var(--color-gray-100);
+  color: var(--color-gray-900);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.45);
+}
+
+/* Coloured top accents on cards (e.g. dean Faculty Involvement charts): keep them through the
+   .dark .border-gray-* remap above, slightly lighter so they read on the dark card */
+html.dark .border-t-purple-500 {
+  border-top-color: var(--color-purple-400);
+}
+html.dark .border-t-green-500 {
+  border-top-color: var(--color-green-400);
+}
+html.dark .border-t-amber-500 {
+  border-top-color: var(--color-amber-400);
+}
+
+/* Chart colour tokens (see styles.css): softer, less saturated hues on the dark cards */
+html.dark {
+  --chart-validated: color-mix(in oklab, var(--color-green-500) 70%, var(--color-gray-800));
+  --chart-pending: color-mix(in oklab, var(--color-yellow-500) 70%, var(--color-gray-800));
+  --chart-returned: color-mix(in oklab, var(--color-red-500) 70%, var(--color-gray-800));
+  --chart-empty: var(--color-gray-700);
+  --chart-progress: color-mix(in oklab, var(--color-blue-400) 80%, var(--color-gray-800));
+  --chart-hole: var(--color-gray-800);
 }

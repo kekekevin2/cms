@@ -39,7 +39,11 @@ exports.getPersonalProfile = async (req, res) => {
 exports.upsertPersonalProfile = async (req, res) => {
   try {
     const facultyId = req.user.faculty_id;
-    const profileData = req.body;
+    const profileData = { ...req.body };
+    // Photo columns are only ever set from an uploaded file below; a text value here is the
+    // viewable URL the client echoed back, which would overwrite the stored key
+    delete profileData.profile_picture;
+    delete profileData.passport_photo;
 
     const existing = await db.FacultyPersonalProfile.findOne({
       where: { faculty_id: facultyId },
@@ -1118,5 +1122,70 @@ exports.getAllFacultyProfilesByDean = async (req, res) => {
   } catch (error) {
     console.error("Get all faculty profiles by dean error:", error);
     res.status(500).json({ message: "Error fetching faculty profiles" });
+  }
+};
+
+// ==================== COURSES HANDLED ====================
+// Printed in the "COURSES HANDLED" section of the Faculty Profile PDF.
+
+exports.getCoursesHandled = async (req, res) => {
+  try {
+    const courses = await db.FacultyCourseHandled.findAll({
+      where: { faculty_id: req.user.faculty_id },
+      order: [["id", "ASC"]],
+    });
+    res.json({ courses });
+  } catch (error) {
+    console.error("Get courses handled error:", error);
+    res.status(500).json({ message: "Error fetching courses handled" });
+  }
+};
+
+exports.createCourseHandled = async (req, res) => {
+  try {
+    const courseName = (req.body.course_name || "").trim();
+    if (!courseName) {
+      return res.status(400).json({ message: "Course name is required" });
+    }
+    const course = await db.FacultyCourseHandled.create({
+      faculty_id: req.user.faculty_id,
+      course_name: courseName,
+    });
+    res.status(201).json({ message: "Course added successfully", course });
+  } catch (error) {
+    console.error("Create course handled error:", error);
+    res.status(500).json({ message: "Error adding course" });
+  }
+};
+
+exports.updateCourseHandled = async (req, res) => {
+  try {
+    const courseName = (req.body.course_name || "").trim();
+    if (!courseName) {
+      return res.status(400).json({ message: "Course name is required" });
+    }
+    const course = await db.FacultyCourseHandled.findOne({
+      where: { id: req.params.id, faculty_id: req.user.faculty_id },
+    });
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    await course.update({ course_name: courseName });
+    res.json({ message: "Course updated successfully", course });
+  } catch (error) {
+    console.error("Update course handled error:", error);
+    res.status(500).json({ message: "Error updating course" });
+  }
+};
+
+exports.deleteCourseHandled = async (req, res) => {
+  try {
+    const course = await db.FacultyCourseHandled.findOne({
+      where: { id: req.params.id, faculty_id: req.user.faculty_id },
+    });
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    await course.destroy();
+    res.json({ message: "Course deleted successfully" });
+  } catch (error) {
+    console.error("Delete course handled error:", error);
+    res.status(500).json({ message: "Error deleting course" });
   }
 };

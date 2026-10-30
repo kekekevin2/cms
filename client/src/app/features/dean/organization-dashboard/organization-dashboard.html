@@ -196,20 +196,42 @@
 
     <!-- Recent Documents -->
     <div class="bg-white rounded-sm border border-gray-100 overflow-hidden">
-      <div class="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
-        <i class="pi pi-inbox text-xs text-gray-400"></i>
-        <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-          Recent Report Submissions
-        </p>
+      <div class="px-4 py-3 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-inbox text-xs text-gray-400"></i>
+          <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+            Recent Report Submissions
+          </p>
+        </div>
+        <select
+          aria-label="Filter recent report submissions by organization"
+          [value]="recentOrganizationId() ?? 0"
+          (change)="filterRecentDocuments($event)"
+          class="w-full sm:w-56 px-3 py-2 text-xs border border-gray-200 rounded-sm bg-white outline-none focus:ring-0 focus:border-gray-300"
+        >
+          <option value="0">All Organizations</option>
+          @for (org of organizationOptions(); track org.organization_id) {
+            <option [value]="org.organization_id">{{ org.organization_name }}</option>
+          }
+        </select>
       </div>
       <div class="p-4">
-        @if (recentDocuments().length === 0) {
+        @if (recentDocumentsLoading()) {
+          <div role="status" class="text-center py-8 text-gray-400">
+            <i class="pi pi-spin pi-spinner text-xl mb-2 block"></i>
+            <p class="text-xs">Loading submissions...</p>
+          </div>
+        } @else if (recentDocuments().length === 0) {
           <div class="text-center py-8 text-gray-400">
             <i class="pi pi-file text-3xl text-gray-200 mb-2 block"></i>
             <p class="text-xs">No reports submitted yet</p>
           </div>
         } @else {
-          <div class="space-y-2">
+          <div
+            class="space-y-2 max-h-[26rem] overflow-y-auto overscroll-contain pr-1"
+            tabindex="0"
+            aria-label="Recent report submissions"
+          >
             @for (doc of recentDocuments(); track doc.document_id) {
               <div
                 class="flex items-center justify-between p-3 bg-gray-50 rounded-sm hover:bg-gray-100 transition-colors"
@@ -279,12 +301,12 @@
                       </p>
                     </div>
                     <p class="text-xs text-gray-600 mt-1 ml-10">
-                      <i class="pi pi-user text-xs mr-1 text-gray-500"></i>{{ getFacultyName(org) }}
+                      <i class="pi pi-user text-xs mr-1 text-gray-500"></i>{{ getAdviserName(org) }}
                     </p>
                   </div>
                   @if (getPendingCount(org) > 0) {
                     <span
-                      class="shrink-0 ml-2 px-2 py-1 bg-yellow-400 text-yellow-900 text-xs font-semibold rounded-full"
+                      class="shrink-0 ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full"
                     >
                       {{ getPendingCount(org) }}
                     </span>

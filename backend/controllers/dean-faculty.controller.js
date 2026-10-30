@@ -3,6 +3,31 @@ const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
 const { sendAccountCredentials } = require("../utils/email");
 const { presignFields } = require("../utils/presign");
+const storage = require("../utils/storage");
+const fs = require("fs");
+const path = require("path");
+const EMPLOYMENT_STATUSES = ["Permanent", "Temporary", "Guest Lecturer"];
+const isValidDesignation = (value) => value == null ||
+  (typeof value === "string" && value.trim().length <= 255);
+
+/**
+ * Viewable URL of the first photo in `candidates` that is actually stored. Accepts storage keys
+ * and legacy "/uploads/<key>" paths saved before the storage migration (which presignFields
+ * rejects). On the disk driver, files that no longer exist are skipped.
+ */
+async function firstViewablePhoto(candidates) {
+  for (const value of candidates) {
+    if (!value || typeof value !== "string") continue;
+    const key = value.replace(/^\/?uploads\//, "");
+    try {
+      if (storage.driver === "disk" && !fs.existsSync(path.join(__dirname, "..", "uploads", key))) continue;
+      return await storage.getUrl(key);
+    } catch {
+      // not a usable key — try the next candidate
+    }
+  }
+  return null;
+}
 
 // Generate secure random password
 const generatePassword = () => {
@@ -113,6 +138,8 @@ exports.createFaculty = async (req, res) => {
       email,
       contact_number,
       position_level,
+      employment_status,
+      designation,
     } = req.body;
 
     if (!employee_id || !first_name || !last_name || !email) {
@@ -120,6 +147,18 @@ exports.createFaculty = async (req, res) => {
       return res.status(400).json({
         message: "Employee ID, first name, last name, and email are required",
       });
+    }
+
+    if (employment_status != null && employment_status !== "" && !EMPLOYMENT_STATUSES.includes(employment_status)) {
+      await transaction.rollback();
+      return res.status(400).json({
+        message: "Employment status must be Permanent, Temporary, or Guest Lecturer",
+      });
+    }
+
+    if (!isValidDesignation(designation)) {
+      await transaction.rollback();
+      return res.status(400).json({ message: "Designation must be text with at most 255 characters" });
     }
 
     // Validate employee_id is 5 digits
@@ -178,6 +217,8 @@ exports.createFaculty = async (req, res) => {
         contact_number,
         department: dean.department,
         position_level,
+        employment_status: employment_status || null,
+        designation: designation?.trim() || null,
         user_id: user.user_id,
       },
       { transaction },
@@ -237,6 +278,8 @@ exports.updateFaculty = async (req, res) => {
       email,
       contact_number,
       position_level,
+      employment_status,
+      designation,
     } = req.body;
 
     const faculty = await db.Faculty.findOne({
@@ -248,6 +291,17 @@ exports.updateFaculty = async (req, res) => {
 
     if (!faculty) {
       return res.status(404).json({ message: "Faculty not found" });
+    }
+
+    if (employment_status != null && employment_status !== "" &&
+        !EMPLOYMENT_STATUSES.includes(employment_status) && employment_status !== faculty.employment_status) {
+      return res.status(400).json({
+        message: "Employment status must be Permanent, Temporary, or Guest Lecturer",
+      });
+    }
+
+    if (!isValidDesignation(designation)) {
+      return res.status(400).json({ message: "Designation must be text with at most 255 characters" });
     }
 
     // Validate employee_id is 5 digits
@@ -296,6 +350,8 @@ exports.updateFaculty = async (req, res) => {
       email,
       contact_number,
       position_level,
+      ...(employment_status !== undefined ? { employment_status: employment_status || null } : {}),
+      ...(designation !== undefined ? { designation: designation?.trim() || null } : {}),
     });
 
     // Update user email if changed
@@ -483,28 +539,51 @@ exports.getFacultyFullProfile = async (req, res) => {
       }),
     ]);
 
-    // Get eligibilities from PDS if exists
+    // Eligibilities and education (used when the academic profile is empty) come from the PDS
     let eligibilities = [];
+    let pdsEducation = [];
     const pds = await db.PersonalDataSheet.findOne({
       where: { faculty_id: facultyId },
       include: [
-        {
-          model: db.PDSEligibility,
-          as: "eligibilities",
-        },
+        { model: db.PDSEligibility, as: "eligibilities" },
+        { model: db.PDSEducation, as: "education" },
       ],
     });
     if (pds && pds.eligibilities) {
       eligibilities = pds.eligibilities;
     }
+    if (pds && pds.education) {
+      pdsEducation = pds.education;
+    }
 
-    // Get courses handled (from requirements or other source)
-    // This is a placeholder - adjust based on your actual data structure
-    const coursesHandled = [];
+    // Courses handled: entered in the faculty's "My Profile"; falls back to the
+    // "subjects to teach" from their credentials when none have been entered
+    const courseRows = await db.FacultyCourseHandled.findAll({
+      where: { faculty_id: facultyId },
+      order: [["id", "ASC"]],
+    });
+    let coursesHandled = courseRows.map((c) => c.course_name);
+    if (coursesHandled.length === 0) {
+      const credential = db.FacultyCredential
+        ? await db.FacultyCredential.findOne({ where: { faculty_id: facultyId } })
+        : null;
+      coursesHandled = (credential?.subjects_to_teach || "")
+        .split(/\r?\n|;|,/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
 
     const presignedPersonal = personalProfile
       ? await presignFields(personalProfile, ["profile_picture", "passport_photo"])
       : null;
+
+    // Photo for the profile cover: the first of these that is actually stored
+    const photoUrl = await firstViewablePhoto([
+      personalProfile?.profile_picture,
+      personalProfile?.passport_photo,
+      pds?.photo_path,
+      faculty.photo_url,
+    ]);
 
     res.json({
       personal: presignedPersonal,
@@ -513,16 +592,24 @@ exports.getFacultyFullProfile = async (req, res) => {
       memberships: memberships || [],
       awards: awards || [],
       eligibilities: eligibilities || [],
+      pdsEducation,
       coursesHandled: coursesHandled,
+      photoUrl,
       faculty: {
         employee_id: faculty.employee_id,
         first_name: faculty.first_name,
         middle_name: faculty.middle_name,
         last_name: faculty.last_name,
+        extension_name: personalProfile?.extension_name?.trim() || null,
         email: faculty.email,
         contact_number: faculty.contact_number,
         department: faculty.department,
         position_level: faculty.position_level,
+        academic_rank: faculty.academic_rank,
+        employment_status: faculty.employment_status,
+        designation: faculty.designation,
+        birth_date: faculty.birth_date,
+        civil_status: faculty.civil_status,
       },
     });
   } catch (error) {

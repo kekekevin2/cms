@@ -843,7 +843,7 @@
                     >
                       <div>
                         <p class="text-xs text-gray-700 font-medium">{{ child.child_name }}</p>
-                        <p class="text-xs text-gray-400">Born: {{ child.date_of_birth }}</p>
+                        <p class="text-xs text-gray-400">Born: {{ child.date_of_birth | date: 'MM/dd/yyyy' : 'UTC' }}</p>
                       </div>
                       @if (!isFormReadonly()) {
                         <button
@@ -975,7 +975,7 @@
                           }
                           @if (elig.date_of_examination) {
                             <span class="text-xs text-gray-400"
-                              >Exam: {{ elig.date_of_examination }}</span
+                              >Exam: {{ elig.date_of_examination | date: 'MM/dd/yyyy' : 'UTC' }}</span
                             >
                           }
                           @if (elig.place_of_examination) {
@@ -990,7 +990,7 @@
                           }
                           @if (elig.license_validity) {
                             <span class="text-xs text-gray-400"
-                              >Valid until: {{ elig.license_validity }}</span
+                              >Valid until: {{ elig.license_validity | date: 'MM/dd/yyyy' : 'UTC' }}</span
                             >
                           }
                         </div>
@@ -1440,512 +1440,91 @@
               Answer all questions truthfully. Any misrepresentation may be grounds for dismissal.
             </p>
 
-            <!-- Q34 -->
-            <div class="border border-gray-100 rounded-sm p-3">
-              <p class="text-xs font-medium text-gray-700 mb-2">
-                34. Are you related by consanguinity or affinity to the appointing or recommending
-                authority?
-              </p>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q34_a_answer"
-                    (ngModelChange)="setPdsField('q34_a_answer', $event)"
-                    name="q34_a_answer"
-                    [value]="true"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q34_a_answer"
-                    (ngModelChange)="setPdsField('q34_a_answer', $event)"
-                    name="q34_a_answer"
-                    [value]="false"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">No</span>
-                </label>
-              </div>
-              @if (pds.q34_a_answer) {
-                <div class="mt-2">
-                  <label class="text-xs font-medium text-gray-500 mb-1 block"
-                    >If yes, give details:</label
-                  >
-                  <textarea
-                    [(ngModel)]="pds.q34_a_details"
-                    [disabled]="isFormReadonly()"
-                    rows="2"
-                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
-                  ></textarea>
+            <!-- Questions 34–40, worded as on page 4 of CS Form 212 (services/core/pds-questionnaire.ts) -->
+            @for (group of questionnaire; track group.no) {
+              <div class="border border-gray-100 rounded-sm p-3">
+                <div class="flex gap-2">
+                  <span class="text-xs text-gray-700 font-medium shrink-0 w-6">{{ group.no }}.</span>
+                  <div class="flex-1 min-w-0 space-y-3">
+                    @if (group.intro) {
+                      <p class="text-xs text-gray-700 font-medium">{{ group.intro }}</p>
+                    }
+                    @for (item of group.items; track item.answer) {
+                      <div>
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-6">
+                          <p class="text-xs text-gray-700 flex gap-1.5">
+                            @if (item.letter) {
+                              <span class="shrink-0">{{ item.letter }}.</span>
+                            }
+                            <span>{{ item.text }}</span>
+                          </p>
+                          <div class="flex gap-4 shrink-0">
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                              <input
+                                type="radio"
+                                [name]="item.answer"
+                                [ngModel]="pds[item.answer]"
+                                (ngModelChange)="setPdsField(item.answer, $event)"
+                                [value]="true"
+                                [disabled]="isFormReadonly()"
+                                class="w-3.5 h-3.5"
+                              />
+                              <span class="text-xs text-gray-700">Yes</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                              <input
+                                type="radio"
+                                [name]="item.answer"
+                                [ngModel]="pds[item.answer]"
+                                (ngModelChange)="setPdsField(item.answer, $event)"
+                                [value]="false"
+                                [disabled]="isFormReadonly()"
+                                class="w-3.5 h-3.5"
+                              />
+                              <span class="text-xs text-gray-700">No</span>
+                            </label>
+                          </div>
+                        </div>
+                        @if (pds[item.answer]) {
+                          <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            @for (detail of item.details; track detail.field) {
+                              <div [class.sm:col-span-2]="detail.type === 'textarea'">
+                                <label class="text-xs font-medium text-gray-500 mb-1 block">{{ detail.label }}</label>
+                                @if (detail.type === 'textarea') {
+                                  <textarea
+                                    [ngModel]="pds[detail.field]"
+                                    (ngModelChange)="setPdsField(detail.field, $event)"
+                                    [disabled]="isFormReadonly()"
+                                    rows="2"
+                                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
+                                  ></textarea>
+                                } @else if (detail.type === 'date') {
+                                  <input
+                                    type="date"
+                                    [ngModel]="$any(pds[detail.field])?.slice(0, 10)"
+                                    (ngModelChange)="setPdsField(detail.field, $event)"
+                                    [disabled]="isFormReadonly()"
+                                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                                  />
+                                } @else {
+                                  <input
+                                    type="text"
+                                    [ngModel]="pds[detail.field]"
+                                    (ngModelChange)="setPdsField(detail.field, $event)"
+                                    [disabled]="isFormReadonly()"
+                                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                                  />
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
-              }
-            </div>
-
-            <!-- Q35a -->
-            <div class="border border-gray-100 rounded-sm p-3">
-              <p class="text-xs font-medium text-gray-700 mb-2">
-                35. a) Have you ever been found guilty of any administrative offense?
-              </p>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q35_a_answer"
-                    (ngModelChange)="setPdsField('q35_a_answer', $event)"
-                    name="q35_a_answer"
-                    [value]="true"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q35_a_answer"
-                    (ngModelChange)="setPdsField('q35_a_answer', $event)"
-                    name="q35_a_answer"
-                    [value]="false"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">No</span>
-                </label>
               </div>
-              @if (pds.q35_a_answer) {
-                <div class="mt-2">
-                  <label class="text-xs font-medium text-gray-500 mb-1 block"
-                    >If yes, give details:</label
-                  >
-                  <textarea
-                    [(ngModel)]="pds.q35_a_details"
-                    [disabled]="isFormReadonly()"
-                    rows="2"
-                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
-                  ></textarea>
-                </div>
-              }
-            </div>
-
-            <!-- Q35b -->
-            <div class="border border-gray-100 rounded-sm p-3">
-              <p class="text-xs font-medium text-gray-700 mb-2">
-                35. b) Have you been criminally charged before any court?
-              </p>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q35_b_answer"
-                    (ngModelChange)="setPdsField('q35_b_answer', $event)"
-                    name="q35_b_answer"
-                    [value]="true"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q35_b_answer"
-                    (ngModelChange)="setPdsField('q35_b_answer', $event)"
-                    name="q35_b_answer"
-                    [value]="false"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">No</span>
-                </label>
-              </div>
-              @if (pds.q35_b_answer) {
-                <div class="mt-2">
-                  <label class="text-xs font-medium text-gray-500 mb-1 block"
-                    >If yes, give details:</label
-                  >
-                  <textarea
-                    [(ngModel)]="pds.q35_b_details"
-                    [disabled]="isFormReadonly()"
-                    rows="2"
-                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
-                  ></textarea>
-                </div>
-              }
-            </div>
-
-            <!-- Q36 -->
-            <div class="border border-gray-100 rounded-sm p-3">
-              <p class="text-xs font-medium text-gray-700 mb-2">
-                36. Have you ever been convicted of any crime or violation of any law?
-              </p>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q36_answer"
-                    (ngModelChange)="setPdsField('q36_answer', $event)"
-                    name="q36_answer"
-                    [value]="true"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q36_answer"
-                    (ngModelChange)="setPdsField('q36_answer', $event)"
-                    name="q36_answer"
-                    [value]="false"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">No</span>
-                </label>
-              </div>
-              @if (pds.q36_answer) {
-                <div class="mt-2">
-                  <label class="text-xs font-medium text-gray-500 mb-1 block"
-                    >If yes, give details:</label
-                  >
-                  <textarea
-                    [(ngModel)]="pds.q36_details"
-                    [disabled]="isFormReadonly()"
-                    rows="2"
-                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
-                  ></textarea>
-                </div>
-              }
-            </div>
-
-            <!-- Q37 -->
-            <div class="border border-gray-100 rounded-sm p-3">
-              <p class="text-xs font-medium text-gray-700 mb-2">
-                37. Have you ever been separated from the service in any of the following modes?
-              </p>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q37_answer"
-                    (ngModelChange)="setPdsField('q37_answer', $event)"
-                    name="q37_answer"
-                    [value]="true"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q37_answer"
-                    (ngModelChange)="setPdsField('q37_answer', $event)"
-                    name="q37_answer"
-                    [value]="false"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">No</span>
-                </label>
-              </div>
-              @if (pds.q37_answer) {
-                <div class="mt-2">
-                  <label class="text-xs font-medium text-gray-500 mb-1 block"
-                    >If yes, give details:</label
-                  >
-                  <textarea
-                    [(ngModel)]="pds.q37_details"
-                    [disabled]="isFormReadonly()"
-                    rows="2"
-                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
-                  ></textarea>
-                </div>
-              }
-            </div>
-
-            <!-- Q38a -->
-            <div class="border border-gray-100 rounded-sm p-3">
-              <p class="text-xs font-medium text-gray-700 mb-2">
-                38. a) Have you ever been a candidate in a national or local election?
-              </p>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q38_answer"
-                    (ngModelChange)="setPdsField('q38_answer', $event)"
-                    name="q38_answer"
-                    [value]="true"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q38_answer"
-                    (ngModelChange)="setPdsField('q38_answer', $event)"
-                    name="q38_answer"
-                    [value]="false"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">No</span>
-                </label>
-              </div>
-              @if (pds.q38_answer) {
-                <div class="mt-2">
-                  <label class="text-xs font-medium text-gray-500 mb-1 block"
-                    >If yes, give details:</label
-                  >
-                  <textarea
-                    [(ngModel)]="pds.q38_details"
-                    [disabled]="isFormReadonly()"
-                    rows="2"
-                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
-                  ></textarea>
-                </div>
-              }
-            </div>
-
-            <!-- Q38b -->
-            <div class="border border-gray-100 rounded-sm p-3">
-              <p class="text-xs font-medium text-gray-700 mb-2">
-                38. b) Have you resigned from the government service during the three-month period
-                before the last election?
-              </p>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q39_answer"
-                    (ngModelChange)="setPdsField('q39_answer', $event)"
-                    name="q39_answer"
-                    [value]="true"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q39_answer"
-                    (ngModelChange)="setPdsField('q39_answer', $event)"
-                    name="q39_answer"
-                    [value]="false"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">No</span>
-                </label>
-              </div>
-              @if (pds.q39_answer) {
-                <div class="mt-2">
-                  <label class="text-xs font-medium text-gray-500 mb-1 block"
-                    >If yes, give details:</label
-                  >
-                  <textarea
-                    [(ngModel)]="pds.q39_details"
-                    [disabled]="isFormReadonly()"
-                    rows="2"
-                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
-                  ></textarea>
-                </div>
-              }
-            </div>
-
-            <!-- Q39 -->
-            <div class="border border-gray-100 rounded-sm p-3">
-              <p class="text-xs font-medium text-gray-700 mb-2">
-                39. Have you acquired the status of an immigrant or permanent resident of another
-                country?
-              </p>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q40_answer"
-                    (ngModelChange)="setPdsField('q40_answer', $event)"
-                    name="q40_answer"
-                    [value]="true"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q40_answer"
-                    (ngModelChange)="setPdsField('q40_answer', $event)"
-                    name="q40_answer"
-                    [value]="false"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">No</span>
-                </label>
-              </div>
-              @if (pds.q40_answer) {
-                <div class="mt-2">
-                  <label class="text-xs font-medium text-gray-500 mb-1 block"
-                    >If yes, give details:</label
-                  >
-                  <textarea
-                    [(ngModel)]="pds.q40_details"
-                    [disabled]="isFormReadonly()"
-                    rows="2"
-                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
-                  ></textarea>
-                </div>
-              }
-            </div>
-
-            <!-- Q40a -->
-            <div class="border border-gray-100 rounded-sm p-3">
-              <p class="text-xs font-medium text-gray-700 mb-2">
-                40. a) Are you a member of any indigenous group?
-              </p>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q41_answer"
-                    (ngModelChange)="setPdsField('q41_answer', $event)"
-                    name="q41_answer"
-                    [value]="true"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q41_answer"
-                    (ngModelChange)="setPdsField('q41_answer', $event)"
-                    name="q41_answer"
-                    [value]="false"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">No</span>
-                </label>
-              </div>
-              @if (pds.q41_answer) {
-                <div class="mt-2">
-                  <label class="text-xs font-medium text-gray-500 mb-1 block"
-                    >If yes, please specify:</label
-                  >
-                  <input
-                    type="text"
-                    [(ngModel)]="pds.q41_country"
-                    [disabled]="isFormReadonly()"
-                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
-                  />
-                </div>
-              }
-            </div>
-
-            <!-- Q40b -->
-            <div class="border border-gray-100 rounded-sm p-3">
-              <p class="text-xs font-medium text-gray-700 mb-2">
-                40. b) Are you a person with disability?
-              </p>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q43_answer"
-                    (ngModelChange)="setPdsField('q43_answer', $event)"
-                    name="q43_answer"
-                    [value]="true"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q43_answer"
-                    (ngModelChange)="setPdsField('q43_answer', $event)"
-                    name="q43_answer"
-                    [value]="false"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">No</span>
-                </label>
-              </div>
-              @if (pds.q43_answer) {
-                <div class="mt-2">
-                  <label class="text-xs font-medium text-gray-500 mb-1 block"
-                    >If yes, please specify ID No.:</label
-                  >
-                  <input
-                    type="text"
-                    [(ngModel)]="pds.q43_id_no"
-                    [disabled]="isFormReadonly()"
-                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
-                  />
-                </div>
-              }
-            </div>
-
-            <!-- Q40c -->
-            <div class="border border-gray-100 rounded-sm p-3">
-              <p class="text-xs font-medium text-gray-700 mb-2">40. c) Are you a solo parent?</p>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q44_answer"
-                    (ngModelChange)="setPdsField('q44_answer', $event)"
-                    name="q44_answer"
-                    [value]="true"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">Yes</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    [ngModel]="pds.q44_answer"
-                    (ngModelChange)="setPdsField('q44_answer', $event)"
-                    name="q44_answer"
-                    [value]="false"
-                    [disabled]="isFormReadonly()"
-                    class="w-3.5 h-3.5"
-                  />
-                  <span class="text-xs text-gray-700">No</span>
-                </label>
-              </div>
-              @if (pds.q44_answer) {
-                <div class="mt-2">
-                  <label class="text-xs font-medium text-gray-500 mb-1 block"
-                    >If yes, please specify ID No.:</label
-                  >
-                  <input
-                    type="text"
-                    [(ngModel)]="pds.q44_id_no"
-                    [disabled]="isFormReadonly()"
-                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
-                  />
-                </div>
-              }
-            </div>
+            }
           </div>
         </div>
 
@@ -1978,7 +1557,7 @@
                           type="button"
                           class="action-btn text-xs text-red-400 hover:text-red-600"
                         >
-                          <i class="pi pi-times text-xs"></i> <span class="action-label">Remove</span>
+                          <i class="pi pi-times text-xs"></i><span class="action-label">Remove</span>
                         </button>
                       }
                     </div>
@@ -2033,7 +1612,7 @@
                           type="button"
                           class="action-btn text-xs text-red-400 hover:text-red-600"
                         >
-                          <i class="pi pi-times text-xs"></i> <span class="action-label">Remove</span>
+                          <i class="pi pi-times text-xs"></i><span class="action-label">Remove</span>
                         </button>
                       }
                     </div>
@@ -2070,17 +1649,76 @@
               </div>
             </div>
 
-            <!-- Declaration -->
-            <div class="mt-4 p-3 bg-blue-50 rounded-sm border border-blue-100">
-              <p class="text-xs font-semibold text-gray-700 mb-1">DECLARATION</p>
-              <p class="text-xs text-gray-500 leading-relaxed">
-                I declare under oath that I have personally accomplished this Personal Data Sheet
-                which is a true, correct and complete statement pursuant to the provisions of
-                pertinent laws, rules and regulations of the Republic of the Philippines. I
-                authorize the agency head/authorized representative to verify/validate the contents
-                stated herein. I agree that any misrepresentation made in this document and its
-                attachments shall cause the filing of administrative/criminal case/s against me.
+            <!-- Government Issued ID (page 4 of CS Form 212) -->
+            <div class="mt-4">
+              <p class="text-xs font-medium text-gray-500 mb-2">
+                Government Issued ID (i.e. Passport, GSIS, SSS, PRC, Driver's License, etc.)
               </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Government Issued ID</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds.government_issued_id"
+                    placeholder="e.g., Passport"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">ID/License/Passport No.</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds.government_id_number"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Date of Issuance</label>
+                  <input
+                    type="date"
+                    [ngModel]="pds.government_id_date_issued?.slice(0, 10)"
+                    (ngModelChange)="pds.government_id_date_issued = $event"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-gray-500 mb-1 block">Place of Issuance</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="pds.government_id_place_issued"
+                    placeholder="e.g., Manila"
+                    [disabled]="isFormReadonly()"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Declaration -->
+            <div id="pds-declaration" class="mt-4 p-3 bg-blue-50 rounded-sm border border-blue-100">
+              <p class="text-xs font-semibold text-gray-700 mb-1">DECLARATION</p>
+              <!-- Ticking it is required before Save / Submit / Resubmit; shown ticked once submitted -->
+              <label class="flex items-start gap-2" [class.cursor-pointer]="!isFormReadonly()">
+                <input
+                  type="checkbox"
+                  class="mt-0.5 w-3.5 h-3.5 shrink-0 accent-blue-600"
+                  [checked]="declarationAgreed() || isFormReadonly()"
+                  [disabled]="isFormReadonly()"
+                  (change)="declarationAgreed.set($any($event.target).checked)"
+                />
+                <span class="text-xs text-gray-500 leading-relaxed">
+                  I declare under oath that I have personally accomplished this Personal Data Sheet
+                  which is a true, correct and complete statement pursuant to the provisions of
+                  pertinent laws, rules and regulations of the Republic of the Philippines. I
+                  authorize the agency head/authorized representative to verify/validate the
+                  contents stated herein. I agree that any misrepresentation made in this document
+                  and its attachments shall cause the filing of administrative/criminal case/s
+                  against me.
+                </span>
+              </label>
             </div>
           </div>
         </div>

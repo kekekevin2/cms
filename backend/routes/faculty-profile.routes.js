@@ -9,7 +9,7 @@ const checkRole = require("../middleware/role.middleware");
 router.use(verifyToken);
 router.use(checkRole("faculty"));
 
-const PROFILE_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
+const PROFILE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"];
 
 const uploadFor = (folder) =>
   makeUpload({ folder, allowedTypes: PROFILE_TYPES, maxSize: 5 * MB });
@@ -68,6 +68,12 @@ router.delete(
   "/membership/:id",
   facultyProfileController.deleteProfessionalMembership,
 );
+
+// ==================== COURSES HANDLED ====================
+router.get("/courses", facultyProfileController.getCoursesHandled);
+router.post("/courses", facultyProfileController.createCourseHandled);
+router.put("/courses/:id", facultyProfileController.updateCourseHandled);
+router.delete("/courses/:id", facultyProfileController.deleteCourseHandled);
 
 // ==================== AWARDS ====================
 router.get("/awards", facultyProfileController.getAwards);

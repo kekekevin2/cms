@@ -107,15 +107,26 @@
         </div>
 
         <!-- reCAPTCHA -->
-        <div class="flex justify-center overflow-visible">
-          <div id="recaptcha-container"></div>
+        <div
+          #recaptchaFrame
+          class="recaptcha-frame"
+          [class.recaptcha-frame-dark]="themeService.isDarkMode()"
+        >
+          <div class="recaptcha-widget" [style.transform]="'scale(' + recaptchaScale + ')'">
+            <div id="recaptcha-container"></div>
+          </div>
         </div>
+        @if (recaptchaConfigError) {
+          <p class="text-center text-xs text-red-500">
+            reCAPTCHA could not load. Please refresh the page.
+          </p>
+        }
 
         <!-- Submit -->
         <button
           type="submit"
-          [disabled]="loginForm.invalid || isLoading()"
-          class="w-full inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-sm text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition"
+          [disabled]="!canSignIn"
+          class="sign-in-button w-full inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-sm text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           @if (isLoading()) {
             <i class="pi pi-spin pi-spinner text-xs"></i>

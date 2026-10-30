@@ -1,8 +1,9 @@
 const axios = require('axios');
+const { getRecaptchaConfig } = require('../config/recaptcha.config');
 
 /**
  * Middleware to verify Google reCAPTCHA token
- * Validates the reCAPTCHA response from the client before allowing the request to proceed
+ * Validates the reCAPTCHA v2 checkbox response from the client before allowing the request to proceed
  * 
  * Environment Variables Required:
  * - RECAPTCHA_SECRET_KEY: Your Google reCAPTCHA secret key
@@ -12,16 +13,27 @@ const axios = require('axios');
  * router.post('/endpoint', verifyRecaptcha, controller.method);
  */
 const verifyRecaptcha = async (req, res, next) => {
+	let config;
+	try {
+		config = getRecaptchaConfig();
+	} catch {
+		return res.status(503).json({ message: 'reCAPTCHA is not configured' });
+	}
+
 	// Skip reCAPTCHA verification if disabled (for development/testing)
-	if (process.env.RECAPTCHA_ENABLED !== 'true') {
+	if (!config.enabled) {
 		console.log('⚠️  reCAPTCHA verification skipped (disabled in environment)');
 		return next();
 	}
 
-	const recaptchaToken = req.body.recaptchaToken;
+	if (!config.siteKey || !config.secretKey) {
+		return res.status(503).json({ message: 'reCAPTCHA is not configured' });
+	}
+
+	const recaptchaToken = req.body?.recaptchaToken;
 
 	// Check if token is provided
-	if (!recaptchaToken) {
+	if (typeof recaptchaToken !== 'string' || !recaptchaToken.trim()) {
 		console.log('❌ reCAPTCHA token missing');
 		return res.status(400).json({
 			message: 'reCAPTCHA verification required. Please complete the reCAPTCHA challenge.',
@@ -32,20 +44,20 @@ const verifyRecaptcha = async (req, res, next) => {
 		// Verify token with Google reCAPTCHA API
 		const response = await axios.post(
 			'https://www.google.com/recaptcha/api/siteverify',
-			null,
+			new URLSearchParams({
+				secret: config.secretKey,
+				response: recaptchaToken,
+			}).toString(),
 			{
-				params: {
-					secret: process.env.RECAPTCHA_SECRET_KEY,
-					response: recaptchaToken,
-					remoteip: req.ip || req.connection.remoteAddress,
-				},
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				timeout: 10000,
 			}
 		);
 
 		const { success, 'error-codes': errorCodes } = response.data;
 
 		// Check if verification was successful
-		if (!success) {
+		if (success !== true) {
 			console.error('❌ reCAPTCHA verification failed:', errorCodes);
 			return res.status(400).json({
 				message: 'reCAPTCHA verification failed. Please try again.',

@@ -82,6 +82,11 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: true,
       comment: "Employment status (e.g., PERMANENT FACULTY, TEMPORARY, etc.)",
     },
+    designation: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+      comment: "Designation assigned by the college department",
+    },
     educational_attainment: {
       type: Sequelize.STRING(255),
       allowNull: true,

@@ -29,6 +29,12 @@ export class DeanOrganizationManagement implements OnInit {
 
   showCreateModal = signal(false);
   showEditModal = signal(false);
+  viewedOrganization = signal<Organization | null>(null);
+
+  openViewModal(organization: Organization, dialog: HTMLDialogElement) {
+    this.viewedOrganization.set(organization);
+    dialog.showModal();
+  }
 
   createForm: CreateOrganizationData = {
     organization_name: '',
@@ -38,6 +44,8 @@ export class DeanOrganizationManagement implements OnInit {
   };
   editForm = {
     organization_id: 0,
+    email: '',
+    adviser_id_1: 0,
     organization_name: '',
     description: '',
   };
@@ -231,6 +239,8 @@ export class DeanOrganizationManagement implements OnInit {
       organization_id: organization.organization_id,
       organization_name: organization.organization_name,
       description: organization.description || '',
+      email: organization.email || '',
+      adviser_id_1: organization.organization_advisers?.find(a => a.is_active)?.faculty_id || organization.faculty_id || 0,
     };
     this.showEditModal.set(true);
   }
@@ -250,11 +260,18 @@ export class DeanOrganizationManagement implements OnInit {
       return;
     }
 
+    if (!this.editForm.email.trim() || !Number(this.editForm.adviser_id_1)) {
+      Swal.fire({ icon: 'warning', title: 'Validation Error', text: 'Please enter an email and select an adviser', confirmButtonColor: '#2563eb' });
+      return;
+    }
+
     this.loading.set(true);
     this.organizationService
       .updateOrganization(this.editForm.organization_id, {
         organization_name: this.editForm.organization_name,
         description: this.editForm.description,
+        email: this.editForm.email.trim(),
+        adviser_id_1: Number(this.editForm.adviser_id_1),
       })
       .subscribe({
         next: () => {

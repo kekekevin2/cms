@@ -104,6 +104,7 @@ export interface PersonalDataSheet {
   government_issued_id?: string;
   government_id_number?: string;
   government_id_date_issued?: string;
+  government_id_place_issued?: string;
 
   // Status
   status?: 'draft' | 'submitted' | 'approved' | 'returned';

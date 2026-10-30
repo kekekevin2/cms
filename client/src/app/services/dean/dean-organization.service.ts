@@ -53,6 +53,8 @@ export interface CreateOrganizationResponse {
 }
 
 export interface UpdateOrganizationData {
+  email?: string;
+  adviser_id_1?: number;
   organization_name: string;
   description?: string;
 }
