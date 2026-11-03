@@ -58,11 +58,18 @@ async function getDepartmentForUser(userId) {
       },
     ],
   });
-  if (cd && cd.department)
-    return {
-      department: cd.department.department_name,
-      source: "college_department",
-    };
+  if (cd) {
+    // Older college-department accounts may not have department_id populated.
+    // Their account name was historically stored as the department name, so
+    // keep those accounts functional while newer records use the association.
+    const department = cd.department?.department_name || cd.name?.trim();
+    if (department) {
+      return {
+        department,
+        source: "college_department",
+      };
+    }
+  }
 
   return null;
 }

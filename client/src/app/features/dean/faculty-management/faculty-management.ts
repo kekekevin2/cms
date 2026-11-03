@@ -333,7 +333,7 @@ export class DeanFacultyManagement implements OnInit, OnDestroy {
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Failed to load faculty',
+            text: error.error?.message || 'Failed to load faculty',
             confirmButtonColor: '#2563eb',
           });
         },
@@ -815,7 +815,7 @@ export class DeanFacultyManagement implements OnInit, OnDestroy {
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Failed to load disabled faculty',
+            text: error.error?.message || 'Failed to load disabled faculty',
             confirmButtonColor: '#2563eb',
           });
         },
