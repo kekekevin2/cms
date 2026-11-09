@@ -36,6 +36,18 @@ export interface CreateDeanData {
   department?: string;
 }
 
+export interface OrganizationOfficer {
+  member_id: number;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  position: string;
+  photo_url?: string;
+  year_level?: string;
+  semester?: string;
+  academic_year?: { year_start: number; year_end: number };
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -91,6 +103,16 @@ export class DeanService {
     return this.http.get<any>(`${this.deanApiUrl}/dashboard/organizations/dashboard`, {
       params,
     });
+  }
+
+  getOrganizationOfficers(organizationId: number): Observable<{
+    organization: { organization_id: number; organization_name: string };
+    officers: OrganizationOfficer[];
+  }> {
+    return this.http.get<{
+      organization: { organization_id: number; organization_name: string };
+      officers: OrganizationOfficer[];
+    }>(`${this.deanApiUrl}/dashboard/organizations/${organizationId}/officers`);
   }
 
   getRecentOrganizationDocuments(organizationId?: number): Observable<{ recentDocuments: any[] }> {

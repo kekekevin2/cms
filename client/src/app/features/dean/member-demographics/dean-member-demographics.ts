@@ -1,4 +1,4 @@
-import { Component, OnInit, OnChanges, SimpleChanges, Input, signal, inject } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChanges, Input, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -10,6 +10,19 @@ interface MemberDemographics {
   malePercentage: number;
   femalePercentage: number;
   byProgram: Array<{ program: string; count: number }>;
+  genderByProgram?: ProgramGenderDistribution[];
+}
+
+interface GenderDistribution {
+  totalMembers: number;
+  maleCount: number;
+  femaleCount: number;
+  malePercentage: number;
+  femalePercentage: number;
+}
+
+interface ProgramGenderDistribution extends GenderDistribution {
+  program: string;
 }
 
 interface MemberStats {
@@ -27,7 +40,7 @@ interface AcademicYear {
 /**
  * Department Portal → Member Demographics.
  *
- * UI mirrors the Organization Portal demographics tab exactly. Data is
+ * Cards and panels follow the Organization Analytics tab. Data is
  * aggregated across every organization in the dean's department by
  * default. When an `organizationId` is supplied (via the Organization
  * Management action icon deep-link), the same view is scoped to a
@@ -51,6 +64,7 @@ export class DeanMemberDemographicsComponent implements OnInit, OnChanges {
   loading = signal(false);
   selectedAcademicYear: number | undefined = undefined;
   selectedSemester: string | undefined = undefined;
+  selectedGenderProgram = signal('');
 
   academicYears = signal<AcademicYear[]>([]);
 
@@ -68,6 +82,18 @@ export class DeanMemberDemographicsComponent implements OnInit, OnChanges {
     membersByYearLevel: [],
   });
 
+  genderPrograms = computed(() => this.demographics().genderByProgram ?? []);
+  genderDistribution = computed<GenderDistribution>(() => {
+    const selected = this.genderPrograms().find((item) => item.program === this.selectedGenderProgram());
+    return selected ?? {
+      totalMembers: this.stats().totalMembers,
+      maleCount: this.demographics().maleCount,
+      femaleCount: this.demographics().femaleCount,
+      malePercentage: this.demographics().malePercentage,
+      femalePercentage: this.demographics().femalePercentage,
+    };
+  });
+
   ngOnInit() {
     this.loadAcademicYears();
     this.loadDemographics();
@@ -83,7 +109,7 @@ export class DeanMemberDemographicsComponent implements OnInit, OnChanges {
   loadAcademicYears() {
     this.http.get<any>(`${environment.apiUrl}/dropdown/academic-years`).subscribe({
       next: (response) => {
-        this.academicYears.set(response.academicYears || []);
+        this.academicYears.set(Array.isArray(response) ? response : response.academicYears || []);
       },
       error: (error) => {
         console.error('Error loading academic years:', error);
@@ -114,6 +140,9 @@ export class DeanMemberDemographicsComponent implements OnInit, OnChanges {
         next: (response) => {
           this.demographics.set(response.demographics);
           this.stats.set(response.stats);
+          if (!this.genderPrograms().some((item) => item.program === this.selectedGenderProgram())) {
+            this.selectedGenderProgram.set('');
+          }
           this.loading.set(false);
         },
         error: (error) => {

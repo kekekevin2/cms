@@ -1,1 +1,30 @@
 /* Organization Dashboard Styles */
+
+:host .officers-dialog {
+  width: min(760px, calc(100% - 32px));
+  max-height: 85vh;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+:host-context(.dark) .officers-dialog {
+  border-color: var(--color-gray-700);
+  background: var(--color-gray-800);
+}
+
+:host .officers-dialog::backdrop {
+  background: rgb(3 7 18 / 65%);
+}
+
+:host .officers-dialog h2 {
+  font-size: 0.875rem !important;
+}
+
+:host .officer-photo {
+  width: 3.5rem;
+  height: 3.5rem;
+}

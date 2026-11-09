@@ -35,6 +35,11 @@ export interface CollegeDepartmentProfile {
   department?: { department_name: string; acronym: string };
 }
 
+export type PublicDepartmentSummary = Pick<
+  CollegeDepartmentProfile,
+  'college_department_id' | 'name' | 'campus' | 'department'
+>;
+
 @Injectable({ providedIn: 'root' })
 export class CollegeDepartmentProfileService {
   private apiUrl = `${environment.apiUrl}/college-department`;
@@ -43,6 +48,18 @@ export class CollegeDepartmentProfileService {
 
   getProfile(): Observable<{ record: CollegeDepartmentProfile }> {
     return this.http.get<{ record: CollegeDepartmentProfile }>(`${this.apiUrl}/profile`);
+  }
+
+  getPublicDepartments(): Observable<{ records: PublicDepartmentSummary[] }> {
+    return this.http.get<{ records: PublicDepartmentSummary[] }>(
+      `${environment.apiUrl}/public/departments`,
+    );
+  }
+
+  getPublicProfile(id: string): Observable<{ record: CollegeDepartmentProfile }> {
+    return this.http.get<{ record: CollegeDepartmentProfile }>(
+      `${environment.apiUrl}/public/departments/${encodeURIComponent(id)}`,
+    );
   }
 
   updateProfile(

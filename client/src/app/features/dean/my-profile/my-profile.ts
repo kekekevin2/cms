@@ -1,6 +1,6 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   CollegeDepartmentProfileService,
   CollegeDepartmentProfile,
@@ -12,15 +12,19 @@ import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-dean-my-profile',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './my-profile.html',
-  styles: [],
+  styleUrl: './my-profile.css',
 })
 export class DeanMyProfile implements OnInit {
   loading = signal(false);
   saving = signal(false);
   isEditing = signal(false);
   uploadingPicture = signal(false);
+  emailControl = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.email, Validators.maxLength(150)],
+  });
 
   profile = signal<CollegeDepartmentProfile>({});
   form = signal<CollegeDepartmentProfile>({});
@@ -71,6 +75,7 @@ export class DeanMyProfile implements OnInit {
 
   startEdit() {
     this.form.set({ ...this.profile() });
+    this.emailControl.reset(this.profile().email ?? '');
     this.isEditing.set(true);
   }
 
@@ -79,10 +84,17 @@ export class DeanMyProfile implements OnInit {
   }
 
   save() {
+    if (this.saving()) return;
+    this.emailControl.setValue(this.emailControl.value.trim().toLowerCase());
+    if (this.emailControl.invalid) {
+      this.emailControl.markAsTouched();
+      return;
+    }
     this.saving.set(true);
     const f = this.form();
     const payload = {
       ...f,
+      email: this.emailControl.value,
       peos: this.peos(),
       programs: this.programs(),
       career_opportunities: this.careerOpportunities(),
@@ -101,8 +113,8 @@ export class DeanMyProfile implements OnInit {
         this.saving.set(false);
         this.loadProfile();
       },
-      error: () => {
-        Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to save profile' });
+      error: (error) => {
+        Swal.fire({ icon: 'error', title: 'Error', text: error.error?.message || 'Failed to save profile' });
         this.saving.set(false);
       },
     });

@@ -28,6 +28,14 @@ router.get(
   deanOrgDashboardController.getRecentOrganizationDocuments,
 );
 
+// View officers for an organization belonging to the current department.
+router.get(
+  "/organizations/:organizationId/officers",
+  verifyToken,
+  checkRole("dean", "college_department"),
+  deanOrgDashboardController.getOrganizationOfficers,
+);
+
 // Get member demographics for an organization
 router.get(
   "/organizations/member-demographics",

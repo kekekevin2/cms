@@ -10,6 +10,20 @@ import { loginGuard } from './guards/login.guard';
 
 export const routes: Routes = [
   {
+    path: 'public/departments',
+    loadComponent: () =>
+      import('./features/public/department-profile/public-department-profile').then(
+        (m) => m.PublicDepartmentProfile,
+      ),
+  },
+  {
+    path: 'public/departments/:id',
+    loadComponent: () =>
+      import('./features/public/department-profile/public-department-profile').then(
+        (m) => m.PublicDepartmentProfile,
+      ),
+  },
+  {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full',

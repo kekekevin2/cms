@@ -6,6 +6,7 @@ const checkRole = require("../middleware/role.middleware");
 const { makeUpload, MB } = require("../utils/upload");
 const storage = require("../utils/storage");
 const { presignFields } = require("../utils/presign");
+const { Validator } = require("sequelize");
 const Campus = db.Campus;
 const Department = db.Department;
 
@@ -53,6 +54,18 @@ router.get("/profile", async (req, res) => {
 // PUT /api/college-department/profile
 router.put("/profile", async (req, res) => {
   try {
+    const email = req.body.email;
+    let normalizedEmail;
+    if (email !== undefined) {
+      if (typeof email !== "string") {
+        return res.status(400).json({ message: "Please enter a valid email address" });
+      }
+      normalizedEmail = email.trim().toLowerCase();
+      if (normalizedEmail.length > 150 || !Validator.isEmail(normalizedEmail)) {
+        return res.status(400).json({ message: "Please enter a valid email address (up to 150 characters)" });
+      }
+    }
+
     const record = await db.CollegeDepartment.findOne({
       where: { user_id: req.user.user_id },
     });
@@ -75,7 +88,9 @@ router.put("/profile", async (req, res) => {
       program_outcomes,
     } = req.body;
 
-    await record.update({
+    const updates = {
+      // Public contact information is separate from users.email (login).
+      ...(normalizedEmail !== undefined ? { email: normalizedEmail } : {}),
       dean_name: dean_name !== undefined ? dean_name : record.dean_name,
       contact_number:
         contact_number !== undefined ? contact_number : record.contact_number,
@@ -94,7 +109,9 @@ router.put("/profile", async (req, res) => {
         program_outcomes !== undefined
           ? JSON.stringify(program_outcomes)
           : record.program_outcomes,
-    });
+    };
+
+    await record.update(updates);
 
     res.json({ message: "Profile updated successfully", record });
   } catch (err) {

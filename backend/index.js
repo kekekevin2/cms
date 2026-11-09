@@ -163,6 +163,9 @@ app.use("/api/announcements", announcementRoutes);
 const collegeDepartmentPortalRoutes = require("./routes/college-department-portal.routes");
 app.use("/api/college-department", collegeDepartmentPortalRoutes);
 
+// Public read-only profiles use their own router; portal writes stay protected.
+app.use("/api/public/departments", require("./routes/public-department.routes"));
+
 app.get("/api/hello", (req, res) => {
 	res.json({ message: "Hello from the backend!" });
 });

@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "compilerOptions": { "outDir": "./out-tsc/member-demographics-spec" },
+  "include": ["src/app/features/dean/member-demographics/dean-member-demographics.spec.ts"]
+}

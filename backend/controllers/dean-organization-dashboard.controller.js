@@ -20,6 +20,53 @@ async function getDepartmentForUser(userId) {
 }
 
 const { Op } = require("sequelize");
+const { presignFields } = require("../utils/presign");
+
+// Read-only officer profiles for an organization belonging to this department.
+exports.getOrganizationOfficers = async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const organizationId = Number(req.params.organizationId);
+  if (!/^[1-9]\d*$/.test(req.params.organizationId) || organizationId > 2147483647) {
+    return res.status(400).json({ message: "Invalid organization ID" });
+  }
+  try {
+    const departmentInfo = await getDepartmentForUser(req.user.user_id);
+    if (!departmentInfo) {
+      return res.status(404).json({ message: "Department profile not found" });
+    }
+    const organization = await db.Organization.findOne({
+      where: { organization_id: organizationId, department: departmentInfo.department },
+      attributes: ["organization_id", "organization_name"],
+    });
+    if (!organization) {
+      return res.status(404).json({ message: "Organization not found" });
+    }
+    const members = await db.OrganizationMember.findAll({
+      where: { organization_id: organizationId, is_active: true },
+      // Do not expose student IDs, grades, home addresses, signatures or credentials.
+      attributes: ["member_id", "first_name", "middle_name", "last_name", "position", "photo_url", "year_level", "academic_year_id", "semester"],
+      include: [{ model: db.AcademicYear, attributes: ["year_start", "year_end"], required: false }],
+      order: [["last_name", "ASC"], ["first_name", "ASC"], ["member_id", "ASC"]],
+    });
+    // Match the Organization Portal's Officers Profile, including custom roles.
+    const officers = members.filter((member) => {
+      const position = (member.position || "").trim().toLowerCase();
+      return position && !["member", "adviser", "advisor"].includes(position);
+    });
+    const positions = await db.OrganizationPositionTemplate.findAll({
+      attributes: ["position_name", "hierarchy_level"],
+    });
+    const hierarchy = new Map(positions.map((position) => [position.position_name.trim().toLowerCase(), position.hierarchy_level]));
+    officers.sort((a, b) =>
+      (hierarchy.get(a.position.trim().toLowerCase()) ?? 9999) -
+      (hierarchy.get(b.position.trim().toLowerCase()) ?? 9999),
+    );
+    res.json({ organization, officers: await presignFields(officers, ["photo_url"]) });
+  } catch (error) {
+    console.error("Get organization officers error:", error);
+    res.status(500).json({ message: "Unable to load organization officers" });
+  }
+};
 
 function findRecentDocuments(department, organizationId) {
   const organizationWhere = { department };
@@ -432,6 +479,7 @@ exports.getMemberDemographics = async (req, res) => {
             malePercentage: 0,
             femalePercentage: 0,
             byProgram: [],
+            genderByProgram: [],
           },
           stats: {
             totalMembers: 0,
@@ -475,16 +523,30 @@ exports.getMemberDemographics = async (req, res) => {
       totalMembers > 0 ? ((femaleCount / totalMembers) * 100).toFixed(1) : 0;
 
     // Program distribution
-    const programMap = {};
+    const programMap = new Map();
     members.forEach((m) => {
-      if (m.program) {
-        programMap[m.program] = (programMap[m.program] || 0) + 1;
-      }
+      const program = (m.program || "").trim();
+      if (!program) return;
+      const counts = programMap.get(program) || { program, totalMembers: 0, maleCount: 0, femaleCount: 0 };
+      counts.totalMembers++;
+      if (m.gender === "Male") counts.maleCount++;
+      if (m.gender === "Female") counts.femaleCount++;
+      programMap.set(program, counts);
     });
 
-    const byProgram = Object.entries(programMap)
-      .map(([program, count]) => ({ program, count }))
+    const byProgram = [...programMap.values()]
+      .map(({ program, totalMembers }) => ({ program, count: totalMembers }))
       .sort((a, b) => b.count - a.count);
+    // Aggregate only; the chart never receives individual member information.
+    // These totals inherit the same department, organization and term scope.
+    const genderByProgram = byProgram.map(({ program }) => {
+      const counts = programMap.get(program);
+      return {
+        ...counts,
+        malePercentage: Number(((counts.maleCount / counts.totalMembers) * 100).toFixed(1)),
+        femalePercentage: Number(((counts.femaleCount / counts.totalMembers) * 100).toFixed(1)),
+      };
+    });
 
     // Year level distribution
     const yearLevelMap = {};
@@ -514,6 +576,7 @@ exports.getMemberDemographics = async (req, res) => {
         malePercentage: parseFloat(malePercentage),
         femalePercentage: parseFloat(femalePercentage),
         byProgram,
+        genderByProgram,
       },
       stats: {
         totalMembers,

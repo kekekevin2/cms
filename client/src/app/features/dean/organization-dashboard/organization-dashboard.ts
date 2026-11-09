@@ -1,6 +1,7 @@
-import { Component, OnInit, OnChanges, SimpleChanges, Input, signal, inject } from '@angular/core';
+import { Component, OnInit, OnChanges, OnDestroy, SimpleChanges, Input, ViewChild, ElementRef, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DeanService } from '../../../services/dean/dean.service';
+import { DeanService, OrganizationOfficer } from '../../../services/dean/dean.service';
+import { Subscription } from 'rxjs';
 import { EventAnalyticsService, SDGEventData } from '../../../services/organization/event-analytics.service';
 import { SDGEventsChartComponent } from '../../../shared/components/sdg-events-chart/sdg-events-chart';
 
@@ -10,7 +11,7 @@ import { SDGEventsChartComponent } from '../../../shared/components/sdg-events-c
   templateUrl: './organization-dashboard.html',
   styleUrl: './organization-dashboard.css',
 })
-export class DeanOrganizationDashboard implements OnInit, OnChanges {
+export class DeanOrganizationDashboard implements OnInit, OnChanges, OnDestroy {
   private deanService = inject(DeanService);
   private eventAnalyticsService = inject(EventAnalyticsService);
 
@@ -40,6 +41,12 @@ export class DeanOrganizationDashboard implements OnInit, OnChanges {
   organizationOptions = signal<any[]>([]);
   organizationStats = signal<any[]>([]);
   private recentDocumentsRequestId = 0;
+  @ViewChild('officersDialog') private officersDialog!: ElementRef<HTMLDialogElement>;
+  selectedOrganization = signal<any | null>(null);
+  officers = signal<OrganizationOfficer[]>([]);
+  officersLoading = signal(false);
+  officersError = signal('');
+  private officersRequest?: Subscription;
 
   /**
    * Aggregated member breakdown used by the Position and Year Level
@@ -69,9 +76,54 @@ export class DeanOrganizationDashboard implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['organizationId'] && !changes['organizationId'].firstChange) {
+      this.closeOfficers();
       this.recentOrganizationId.set(null);
       this.loadDashboard();
     }
+  }
+
+  ngOnDestroy() {
+    this.officersRequest?.unsubscribe();
+  }
+
+  openOfficers(org: any) {
+    this.officersRequest?.unsubscribe();
+    this.selectedOrganization.set(org);
+    this.officers.set([]);
+    this.officersError.set('');
+    this.officersLoading.set(true);
+    const dialog = this.officersDialog.nativeElement;
+    if (!dialog.open) dialog.showModal();
+    this.officersRequest = this.deanService.getOrganizationOfficers(org.organization_id).subscribe({
+      next: (response) => {
+        this.officers.set(response.officers);
+        this.officersLoading.set(false);
+      },
+      error: () => {
+        this.officersError.set('Unable to load officers. Please try again.');
+        this.officersLoading.set(false);
+      },
+    });
+  }
+
+  closeOfficers() {
+    this.officersRequest?.unsubscribe();
+    this.officersDialog?.nativeElement.close();
+    this.selectedOrganization.set(null);
+    this.officers.set([]);
+    this.officersLoading.set(false);
+  }
+
+  closeOnBackdrop(event: MouseEvent) {
+    const dialog = this.officersDialog.nativeElement;
+    const rect = dialog.getBoundingClientRect();
+    if (event.target === dialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) {
+      this.closeOfficers();
+    }
+  }
+
+  getOfficerName(officer: OrganizationOfficer): string {
+    return [officer.first_name, officer.middle_name, officer.last_name].filter(Boolean).join(' ') || 'Name not provided';
   }
 
   loadSDGEventData() {
@@ -194,24 +246,6 @@ export class DeanOrganizationDashboard implements OnInit, OnChanges {
       .join('')
       .toUpperCase()
       .substring(0, 2);
-  }
-
-  getMemberCount(org: any): number {
-    // Exclude advisers from member count
-    if (!org.members) return 0;
-    return org.members.filter((m: any) => 
-      m.position && 
-      m.position.toLowerCase() !== 'adviser' && 
-      m.position.toLowerCase() !== 'advisor'
-    ).length;
-  }
-
-  getDocumentCount(org: any): number {
-    return org.documents?.length || 0;
-  }
-
-  getPendingCount(org: any): number {
-    return org.documents?.filter((doc: any) => doc.status === 'pending').length || 0;
   }
 
   getAdviserName(org: any): string {

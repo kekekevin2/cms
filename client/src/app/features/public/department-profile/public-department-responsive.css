@@ -1,0 +1,48 @@
+@media (max-width: 900px) {
+  .contact-strip { padding: 20px; gap: 18px; }
+  .contact-item { align-items: flex-start; gap: 10px; }
+  .contact-item + .contact-item { padding-left: 18px; }
+  .contact-icon { display: none; }
+  .objectives-grid { grid-template-columns: 1fr; }
+  .objective-card { display: grid; grid-template-columns: 72px 1fr; gap: 0 18px; }
+  .objective-index { grid-row: span 2; align-self: start; margin: 0; }
+}
+@media (max-width: 600px) {
+  .page-width { width: calc(100% - 36px); }
+  .header-inner { min-height: 80px; gap: 12px; }
+  .visitor-page .university-seal { width: 42px; height: 42px; }
+  .university-brand { gap: 9px; }
+  .university-brand strong { font-size: 12px; max-width: 160px; line-height: 1.4; }
+  .university-brand small { font-size: 12px; max-width: 155px; }
+  .header-actions { gap: 12px; }
+  .directory-link span, .theme-toggle span { display: none; }
+  .visitor-page .theme-toggle { width: 40px; height: 40px; padding: 0; }
+  .department-hero { min-height: 340px; padding: 28px 24px; margin-top: 18px; border-radius: 12px; }
+  .department-hero::before { background-position: 38% 82%; }
+  .department-hero .eyebrow { font-size: 12px; letter-spacing: 1.25px; }
+  .visitor-page h1 { font-size: 20px !important; letter-spacing: normal; }
+  .hero-meta { gap: 12px; font-size: 12px; margin-top: 20px; }
+  .hero-meta > span:last-child { width: 100%; }
+  .section-nav { gap: 24px; padding-block: 17px; }
+  .section-nav a { font-size: 12px; }
+  .contact-strip { grid-template-columns: 1fr; padding: 6px 20px; gap: 0; margin-top: 20px; }
+  .contact-item { padding: 17px 0; align-items: center; gap: 14px; }
+  .contact-item + .contact-item { border-left: 0; border-top: 1px solid var(--vp-border); padding-left: 0; }
+  .contact-icon { display: grid; width: 36px; height: 36px; }
+  .contact-value { font-size: 12px; }
+  .profile-section { margin-top: 36px; }
+  .section-heading { margin-bottom: 18px; }
+  .visitor-page h2 { font-size: 12px !important; }
+  .department-card h2 { font-size: 20px !important; }
+  .eyebrow { font-size: 12px; letter-spacing: 1.3px; }
+  .overview-grid, .two-column-grid, .outcomes-grid, .directory-grid { grid-template-columns: 1fr; }
+  .content-panel { padding: 22px; }
+  .body-copy { font-size: 12px; }
+  .objective-card { display: block; }
+  .objective-index { margin-bottom: 16px; }
+  .program-card { gap: 14px; }
+  .program-icon { width: 38px; height: 38px; font-size: 16px; }
+  .program-card h3 { font-size: 12px !important; }
+  .directory-heading { padding-top: 38px; }
+}
+@media (prefers-reduced-motion: reduce) { .department-card { transition: none; } }

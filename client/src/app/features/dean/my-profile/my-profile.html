@@ -72,7 +72,7 @@
           </button>
           <button
             (click)="save()"
-            [disabled]="saving()"
+            [disabled]="saving() || emailControl.invalid"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500 text-white rounded-sm hover:bg-red-600 transition disabled:opacity-50 whitespace-nowrap"
           >
             @if (saving()) {
@@ -161,6 +161,24 @@
               </div>
             } @else {
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label for="department-email" class="block text-xs font-medium text-gray-500 mb-1">Contact Email</label>
+                  <input
+                    id="department-email"
+                    type="email"
+                    autocomplete="email"
+                    maxlength="150"
+                    required
+                    [formControl]="emailControl"
+                    [attr.aria-invalid]="emailControl.invalid && (emailControl.dirty || emailControl.touched)"
+                    aria-describedby="department-email-help department-email-error"
+                    class="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                  />
+                  <p id="department-email-help" class="text-xs text-gray-500 mt-1">For department contact information only. Your login email and password will stay the same.</p>
+                  @if (emailControl.invalid && (emailControl.dirty || emailControl.touched)) {
+                    <p id="department-email-error" class="text-xs text-red-600 mt-1" role="alert">Enter a valid email address (up to 150 characters).</p>
+                  }
+                </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 mb-1">Contact Number</label>
                   <input
@@ -446,21 +464,29 @@
               <div class="space-y-2">
                 @for (career of careerOpportunities(); track trackByIndex($index); let i = $index) {
                   <div class="flex gap-2 items-start p-2 bg-gray-50 rounded-sm">
-                    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <input
-                        type="text"
-                        [ngModel]="career.program"
-                        (ngModelChange)="updateCareer(i, 'program', $event)"
-                        placeholder="Program name"
-                        class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300"
-                      />
-                      <textarea
-                        rows="3"
-                        [ngModel]="career.careers"
-                        (ngModelChange)="updateCareer(i, 'careers', $event)"
-                        placeholder="Career paths (press Enter for new line)"
-                        class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300 resize-none"
-                      ></textarea>
+                    <div class="career-fields flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label [for]="'career-program-' + i" class="text-gray-500">Program name</label>
+                        <input
+                          [id]="'career-program-' + i"
+                          type="text"
+                          [ngModel]="career.program"
+                          (ngModelChange)="updateCareer(i, 'program', $event)"
+                          placeholder="Program name"
+                          class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                        />
+                      </div>
+                      <div>
+                        <label [for]="'career-paths-' + i" class="text-gray-500">Career paths (one per line)</label>
+                        <textarea
+                          [id]="'career-paths-' + i"
+                          rows="5"
+                          [ngModel]="career.careers"
+                          (ngModelChange)="updateCareer(i, 'careers', $event)"
+                          placeholder="Career paths (press Enter for new line)"
+                          class="px-3 py-2 text-xs bg-white border border-gray-200 rounded-sm outline-none focus:border-gray-300"
+                        ></textarea>
+                      </div>
                     </div>
                     <button
                       (click)="removeCareer(i)"

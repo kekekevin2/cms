@@ -6,6 +6,7 @@
    instead of the OS/browser colour scheme, which is Tailwind v4's default. */
 @custom-variant dark (&:where(.dark, .dark *));
 @import './styles/dark-mode.css';
+@import './styles/notifications.css';
 @import './styles/responsive.css';
 
 * {

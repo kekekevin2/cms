@@ -1,0 +1,46 @@
+/* SweetAlert renders outside Angular components. Scope its theme to the shared
+   container so direct Swal calls and SweetAlertService follow the app toggle,
+   including alerts that are already open when the theme changes. */
+html.dark .swal2-container {
+  --swal2-background: var(--color-gray-800);
+  --swal2-color: var(--color-gray-100);
+  --swal2-footer-border-color: var(--color-gray-700);
+  --swal2-footer-color: var(--color-gray-300);
+  --swal2-input-background: var(--color-gray-700);
+  --swal2-input-border: 1px solid var(--color-gray-600);
+  --swal2-input-focus-border: 1px solid var(--color-green-500);
+  --swal2-input-focus-box-shadow: 0 0 0 3px rgb(34 197 94 / 25%);
+  --swal2-validation-message-background: var(--color-gray-900);
+  --swal2-validation-message-color: var(--color-red-300);
+  --swal2-timer-progress-bar-background: var(--color-gray-400);
+  --swal2-close-button-color: var(--color-gray-400);
+}
+
+html.dark .swal2-popup {
+  /* Override per-alert inline backgrounds as well as the library defaults. */
+  background: var(--swal2-background) !important;
+  color: var(--swal2-color) !important;
+  border: 1px solid var(--color-gray-700);
+}
+
+html.dark .swal2-title,
+html.dark .swal2-html-container,
+html.dark .swal2-input,
+html.dark .swal2-textarea,
+html.dark .swal2-select,
+html.dark .swal2-radio,
+html.dark .swal2-checkbox {
+  color: var(--swal2-color);
+}
+
+/* The success animation uses inline masks matching the initial background.
+   Keep those masks in sync even if the theme changes while the alert is open. */
+.swal2-popup .swal2-success-circular-line-left,
+.swal2-popup .swal2-success-circular-line-right,
+.swal2-popup .swal2-success-fix {
+  background-color: var(--swal2-background) !important;
+}
+
+html.dark .swal2-close:hover {
+  color: var(--color-gray-100);
+}

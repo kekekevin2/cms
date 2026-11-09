@@ -1,0 +1,124 @@
+<div class="visitor-page" [class.visitor-dark]="themeService.isDarkMode()">
+  <a class="skip-link" href="#main-content" (click)="scrollTo('main-content', $event)">Skip to content</a>
+  <header class="site-header">
+    <div class="page-width header-inner">
+      <a routerLink="/public/departments" class="university-brand" aria-label="Batangas State University departments">
+        <img src="/assets/logo.png" alt="Batangas State University seal" width="52" height="52" class="university-seal" />
+        <span><strong>Batangas State University</strong><small>The National Engineering University</small></span>
+      </a>
+      <div class="header-actions">
+        <a routerLink="/public/departments" class="directory-link" aria-label="All departments"><i class="pi pi-th-large" aria-hidden="true"></i><span>All departments</span></a>
+        <button type="button" class="theme-toggle" (click)="themeService.toggleTheme()"
+          [attr.aria-label]="themeService.isDarkMode() ? 'Switch to light mode' : 'Switch to dark mode'"
+          [attr.aria-pressed]="themeService.isDarkMode()">
+          <i [class]="themeService.isDarkMode() ? 'pi pi-sun' : 'pi pi-moon'" aria-hidden="true"></i>
+          <span>{{ themeService.isDarkMode() ? 'Light mode' : 'Dark mode' }}</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="page-width">
+    @if (loading()) {
+      <div class="status-panel" role="status"><i class="pi pi-spin pi-spinner" aria-hidden="true"></i><p>Loading department information…</p></div>
+    } @else if (error()) {
+      <div class="status-panel" role="alert"><i class="pi pi-info-circle" aria-hidden="true"></i><h1>Department profile unavailable</h1><p>{{ error() }}</p><a routerLink="/public/departments">Explore departments <i class="pi pi-arrow-right" aria-hidden="true"></i></a></div>
+    } @else if (profile(); as record) {
+      <section class="department-hero" aria-labelledby="department-name">
+        <div class="hero-content">
+          <p class="eyebrow">Academics <span aria-hidden="true">/</span> Department profile</p>
+          <h1 id="department-name">{{ record.name || 'College Department' }}</h1>
+          <div class="hero-meta">
+            @if (record.department?.acronym) { <span class="department-tag">{{ record.department?.acronym }}</span> }
+            @if (record.campus?.campus_name) { <span><i class="pi pi-map-marker" aria-hidden="true"></i>{{ record.campus?.campus_name }} Campus</span> }
+            <span><i class="pi pi-building-columns" aria-hidden="true"></i>Batangas State University</span>
+          </div>
+        </div>
+        <a class="hero-link" href="#section-programs" (click)="scrollTo('section-programs', $event)">Explore our programs <i class="pi pi-arrow-down" aria-hidden="true"></i></a>
+      </section>
+
+      <nav class="section-nav" aria-label="Department profile sections">
+        <a href="#section-about" (click)="scrollTo('section-about', $event)">Overview</a><a href="#section-peo" (click)="scrollTo('section-peo', $event)">Objectives</a><a href="#section-programs" (click)="scrollTo('section-programs', $event)">Programs</a><a href="#section-careers" (click)="scrollTo('section-careers', $event)">Careers</a><a href="#section-outcomes" (click)="scrollTo('section-outcomes', $event)">Outcomes</a><a href="#section-contact" (click)="scrollTo('section-contact', $event)">Contact</a>
+      </nav>
+
+      <section id="section-about" class="profile-section" aria-labelledby="about-heading">
+        <div class="section-heading"><div><p class="eyebrow">Discover our department</p><h2 id="about-heading">About &amp; goal</h2></div><span class="section-number" aria-hidden="true">01</span></div>
+        <div class="overview-grid">
+          <div class="content-panel about-panel"><span class="panel-icon"><i class="pi pi-building-columns" aria-hidden="true"></i></span><h3>About the department</h3><p class="body-copy">{{ record.about || 'Department information will be available here.' }}</p></div>
+          <div class="content-panel goal-panel"><h3>Our goal</h3><p class="body-copy">{{ record.goal || 'Department goals will be available here.' }}</p>
+            @if (record.why_batstateu) {
+              <div class="why-section"><h3>Why BatStateU?</h3><ul class="check-list">
+                @for (line of record.why_batstateu.split('\n'); track $index) {
+                  @if (line.trim()) { <li><i class="pi pi-check-circle" aria-hidden="true"></i><span>{{ line }}</span></li> }
+                }
+              </ul></div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section id="section-peo" class="profile-section" aria-labelledby="peo-heading">
+        <div class="section-heading"><div><p class="eyebrow">Our direction</p><h2 id="peo-heading">Program educational objectives</h2></div><span class="section-number" aria-hidden="true">02</span></div>
+        <div class="objectives-grid">
+          @for (peo of peos(); track $index) {
+            <article class="content-panel objective-card"><span class="objective-index">PEO {{ $index + 1 }}</span><h3>{{ peo.title }}</h3><p class="body-copy">{{ peo.description }}</p></article>
+          } @empty { <p class="empty-message">No objectives added yet.</p> }
+        </div>
+      </section>
+
+      <section id="section-programs" class="profile-section" aria-labelledby="programs-heading">
+        <div class="section-heading"><div><p class="eyebrow">Find your path</p><h2 id="programs-heading">Program offerings</h2></div><span class="section-number" aria-hidden="true">03</span></div>
+        <div class="two-column-grid">
+          @for (prog of programs(); track $index) {
+            <article class="content-panel program-card"><span class="program-icon"><i class="pi pi-graduation-cap" aria-hidden="true"></i></span><div><h3>{{ prog.name }}</h3><p class="body-copy">{{ prog.description }}</p></div></article>
+          } @empty { <p class="empty-message">No programs added yet.</p> }
+        </div>
+      </section>
+
+      <section id="section-careers" class="profile-section" aria-labelledby="careers-heading">
+        <div class="section-heading"><div><p class="eyebrow">Beyond the classroom</p><h2 id="careers-heading">Career opportunities</h2></div><span class="section-number" aria-hidden="true">04</span></div>
+        <div class="two-column-grid">
+          @for (career of careerOpportunities(); track $index) {
+            <article class="content-panel career-card"><h3>{{ career.program }}</h3><ul class="career-list">
+              @for (line of getCareerLines(career.careers); track $index) { <li>{{ line }}</li> }
+            </ul></article>
+          } @empty { <p class="empty-message">No career opportunities added yet.</p> }
+        </div>
+      </section>
+
+      <section id="section-outcomes" class="profile-section" aria-labelledby="outcomes-heading">
+        <div class="section-heading"><div><p class="eyebrow">Knowledge into practice</p><h2 id="outcomes-heading">Program outcomes</h2></div><span class="section-number" aria-hidden="true">05</span></div>
+        <div class="content-panel outcomes-panel">
+          <ol class="outcomes-grid">
+            @for (outcome of programOutcomes(); track $index) { <li><span class="outcome-index">{{ ($index + 1).toString().padStart(2, '0') }}</span><p>{{ outcome }}</p></li> }
+            @empty { <li class="empty-message">No outcomes added yet.</li> }
+          </ol>
+        </div>
+      </section>
+
+      <section id="section-contact" class="contact-strip" aria-labelledby="contact-heading">
+        <h2 id="contact-heading" class="visually-hidden">Contact Information</h2>
+        <div class="contact-item"><span class="contact-icon"><i class="pi pi-envelope" aria-hidden="true"></i></span><div><p class="field-label">Email address</p><p class="contact-value">{{ record.email || '—' }}</p></div></div>
+        <div class="contact-item"><span class="contact-icon"><i class="pi pi-phone" aria-hidden="true"></i></span><div><p class="field-label">Contact number</p><p class="contact-value">{{ record.contact_number || '—' }}</p></div></div>
+        <div class="contact-item"><span class="contact-icon"><i class="pi pi-user" aria-hidden="true"></i></span><div><p class="field-label">Department head</p><p class="contact-value">{{ record.dean_name || '—' }}</p></div></div>
+      </section>
+
+    } @else {
+      <section class="directory-heading"><p class="eyebrow">Batangas State University</p><h1>Discover our departments.</h1><p>Explore our academic programs, goals, and opportunities.</p></section>
+      <div class="directory-grid">
+        @for (department of departments(); track department.college_department_id) {
+          <a [routerLink]="['/public/departments', department.college_department_id]" class="content-panel department-card">
+            <span class="department-tag">{{ department.department?.acronym || 'Department' }}</span>
+            <h2>{{ department.name }}</h2>
+            @if (department.department?.department_name && department.department?.department_name?.trim()?.toLowerCase() !== department.name?.trim()?.toLowerCase()) {
+              <p class="body-copy">{{ department.department?.department_name }}</p>
+            }
+            @if (department.campus?.campus_name) { <p class="campus-label"><i class="pi pi-map-marker" aria-hidden="true"></i>{{ department.campus?.campus_name }} Campus</p> }
+            <span class="card-link">View department profile <i class="pi pi-arrow-up-right" aria-hidden="true"></i></span>
+          </a>
+        } @empty { <p class="empty-message">No department profiles are available.</p> }
+      </div>
+    }
+  </main>
+
+</div>
