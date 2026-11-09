@@ -1,3 +1,4 @@
+import { PortalSidebarState } from '../../../shared/components/portal-sidebar-state';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -29,6 +30,7 @@ interface OrganizationStats {
 }
 
 @Component({
+  providers: [PortalSidebarState],
   selector: 'app-organization-dashboard',
   standalone: true,
   imports: [
@@ -51,7 +53,8 @@ export class OrganizationDashboard implements OnInit {
 
   activeTab = signal<'dashboard' | 'members' | 'documents' | 'advisers' | 'events' | 'cvl-attachments'>('dashboard');
   dashboardTab = signal<'analytics' | 'demographics'>('analytics');
-  isSidebarOpen = signal(false);
+  readonly sidebar = inject(PortalSidebarState);
+  readonly isSidebarOpen = this.sidebar.isOpen;
   isUserMenuOpen = signal(false);
   isChangePasswordOpen = signal(false);
 
@@ -186,6 +189,7 @@ export class OrganizationDashboard implements OnInit {
 
   selectTab(tab: 'dashboard' | 'members' | 'documents' | 'advisers' | 'events' | 'cvl-attachments') {
     this.activeTab.set(tab);
+    this.sidebar.closeMobile();
     if (tab === 'advisers') {
       this.loadAdvisers();
     } else if (tab === 'dashboard') {
@@ -206,7 +210,7 @@ export class OrganizationDashboard implements OnInit {
   }
 
   toggleSidebar() {
-    this.isSidebarOpen.set(!this.isSidebarOpen());
+    this.sidebar.toggle();
   }
 
   toggleUserMenu() {

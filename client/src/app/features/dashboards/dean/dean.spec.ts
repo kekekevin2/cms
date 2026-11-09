@@ -1,3 +1,4 @@
+import { PortalSidebarState } from '../../../shared/components/portal-sidebar-state';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -43,6 +44,7 @@ describe('Faculty involvement employment filter', () => {
     TestBed.configureTestingModule({
       providers: [
         DeanDashboard,
+        PortalSidebarState,
         { provide: DeanAnalyticsService, useValue: analytics },
         ...[ActivatedRoute, Router, Auth, ThemeService, DropdownService,
           CollegeDepartmentProfileService, DeanRequirementService, DeanService]

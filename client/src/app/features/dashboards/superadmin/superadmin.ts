@@ -1,4 +1,5 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { PortalSidebarState } from '../../../shared/components/portal-sidebar-state';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../../services/auth/auth';
 import { RouterModule } from '@angular/router';
@@ -17,6 +18,7 @@ import {
 } from '../../../services/superadmin/superadmin-dashboard.service';
 
 @Component({
+  providers: [PortalSidebarState],
   selector: 'app-superadmin-dashboard',
   imports: [
     CommonModule,
@@ -34,7 +36,8 @@ import {
   styles: [],
 })
 export class SuperadminDashboard implements OnInit {
-  isSidebarOpen = signal(false);
+  readonly sidebar = inject(PortalSidebarState);
+  readonly isSidebarOpen = this.sidebar.isOpen;
   activeTab = signal<string>('dashboard');
   isUserMenuOpen = signal(false);
   isChangePasswordOpen = signal(false);
@@ -82,7 +85,7 @@ export class SuperadminDashboard implements OnInit {
   }
 
   toggleSidebar() {
-    this.isSidebarOpen.set(!this.isSidebarOpen());
+    this.sidebar.toggle();
   }
 
   toggleUserMenu() {
@@ -91,6 +94,7 @@ export class SuperadminDashboard implements OnInit {
 
   selectTab(tab: string) {
     this.activeTab.set(tab);
+    this.sidebar.closeMobile();
   }
 
   logout() {

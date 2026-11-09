@@ -21,6 +21,40 @@ button {
   cursor: pointer;
 }
 
+/* Shared portal navigation control, including a keyboard-only focus indicator. */
+@layer components {
+  /* Let responsive utilities such as sm:hidden override the default display. */
+  .portal-menu-button {
+    @apply inline-flex shrink-0 items-center justify-center rounded-lg text-gray-700;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    transition: background-color 150ms, color 150ms;
+  }
+}
+
+.portal-menu-button:hover {
+  @apply bg-gray-100;
+}
+
+.portal-menu-button:focus-visible {
+  outline: 2px solid var(--color-green-500);
+  outline-offset: 2px;
+}
+
+.portal-menu-button .pi {
+  font-size: 1.125rem;
+}
+
+html.dark .portal-menu-button {
+  @apply text-gray-300;
+}
+
+html.dark .portal-menu-button:hover {
+  @apply bg-gray-700;
+}
+
 /* Google adds this iframe dynamically, outside Angular's scoped component styles. */
 app-login .recaptcha-frame iframe {
   display: block;

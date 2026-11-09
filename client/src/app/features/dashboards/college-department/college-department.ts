@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { PortalSidebarState } from '../../../shared/components/portal-sidebar-state';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../../services/auth/auth';
 import { ThemeService } from '../../../services/theme/theme.service';
@@ -32,13 +33,15 @@ export interface DeptStats {
 }
 
 @Component({
+  providers: [PortalSidebarState],
   selector: 'app-college-department-dashboard',
   imports: [CommonModule, ChangePasswordModal, DeanMyProfile],
   templateUrl: './college-department.html',
   styles: [],
 })
 export class CollegeDepartmentDashboard implements OnInit {
-  isSidebarOpen = signal(false);
+  readonly sidebar = inject(PortalSidebarState);
+  readonly isSidebarOpen = this.sidebar.isOpen;
   activeTab = signal<string>('overview');
   isUserMenuOpen = signal(false);
   isChangePasswordOpen = signal(false);
@@ -82,7 +85,7 @@ export class CollegeDepartmentDashboard implements OnInit {
   }
 
   toggleSidebar() {
-    this.isSidebarOpen.set(!this.isSidebarOpen());
+    this.sidebar.toggle();
   }
 
   toggleUserMenu() {
@@ -91,6 +94,7 @@ export class CollegeDepartmentDashboard implements OnInit {
 
   selectTab(tab: string) {
     this.activeTab.set(tab);
+    this.sidebar.closeMobile();
     this.isUserMenuOpen.set(false);
   }
 

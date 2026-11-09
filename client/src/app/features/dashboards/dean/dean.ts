@@ -1,3 +1,4 @@
+import { PortalSidebarState } from '../../../shared/components/portal-sidebar-state';
 import { Component, signal, OnInit, OnDestroy, inject } from '@angular/core';
 import type { Subscription } from 'rxjs';
 import { finalize } from 'rxjs';
@@ -34,6 +35,7 @@ import { Pie3dChartComponent, Pie3dItem } from '../../../shared/components/pie-3
 import type { InvolvementChartType } from '../../../services/core/involvement-chart-pdf.service';
 
 @Component({
+  providers: [PortalSidebarState],
   selector: 'app-dean-dashboard',
   imports: [
     CommonModule,
@@ -57,7 +59,8 @@ export class DeanDashboard implements OnInit, OnDestroy {
 
   private route = inject(ActivatedRoute);
 
-  isSidebarOpen = signal(false);
+  readonly sidebar = inject(PortalSidebarState);
+  readonly isSidebarOpen = this.sidebar.isOpen;
   activeTab = signal<string>('dashboard');
   dashboardSubTab = signal<string>('overview');
   isUserMenuOpen = signal(false);
@@ -221,7 +224,7 @@ export class DeanDashboard implements OnInit, OnDestroy {
   }
 
   toggleSidebar() {
-    this.isSidebarOpen.set(!this.isSidebarOpen());
+    this.sidebar.toggle();
   }
 
   toggleUserMenu() {
@@ -230,6 +233,7 @@ export class DeanDashboard implements OnInit, OnDestroy {
 
   selectTab(tab: string) {
     this.activeTab.set(tab);
+    this.sidebar.closeMobile();
     if (tab === 'dashboard') {
       this.dashboardSubTab.set('overview');
     }

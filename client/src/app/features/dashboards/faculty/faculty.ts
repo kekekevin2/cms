@@ -1,4 +1,5 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { PortalSidebarState } from '../../../shared/components/portal-sidebar-state';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../../services/auth/auth';
 import { RouterModule } from '@angular/router';
@@ -20,6 +21,7 @@ interface Assignment {
 }
 
 @Component({
+  providers: [PortalSidebarState],
   selector: 'app-faculty-dashboard',
   imports: [
     CommonModule,
@@ -33,10 +35,17 @@ interface Assignment {
   template: `
     <!-- Sidebar -->
     <aside
+      id="portal-sidebar"
+      aria-label="Main navigation"
+      [attr.inert]="isSidebarOpen() ? null : ''"
       [class.translate-x-0]="isSidebarOpen()"
       [class.-translate-x-full]="!isSidebarOpen()"
-      class="fixed top-0 left-0 z-50 w-64 max-w-[85vw] h-full transition-transform sm:translate-x-0 bg-white border-r border-gray-200"
+      class="fixed top-0 left-0 z-50 w-64 max-w-[85vw] h-full transition-transform bg-white border-r border-gray-200"
     >
+      <button type="button" class="portal-menu-button bg-transparent absolute top-2 right-2 sm:hidden"
+        (click)="sidebar.closeMobile()" aria-label="Close navigation">
+        <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
       <div class="h-full px-3 py-4 overflow-y-auto">
         <!-- Logo/Brand -->
         <div class="mb-6 px-2 flex flex-col items-center">
@@ -106,20 +115,24 @@ interface Assignment {
     </aside>
 
     @if (isSidebarOpen()) {
-      <div class="fixed inset-0 z-30 bg-black/50 sm:hidden" (click)="toggleSidebar()"></div>
+      <div class="fixed inset-0 z-[45] bg-black/50 sm:hidden" (click)="sidebar.closeMobile()" aria-hidden="true"></div>
     }
 
     <!-- Top Bar -->
     <div
-      class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300 sm:left-64"
+      class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 gap-4 transition-all duration-300"
+      [class.sm:left-64]="isSidebarOpen()"
     >
       <div class="flex items-center gap-4 min-w-0">
         <button
           (click)="toggleSidebar()"
           type="button"
-          class="text-gray-900 bg-transparent hover:bg-gray-200 font-medium rounded-lg text-sm p-2 focus:outline-none shrink-0"
+          class="portal-menu-button bg-transparent"
+          aria-controls="portal-sidebar"
+          [attr.aria-expanded]="isSidebarOpen()"
+          [attr.aria-label]="isSidebarOpen() ? 'Close navigation' : 'Open navigation'"
         >
-          <i class="pi pi-bars text-lg"></i>
+          <i class="pi pi-bars" aria-hidden="true"></i>
         </button>
         <h1 class="text-sm font-semibold text-gray-900 truncate">{{ getPageTitle() }}</h1>
       </div>
@@ -178,7 +191,7 @@ interface Assignment {
     </div>
 
     <!-- Main Content -->
-    <div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300 sm:ml-64">
+    <div class="pt-20 pl-4 pr-4 pb-4 transition-all duration-300" [class.sm:ml-64]="isSidebarOpen()">
       @if (activeTab() === 'dashboard') {
         <div class="space-y-4">
           <!-- Filters -->
@@ -519,7 +532,8 @@ interface Assignment {
   styles: [],
 })
 export class FacultyDashboard implements OnInit {
-  isSidebarOpen = signal(false);
+  readonly sidebar = inject(PortalSidebarState);
+  readonly isSidebarOpen = this.sidebar.isOpen;
   activeTab = signal<string>('dashboard');
   isUserMenuOpen = signal(false);
   isChangePasswordOpen = signal(false);
@@ -679,7 +693,7 @@ export class FacultyDashboard implements OnInit {
   }
 
   toggleSidebar() {
-    this.isSidebarOpen.set(!this.isSidebarOpen());
+    this.sidebar.toggle();
   }
 
   toggleUserMenu() {
@@ -688,6 +702,7 @@ export class FacultyDashboard implements OnInit {
 
   selectTab(tab: string) {
     this.activeTab.set(tab);
+    this.sidebar.closeMobile();
   }
 
   getPageTitle(): string {
